@@ -1,1 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fueltek - Orden de Trabajo</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <img src="logo-fueltek.png" alt="Fueltek Logo" class="logo" />
+    <h1>FUELTEK</h1>
+    <p>Servicio Técnico Multimarca</p>
+  </header>
 
+  <main>
+    <form id="otForm">
+      <fieldset>
+        <legend>Orden de Trabajo</legend>
+        <label for="otNumber">N° OT:</label>
+        <input type="text" id="otNumber" name="ot" readonly />
+      </fieldset>
+
+      <fieldset>
+        <legend>Datos del Cliente</legend>
+        <div class="row">
+          <label>Nombre:</label><input type="text" name="clienteNombre" />
+          <label>Teléfono:</label><input type="text" name="clienteTelefono" />
+        </div>
+        <div class="row">
+          <label>Correo:</label><input type="text" name="clienteEmail" />
+          <label>Fecha Recibida:</label><input type="date" name="fechaRecibida" />
+        </div>
+        <div class="row">
+          <label>Fecha Entrega:</label><input type="date" name="fechaEntrega" />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Datos de la Herramienta</legend>
+        <div class="row">
+          <label>Marca:</label><input type="text" name="marca" />
+          <label>Modelo:</label><input type="text" name="modelo" />
+        </div>
+        <div class="row">
+          <label>N° Serie:</label><input type="text" name="serie" />
+          <label>Año:</label><input type="text" name="anio" />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Revisión y Accesorios Recibidos</legend>
+        <div class="accesorios">
+          <label><input type="checkbox" name="accesorios" value="Motosierra" /> Motosierra</label>
+          <label><input type="checkbox" name="accesorios" value="Desbrozadora" /> Desbrozadora</label>
+          <label><input type="checkbox" name="accesorios" value="Cortasetos" /> Cortasetos</label>
+          <label><input type="checkbox" name="accesorios" value="Corta Césped" /> Corta Césped</label>
+          <label><input type="checkbox" name="accesorios" value="Fumigadora" /> Fumigadora</label>
+          <label><input type="checkbox" name="accesorios" value="Sopladora" /> Sopladora</label>
+          <label><input type="checkbox" name="accesorios" value="Espada" /> Espada</label>
+          <label><input type="checkbox" name="accesorios" value="Cadena" /> Cadena</label>
+          <label><input type="checkbox" name="accesorios" value="Bujía" /> Bujía</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Diagnóstico Inicial</legend>
+        <textarea name="diagnostico" rows="4"></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>Trabajo Realizado / Notas del Técnico</legend>
+        <textarea name="trabajo" rows="4"></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>Pago</legend>
+        <label>Valor del Trabajo:</label>
+        <input type="number" name="valorTrabajo" />
+        <label>Estado:</label>
+        <select id="estadoPago" name="estadoPago">
+          <option>Pendiente</option>
+          <option>Pagado</option>
+          <option>Abonado</option>
+        </select>
+        <label id="labelAbono" class="hidden">Monto Abonado:</label>
+        <input id="montoAbonado" name="montoAbonado" type="number" class="hidden" />
+      </fieldset>
+
+      <div class="buttons">
+        <button id="newOtBtn" type="button">Nuevo OT</button>
+        <button id="saveBtn" type="submit">Guardar</button>
+        <button id="printBtn" type="button">Imprimir</button>
+        <button id="clearBtn" type="button">Borrar Todo</button>
+      </div>
+    </form>
+  </main>
+
+  <div id="printArea" style="display:none"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
