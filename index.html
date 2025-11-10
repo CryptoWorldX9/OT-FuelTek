@@ -94,7 +94,6 @@
         <fieldset>
           <legend>Revisión y Accesorios Recibidos</legend>
           <div class="checkbox-grid aligned">
-            <!-- cada item: checkbox a la izquierda, texto a la derecha; igual ancho -->
             <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Motosierra"><span>Motosierra</span></label>
             <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Desbrozadora"><span>Desbrozadora</span></label>
             <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cortasetos"><span>Cortasetos</span></label>
@@ -130,7 +129,7 @@
         <fieldset>
           <legend>Pago</legend>
           <div class="grid-pay">
-            <label class="stack">Valor del trabajo (CLP)<input name="valorTrabajo" type="number" min="0" step="1" /></label>
+            <label class="stack">Valor del trabajo (CLP)<input name="valorTrabajo" id="valorTrabajo" type="number" min="0" step="1" /></label>
             <label class="stack">Estado de Pago
               <select name="estadoPago" id="estadoPago">
                 <option value="Pendiente">Pendiente de Pago</option>
