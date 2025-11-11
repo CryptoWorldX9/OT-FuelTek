@@ -1,12 +1,12 @@
-/* Fueltek v6.0 - script.js
-   - Mejoras de UI/UX y formato CLP (separador de miles con punto)
+/* Fueltek v7.0 - script.js
+   - Mejoras de UI/UX y formato CLP (separador de miles con punto) EN TIEMPO REAL
    - Limpieza de código y unificación del botón Limpiar Campos
 */
 
-const DB_NAME = "fueltek_db_v6"; // Versión de DB actualizada para evitar conflictos
+const DB_NAME = "fueltek_db_v7"; // Versión de DB actualizada
 const DB_VERSION = 1;
 const STORE = "orders";
-const OT_LOCAL = "fueltek_last_ot_v6";
+const OT_LOCAL = "fueltek_last_ot_v7";
 
 let currentLoadedOt = null; // guarda el OT cargado para editar
 
@@ -29,14 +29,16 @@ function unformatCLP(str) {
   return parseInt(cleaned, 10) || 0;
 }
 
-// Handler para aplicar formato al perder foco (on blur)
-function handleFormatOnBlur(e) {
-  e.target.value = formatCLP(e.target.value);
-}
-
-// Handler para limpiar formato al obtener foco (on focus)
-function handleUnformatOnFocus(e) {
-  e.target.value = unformatCLP(e.target.value);
+// Handler para aplicar formato al teclear (input event)
+function handleFormatOnInput(e) {
+  const input = e.target;
+  const value = input.value;
+  // Desformatear, luego reformatear.
+  const numericValue = unformatCLP(value);
+  const formattedValue = formatCLP(numericValue);
+  
+  // Asignar el valor formateado
+  input.value = formattedValue;
 }
 
 // ====================================================================
@@ -96,6 +98,7 @@ function dbDeleteAll() {
 }
 
 function getLastOt() {
+  // El número inicial es 726 si no existe
   return parseInt(localStorage.getItem(OT_LOCAL) || "726", 10);
 }
 function setLastOt(n) { localStorage.setItem(OT_LOCAL, String(n)); }
@@ -125,10 +128,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const updateOtDisplay = () => (otInput.value = String(getLastOt() + 1));
   updateOtDisplay();
   
-  // Agregar listeners para formato de miles
+  // Agregar listeners para formato de miles EN TIEMPO REAL
   [valorTrabajoInput, montoAbonadoInput].forEach(input => {
-    input.addEventListener("blur", handleFormatOnBlur);
-    input.addEventListener("focus", handleUnformatOnFocus);
+    input.addEventListener("input", handleFormatOnInput);
+    // Aplicar formato al cargar la página o al perder foco si se copia/pega
+    input.addEventListener("blur", handleFormatOnInput);
   });
 
   // Mostrar / ocultar campo Abonado
@@ -153,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("Base de datos eliminada. Contador reiniciado a 727.");
   });
   
-  // Limpiar campos manualmente (botón nuevo)
+  // Limpiar campos manualmente (botón Limpiar Campos integrado en la barra superior)
   document.getElementById("resetFormBtn").addEventListener("click", () => {
     if (confirm("¿Seguro que deseas limpiar todos los campos del formulario?")) {
       form.reset();
@@ -250,8 +254,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     ordersList.querySelectorAll("button").forEach(btn => {
       btn.addEventListener("click", async ev => {
-        const ot = ev.target.closest('button').dataset.ot;
-        const action = ev.target.closest('button').dataset.action;
+        // Usa closest para capturar el data-ot y data-action del botón, incluso si el clic es en el icono
+        const targetBtn = ev.target.closest('button');
+        const ot = targetBtn.dataset.ot;
+        const action = targetBtn.dataset.action;
         if (action === "print") {
           const dat = await dbGet(ot); buildPrintAndPrint(dat);
         } else if (action === "load") {
@@ -319,12 +325,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const saldoF = formatCLP(saldo > 0 ? saldo : 0);
 
     const html = `
-      <div style="font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;color:#111;padding-bottom:15px;border-bottom:1px solid #ddd;">
+      <div style="font-family:'Inter', sans-serif;color:#111;padding-bottom:15px;border-bottom:1px solid #ddd;">
         <div style="display:flex;align-items:center;gap:20px">
           <img src="logo-fueltek.png" style="width:100px;height:100px;object-fit:contain;border:1px solid #eee;padding:5px;border-radius:8px;" alt="logo" />
           <div style="flex-grow:1">
             <h2 style="margin:0;color:#004d99;font-size:24px;">ORDEN DE TRABAJO - FUELTEK</h2>
-            <div style="color:#2c3e50;font-weight:600;font-size:16px;">Servicio Técnico Multimarca</div>
+            <div style="color:#f26522;font-weight:600;font-size:16px;">Servicio Técnico Multimarca</div>
             <div style="font-size:11px;margin-top:5px;opacity:0.8;">Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</div>
           </div>
           <div style="text-align:right;background:#004d99;color:white;padding:10px 15px;border-radius:8px;">
@@ -334,7 +340,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <hr style="border:none;border-top:2px solid #004d99;margin:15px 0 18px" />
         
-        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:10pt;">
+        <table style="width:100%;border-collapse:collapse;margin-bottom:15px;font-size:10pt;">
           <tr>
             <td style="width:50%;padding:8px 0;vertical-align:top;border-right:1px solid #eee;">
               <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">DATOS DEL CLIENTE</strong>
@@ -355,7 +361,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </tr>
         </table>
 
-        <div style="display:flex;gap:20px;margin-bottom:20px;border-top:1px solid #ddd;padding-top:15px;">
+        <div style="display:flex;gap:20px;margin-bottom:15px;border-top:1px solid #ddd;padding-top:15px;">
             <div style="width:40%;">
                 <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">RESUMEN DE PAGO</strong>
                 <table style="width:100%;border-collapse:collapse;font-size:10pt;background:#f8f8f8;border-radius:6px;overflow:hidden;">
@@ -375,11 +381,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <div style="margin-top:15px;">
             <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">DIAGNÓSTICO INICIAL</strong>
-            <div style="border:1px solid #ddd;padding:10px;border-radius:6px;min-height:70px;background:#fcfcfc;">${data.diagnostico || "Sin diagnóstico."}</div>
+            <div style="border:1px solid #ddd;padding:10px;border-radius:6px;min-height:60px;background:#fcfcfc;">${data.diagnostico || "Sin diagnóstico."}</div>
         </div>
         <div style="margin-top:15px;">
             <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">TRABAJO REALIZADO / NOTAS DEL TÉCNICO</strong>
-            <div style="border:1px solid #ddd;padding:10px;border-radius:6px;min-height:70px;background:#fcfcfc;">${data.trabajo || "Trabajo Pendiente de Realizar / Sin notas."}</div>
+            <div style="border:1px solid #ddd;padding:10px;border-radius:6px;min-height:60px;background:#fcfcfc;">${data.trabajo || "Trabajo Pendiente de Realizar / Sin notas."}</div>
         </div>
         
         <div style="display:flex;gap:60px;margin-top:35px;padding-top:15px;border-top:1px solid #eee;">
@@ -408,8 +414,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => printArea.style.display = "none", 800);
   }
   
-  // Implementación básica de Exportar a Excel y Exportar/Importar DB JSON
-  // (Funciones para garantizar la funcionalidad de los botones, no estaban en el script original)
+  // Implementación de Exportar/Importar DB JSON y Exportar a Excel (se mantiene)
   document.getElementById("exportBtn").addEventListener("click", async () => {
     const orders = await dbGetAll();
     if (orders.length === 0) return alert("No hay órdenes para exportar.");
