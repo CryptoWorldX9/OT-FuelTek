@@ -1,5 +1,6 @@
 :root{
   --primary: #004d99; /* Azul Corporativo */
+  --accent: #f26522; /* Naranja Contraste (para el subtítulo) */
   --dark: #2c3e50; /* Gris Oscuro/Negro Sobrio */
   --border: #e0e0e0;
   --bg: #f4f7f9; /* Fondo muy claro */
@@ -8,7 +9,7 @@
 
 *{box-sizing:border-box}
 body{
-  font-family: 'Inter', "Segoe UI", Roboto, Arial, sans-serif; /* Usando una fuente moderna */
+  font-family: 'Inter', "Segoe UI", Roboto, Arial, sans-serif; /* Fuente moderna */
   margin:0;
   background:var(--bg);
   color:var(--dark);
@@ -33,7 +34,7 @@ header{
 }
 .logo{width:80px;height:80px;object-fit:contain;background:white;padding:5px;border-radius:8px}
 .header-info h1{margin:0;font-size:2rem}
-.header-info p{color:var(--primary);margin:4px 0;font-weight:600}
+.header-info p{color:var(--accent);margin:4px 0;font-weight:600} /* Color Naranja */
 .header-info small{opacity:0.9;font-size:0.8rem}
 
 main{padding:20px}
@@ -65,7 +66,7 @@ main{padding:20px}
 .controls .danger{background:#c0392b}
 .controls .danger:hover{background:#a13023}
 
-/* Nuevo botón de limpieza: el de borrado total de DB sigue siendo danger */
+/* Botón de limpieza */
 #resetFormBtn {background:#576574}
 #resetFormBtn:hover {background:#465360}
 
@@ -80,7 +81,8 @@ legend{color:var(--primary);font-weight:700;padding:0 8px;font-size:1.1rem}
 .spaced label{padding-right:15px}
 
 .stack{display:flex;flex-direction:column;gap:6px;font-size:0.9rem}
-.stack input, .stack select, textarea{padding:10px;border-radius:6px;border:1px solid var(--border);font-size:1rem;transition:border-color 0.2s}
+/* Aplicar la fuente a los inputs */
+.stack input, .stack select, textarea{padding:10px;border-radius:6px;border:1px solid var(--border);font-size:1rem;transition:border-color 0.2s;font-family: inherit;}
 .stack input:focus, .stack select:focus, textarea:focus{border-color:var(--primary);outline:none}
 textarea{width:100%;min-height:140px;resize:vertical}
 
@@ -94,15 +96,16 @@ textarea{width:100%;min-height:140px;resize:vertical}
 .checkbox-item:hover{background:#f0f7ff;border-color:#b3d4ff}
 .checkbox-item input[type="checkbox"]{width:18px;height:18px;margin:0;flex:0 0 auto;accent-color:var(--primary)}
 
-/* payment grid */
-.grid-pay{grid-template-columns:1fr 1fr 1fr}
+/* payment grid: se mantiene en 3 columnas uniformes para un layout compacto */
+.grid-pay{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px} 
 .hidden{display:none}
 
 /* firmas centradas */
 .firmas{display:flex;justify-content:center;gap:150px;margin:30px 0}
 .firma-box{width:40%;text-align:center}
 .firma-box label{font-weight:600;color:#555}
-.firma-box input{width:100%;height:45px;text-align:center;border-radius:6px;border:1px solid var(--border);margin-top:5px;background:#f9f9f9}
+/* Aplicar la fuente a los inputs de firma */
+.firma-box input{width:100%;height:45px;text-align:center;border-radius:6px;border:1px solid var(--border);margin-top:5px;background:#f9f9f9;font-family: inherit;}
 
 /* notas */
 .notas{background:#e8f0f8;border-left:5px solid var(--primary);padding:15px;border-radius:8px;margin-top:25px}
@@ -127,7 +130,7 @@ textarea{width:100%;min-height:140px;resize:vertical}
 footer{background:var(--dark);color:white;padding:10px;text-align:center;font-size:0.8rem}
 
 /* === PRINT STYLES (PDF) - Mejora Profesional === */
-@page{size:letter;margin:18mm}
+@page{size:letter;margin:8mm} /* MARGEN SUPERIOR DISMINUIDO */
 @media print{
   body{background:white}
   .wrapper{box-shadow:none;margin:0;border-radius:0}
@@ -140,7 +143,7 @@ footer{background:var(--dark);color:white;padding:10px;text-align:center;font-si
   #printArea, #printArea *{visibility:visible}
   #printArea{
     position:absolute;left:0;top:0;width:100%;
-    padding:18mm; /* Mismo margen que @page */
+    padding:8mm; /* Mismo margen que @page */
     box-sizing:border-box;
     font-size:10pt; /* Fuente más pequeña para impresión */
   }
