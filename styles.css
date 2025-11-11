@@ -1,10 +1,13 @@
 :root{
   --primary: #004d99; /* Azul Corporativo */
-  --accent: #f26522; /* Naranja Contraste (para el subtítulo) */
+  --accent: #f26522; /* Naranja Contraste */
   --dark: #2c3e50; /* Gris Oscuro/Negro Sobrio */
   --border: #e0e0e0;
   --bg: #f4f7f9; /* Fondo muy claro */
   --card: #fff;
+  --success: #27ae60;
+  --danger: #c0392b;
+  --warning: #f39c12;
 }
 
 *{box-sizing:border-box}
@@ -20,117 +23,183 @@ body{
   margin:25px auto;
   background:var(--card);
   border-radius:12px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+  box-shadow:0 10px 30px rgba(0,0,0,0.1); /* Sombra un poco más fuerte */
   overflow:hidden;
 }
 
+/* --- HEADER MÁS MODERNO Y LIMPIO --- */
 header{
   display:flex;
-  gap:16px;
+  justify-content: space-between; /* Alineación horizontal */
   align-items:center;
-  background:var(--dark);
-  color:white;
-  padding:18px;
+  background: white; /* Fondo blanco */
+  color: var(--dark); /* Texto oscuro */
+  padding: 18px 25px; /* Más padding */
+  border-bottom: 3px solid var(--primary); /* Línea gruesa azul corporativo */
 }
-.logo{width:80px;height:80px;object-fit:contain;background:white;padding:5px;border-radius:8px}
-.header-info h1{margin:0;font-size:2rem}
-.header-info p{color:var(--accent);margin:4px 0;font-weight:600} /* Color Naranja */
-.header-info small{opacity:0.9;font-size:0.8rem}
+.logo{width:80px;height:80px;object-fit:contain;padding:0;border-radius:0} /* Logo más simple */
+.header-info{text-align: right;} /* Información alineada a la derecha */
+.header-info h1{margin:0;font-size:2.2rem;color:var(--primary)}
+.header-info p{color:var(--dark);margin:4px 0;font-weight:600} 
+.header-info small{color:#888;font-size:0.8rem}
 
-main{padding:20px}
+main{padding:25px}
 
-/* top bar - con el nuevo botón "Limpiar Campos" */
+/* top bar - controles */
 .ot-bar{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:10px 15px;
-  background:var(--bg);
+  padding:12px 15px; /* Más padding */
+  background:var(--card);
   border-radius:8px;
-  margin-bottom:15px;
+  margin-bottom:20px;
   border:1px solid var(--border);
   gap:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
-.ot-bar .left{display:flex;align-items:center;gap:12px}
-.ot-label{font-weight:700;color:var(--dark)}
-#otNumber{width:120px;text-align:center;font-weight:800;font-size:1.1rem;border:2px solid var(--primary);border-radius:8px;padding:8px 10px;background:#fff}
+.ot-bar .left{display:flex;align-items:center;gap:15px}
+.ot-label{font-weight:700;color:var(--dark);font-size:1.1rem}
+#otNumber{
+  width:140px;
+  text-align:center;
+  font-weight:800;
+  font-size:1.3rem; /* Más grande */
+  border:3px solid var(--primary); /* Borde más grueso */
+  border-radius:8px;
+  padding:8px 10px;
+  background:var(--bg);
+  color:var(--primary);
+}
 
-/* controls buttons small and uniform */
+/* controls buttons uniform */
 .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .controls button, .import-label{
-  width:40px;height:40px;border-radius:8px;border:none;background:var(--primary);color:white;
+  width:42px;height:42px;border-radius:8px;border:none;background:var(--primary);color:white;
   display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
-  transition:background 0.2s ease;
+  transition:all 0.2s ease;
+  box-shadow:0 2px 5px rgba(0,0,0,0.15);
 }
-.controls button:hover, .import-label:hover{background:#003a7a}
-.controls .danger{background:#c0392b}
+.controls button:hover, .import-label:hover{background:#003a7a;transform:translateY(-1px)}
+.controls .danger{background:var(--danger)}
 .controls .danger:hover{background:#a13023}
-
-/* Botón de limpieza */
+/* Botón de limpieza - estilo secundario */
 #resetFormBtn {background:#576574}
 #resetFormBtn:hover {background:#465360}
+/* Botón de Guardar/Actualizar destacado */
+#saveBtn {
+    background: var(--success); /* Usar verde para acción positiva */
+    width: auto; /* Ancho automático para más texto */
+    padding: 0 15px;
+}
+#saveBtn:hover {background: #1e8449;}
 
 .import-label input{display:none}
 
-/* form fields */
-fieldset{border:1px solid var(--border);border-radius:10px;padding:15px;margin-bottom:15px}
-legend{color:var(--primary);font-weight:700;padding:0 8px;font-size:1.1rem}
+/* --- FORM FIELDS MÁS LIMPIOS --- */
+fieldset{border:none;padding:10px 0 15px 0;margin-bottom:25px} /* Quitar el borde del fieldset */
+legend{
+    color:var(--dark);
+    font-weight:700;
+    padding:0 5px 5px 0;
+    font-size:1.2rem;
+    border-bottom: 2px solid var(--accent); /* Usar naranja como separador */
+    margin-bottom:15px;
+    display: block; /* Asegura el ancho completo de la línea */
+}
 
-.grid{display:grid;gap:15px}
+.grid{display:grid;gap:20px} /* Más espacio */
 .grid-2col{grid-template-columns: 1fr 1fr}
 .spaced label{padding-right:15px}
 
-.stack{display:flex;flex-direction:column;gap:6px;font-size:0.9rem}
+.stack{display:flex;flex-direction:column;gap:8px;font-size:0.95rem;font-weight: 500;} /* Más espacio y fuente */
 /* Aplicar la fuente a los inputs */
-.stack input, .stack select, textarea{padding:10px;border-radius:6px;border:1px solid var(--border);font-size:1rem;transition:border-color 0.2s;font-family: inherit;}
-.stack input:focus, .stack select:focus, textarea:focus{border-color:var(--primary);outline:none}
+.stack input, .stack select, textarea{
+    padding:12px; /* Más padding */
+    border-radius:8px; /* Bordes más suaves */
+    border:1px solid #c9d0d6;
+    font-size:1rem;
+    transition:all 0.2s;
+    font-family: inherit;
+    background:var(--card);
+}
+.stack input:focus, .stack select:focus, textarea:focus{
+    border-color:var(--primary);
+    outline:none;
+    box-shadow: 0 0 0 3px rgba(0, 77, 153, 0.15); /* Sombra sutil al enfocar */
+}
+.stack input[readonly] {background: var(--bg); color: var(--dark); font-weight: 700;} /* Destacar campos de solo lectura */
 textarea{width:100%;min-height:140px;resize:vertical}
 
 /* checkbox grid aligned */
 .checkbox-grid.aligned{
   display:grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Más flexible */
   gap:10px 15px;
 }
-.checkbox-item{display:flex;align-items:center;gap:10px;background:#fcfcfc;padding:8px;border-radius:6px;border:1px solid var(--border);cursor:pointer}
-.checkbox-item:hover{background:#f0f7ff;border-color:#b3d4ff}
+.checkbox-item{
+    display:flex;align-items:center;gap:10px;
+    background:#fcfcfc;padding:10px 12px; /* Más padding */
+    border-radius:6px;
+    border:1px solid var(--border);
+    cursor:pointer;
+    transition: all 0.2s;
+}
+.checkbox-item:hover{background:#f0f7ff;border-color:var(--primary)}
 .checkbox-item input[type="checkbox"]{width:18px;height:18px;margin:0;flex:0 0 auto;accent-color:var(--primary)}
 
-/* payment grid: se mantiene en 3 columnas uniformes para un layout compacto */
-.grid-pay{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px} 
-.hidden{display:none}
+/* payment grid: ahora de 3 columnas dinámicas */
+.grid-pay{display:grid;grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));gap:20px}
+.hidden{display:none !important}
 
 /* firmas centradas */
-.firmas{display:flex;justify-content:center;gap:150px;margin:30px 0}
-.firma-box{width:40%;text-align:center}
-.firma-box label{font-weight:600;color:#555}
-/* Aplicar la fuente a los inputs de firma */
-.firma-box input{width:100%;height:45px;text-align:center;border-radius:6px;border:1px solid var(--border);margin-top:5px;background:#f9f9f9;font-family: inherit;}
+.firmas{display:flex;justify-content:space-around;gap:50px;margin:40px 0}
+.firma-box{width:45%;max-width:300px;text-align:center}
+.firma-box label{font-weight:600;color:var(--dark)}
+.firma-box input{
+    width:100%;height:50px;
+    text-align:center;
+    border-radius:6px;
+    border:1px dashed #aaa; /* Borde punteado para simular espacio de firma */
+    margin-top:10px;
+    background:var(--bg);
+    font-family: inherit;
+}
 
 /* notas */
-.notas{background:#e8f0f8;border-left:5px solid var(--primary);padding:15px;border-radius:8px;margin-top:25px}
-.notas h4{margin-top:0;color:var(--primary)}
-.notas ul{padding-left:20px;margin:0;font-size:0.9rem}
+.notas{background:#e8f0f8;border-left:5px solid var(--primary);padding:20px;border-radius:8px;margin-top:30px}
+.notas h4{margin-top:0;color:var(--primary);font-size:1.1rem}
+.notas ul{padding-left:20px;margin:5px 0 0 0;font-size:0.95rem;line-height: 1.6;}
 
 /* modal - lista de OT */
-.modal{position:fixed;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);z-index:40}
-.modal.hidden{display:none}
-.modal-content{width:90%;max-width:900px;background:#fff;border-radius:10px;padding:20px;box-shadow:0 15px 40px rgba(0,0,0,0.3)}
+.modal{position:fixed;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);z-index:40}
+.modal-content{width:95%;max-width:900px;background:#fff;border-radius:12px;padding:25px;box-shadow:0 20px 50px rgba(0,0,0,0.4)}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
-.modal-header h3{margin:0;color:var(--dark)}
-.modal-header button{background:#777;padding:8px 12px;color:white;border:none;border-radius:6px;cursor:pointer}
-.modal-body input{width:100%;padding:10px;border-radius:6px;border:1px solid var(--border);margin-bottom:15px}
-.orders-list{max-height:500px;overflow-y:auto;border:1px solid #eee;padding:10px;border-radius:6px;background:#f9f9f9}
-.order-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #e5e5e5;background:#fff;border-radius:6px;margin-bottom:6px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.modal-header h3{margin:0;color:var(--dark);font-size:1.5rem}
+.modal-header button{background:#777;padding:8px 12px;color:white;border:none;border-radius:6px;cursor:pointer;transition:background 0.2s}
+.modal-header button:hover{background:#555}
+.modal-body input{width:100%;padding:12px;border-radius:8px;border:1px solid #c9d0d6;margin-bottom:15px;font-size:1rem}
+.orders-list{max-height:550px;overflow-y:auto;border:1px solid #eee;padding:10px;border-radius:8px;background:#fff}
+.order-row{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e5e5;background:var(--bg);border-radius:8px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
 .order-row:last-child{border-bottom:none}
-.order-actions button{margin-left:8px;padding:8px 10px;border-radius:6px;border:none;background:var(--primary);color:white;cursor:pointer;font-size:0.85rem}
+.order-row b{color:var(--primary)}
+.order-actions button{
+    margin-left:8px;padding:8px 10px;border-radius:6px;
+    border:none;background:var(--primary);color:white;
+    cursor:pointer;font-size:0.85rem;
+    transition:background 0.2s;
+}
+.order-actions button:hover{background:#003a7a}
 .order-actions button.small{padding:6px 10px}
+.order-actions button[data-action="delete"] {background: var(--danger);}
+.order-actions button[data-action="delete"]:hover {background: #a13023;}
+
 
 /* footer */
-footer{background:var(--dark);color:white;padding:10px;text-align:center;font-size:0.8rem}
+footer{background:var(--dark);color:white;padding:15px;text-align:center;font-size:0.85rem}
 
-/* === PRINT STYLES (PDF) - Mejora Profesional === */
-@page{size:letter;margin:8mm} /* MARGEN SUPERIOR DISMINUIDO */
+/* === PRINT STYLES (PDF) === */
+@page{size:letter;margin:10mm}
 @media print{
   body{background:white}
   .wrapper{box-shadow:none;margin:0;border-radius:0}
@@ -143,8 +212,8 @@ footer{background:var(--dark);color:white;padding:10px;text-align:center;font-si
   #printArea, #printArea *{visibility:visible}
   #printArea{
     position:absolute;left:0;top:0;width:100%;
-    padding:8mm; /* Mismo margen que @page */
+    padding:10mm; 
     box-sizing:border-box;
-    font-size:10pt; /* Fuente más pequeña para impresión */
+    font-size:10pt;
   }
 }
