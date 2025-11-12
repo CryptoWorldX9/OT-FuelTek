@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Orden de Trabajo - Fueltek</title>
   <link rel="stylesheet" href="styles.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -29,7 +29,7 @@
 
         <div class="controls">
           <button id="newOtBtn" title="Reservar nuevo OT"><i data-lucide="plus"></i></button>
-          <button id="saveBtn" title="Guardar nueva OT"><i data-lucide="save"></i></button>
+          <button id="saveBtn" title="Guardar OT"><i data-lucide="save"></i></button>
           <button id="viewBtn" title="Ver lista de OT"><i data-lucide="list"></i></button>
           <button id="resetFormBtn" title="Limpiar todos los campos"><i data-lucide="eraser"></i></button>
           <button id="exportBtn" title="Exportar Excel"><i data-lucide="download"></i></button>
@@ -47,21 +47,21 @@
         <fieldset>
           <legend>Datos del Cliente</legend>
           <div class="grid grid-2col spaced">
-            <label class="stack">Nombre del Cliente *
-              <input name="clienteNombre" required />
+            <label class="stack">Nombre del Cliente
+              <input name="clienteNombre" />
             </label>
-            <label class="stack">Teléfono *
-              <input name="clienteTelefono" required />
+            <label class="stack">Teléfono
+              <input name="clienteTelefono" />
             </label>
 
             <label class="stack">Correo Electrónico
               <input name="clienteEmail" type="email" />
             </label>
-            <label class="stack">Fecha Recibida *
-              <input name="fechaRecibida" type="date" required />
+            <label class="stack">Fecha Recibida
+              <input name="fechaRecibida" type="date" />
             </label>
 
-            <label class="stack">Fecha de Entrega Estimada
+            <label class="stack">Fecha de Entrega
               <input name="fechaEntrega" type="date" />
             </label>
             <div></div>
@@ -71,11 +71,11 @@
         <fieldset>
           <legend>Datos de la Herramienta</legend>
           <div class="grid grid-2col spaced">
-            <label class="stack">Marca *
-              <input name="marca" required />
+            <label class="stack">Marca
+              <input name="marca" />
             </label>
-            <label class="stack">Modelo *
-              <input name="modelo" required />
+            <label class="stack">Modelo
+              <input name="modelo" />
             </label>
 
             <label class="stack">N° de Serie
@@ -114,18 +114,18 @@
 
         <fieldset>
           <legend>Diagnóstico Inicial</legend>
-          <textarea name="diagnostico" rows="6" placeholder="Describa el diagnóstico (ej. Falla en carburación, motor amarrado, etc.)..."></textarea>
+          <textarea name="diagnostico" rows="6" placeholder="Describa el diagnóstico ..."></textarea>
         </fieldset>
 
         <fieldset>
           <legend>Trabajo Realizado / Notas del Técnico</legend>
-          <textarea name="trabajo" rows="6" placeholder="Describa el trabajo realizado (ej. Cambio de pistón, carburación, mantención completa, etc.)..."></textarea>
+          <textarea name="trabajo" rows="6" placeholder="Describa el trabajo realizado ..."></textarea>
         </fieldset>
 
         <fieldset>
           <legend>Pago</legend>
           <div class="grid-pay">
-            <label class="stack">Valor del trabajo (CLP) *<input name="valorTrabajo" type="text" inputmode="numeric" pattern="[0-9]*" id="valorTrabajoInput" required /></label>
+            <label class="stack">Valor del trabajo (CLP)<input name="valorTrabajo" type="text" inputmode="numeric" pattern="[0-9]*" id="valorTrabajoInput" /></label>
             <label class="stack">Estado de Pago
               <select name="estadoPago" id="estadoPago">
                 <option value="Pendiente">Pendiente de Pago</option>
@@ -133,16 +133,13 @@
                 <option value="Abonado">Abonado</option>
               </select>
             </label>
-            
             <label class="stack hidden" id="labelAbono">Monto Abonado (CLP)<input name="montoAbonado" type="text" inputmode="numeric" pattern="[0-9]*" id="montoAbonadoInput" /></label>
-            
-            <label class="stack hidden" id="labelSaldo">Saldo Pendiente (CLP)<input name="saldoPendiente" readonly id="saldoPendienteInput" /></label>
           </div>
         </fieldset>
 
         <div class="firmas">
-          <div class="firma-box"><label>Firma Taller</label><input name="firmaTaller" placeholder="Nombre/Firma Digital" /></div>
-          <div class="firma-box"><label>Firma Cliente</label><input name="firmaCliente" placeholder="Nombre/Firma Digital" /></div>
+          <div class="firma-box"><label>Firma Taller</label><input name="firmaTaller" /></div>
+          <div class="firma-box"><label>Firma Cliente</label><input name="firmaCliente" /></div>
         </div>
 
         <section class="notas">
