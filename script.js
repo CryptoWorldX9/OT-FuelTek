@@ -1,555 +1,695 @@
-/* Fueltek v7.1 - script.js
-   - Migración de IndexedDB a Firestore (Firebase)
-   - Implementación de autenticación anónima y uso de __initial_auth_token
-   - Uso de onSnapshot para escucha de datos en tiempo real
+/* Fueltek v8.0 - script.js
+   - MIGRACIÓN COMPLETA a Firebase Firestore.
+   - Se elimina toda la lógica de IndexedDB y localStorage.
+   - Se utiliza onSnapshot para obtener datos en tiempo real.
+   - Se usa el ID del documento de Firestore como el "N° OT".
+   - El número de OT se genera encontrando el máximo OT actual.
 */
 
-// Variables globales de Firebase (inicializadas en index.html)
-let firebaseApp, db, auth, appId, setDoc, doc, collection, query, onSnapshot, getDocs, deleteDoc, updateDoc, signInWithCustomToken, signInAnonymously;
-let userId = null;
-let currentLoadedOt = null; // OT cargada actualmente
-let allOrders = []; // Array local para guardar las órdenes de la última instantánea de Firestore
-let lastOtCorrelative = 0; // El último OT correlativo usado para la creación de nuevos OT
+// Variables importadas del módulo de Firebase en index.html
+let db;
+let auth;
+let appId;
+let userId;
 
-const OT_COLLECTION = "orders";
-const OT_CORRELATIVE_DOC = "lastOt";
-const DB_MESSAGE = document.getElementById('dbMessage');
-const USER_DISPLAY = document.getElementById('userIdDisplay');
-const MODAL_SPINNER = document.getElementById('modalSpinner');
+// Funciones de Firebase
+let setDoc, doc, collection, deleteDoc, query, onSnapshot, getDocs, getDoc, where;
 
-// ====================================================================
-// CONFIGURACIÓN DE FIREBASE Y AUTH
-// ====================================================================
+// Datos globales de la aplicación
+let workOrders = []; // Array que contendrá los datos sincronizados de Firestore
+let currentOtId = null; // ID de Firestore (N° OT) de la orden actualmente cargada
 
-// Esta función se ejecuta después de que el script principal ha cargado los imports de Firebase
-async function setupFirebase() {
-  if (typeof window.firebase === 'undefined') {
-    console.error("Firebase no está disponible. Asegúrate de que los imports en index.html se cargaron correctamente.");
-    DB_MESSAGE.textContent = "Error: Firebase no inicializado.";
+// Inicialización de Firebase/Auth y carga de la lógica principal
+function initializeAppLogic() {
+  if (!window.firebase || !window.firebase.db || !window.firebase.userId) {
+    console.error("Firebase no está inicializado o la autenticación no ha finalizado.");
+    setTimeout(initializeAppLogic, 100); // Reintentar
     return;
   }
 
-  // Desestructuración de las variables y funciones de window.firebase
-  ({
-    app: firebaseApp, db, auth, appId, setDoc, doc, collection, query, onSnapshot, getDocs, deleteDoc, updateDoc, signInWithCustomToken, signInAnonymously
-  } = window.firebase);
-
-  DB_MESSAGE.textContent = "Autenticando...";
+  // Asignar variables y funciones de Firebase
+  ({ db, auth, appId, setDoc, doc, collection, deleteDoc, query, onSnapshot, getDocs, getDoc, where } = window.firebase);
+  userId = auth.currentUser?.uid || window.firebase.userId;
   
-  try {
-    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-    
-    if (initialAuthToken) {
-      await signInWithCustomToken(auth, initialAuthToken);
-    } else {
-      await signInAnonymously(auth);
-    }
+  // Iniciar la sincronización con Firestore
+  setupFirestoreListener();
 
-  } catch (error) {
-    console.error("Error en autenticación:", error);
-    DB_MESSAGE.textContent = "Error de autenticación. Funcionalidad de DB deshabilitada.";
-    return;
-  }
-}
+  // Inicializar UI y Event Listeners
+  updateOtDisplay(getNewOtNumber());
+  setupEventListeners();
 
-// Escucha el estado de autenticación para obtener el ID de usuario
-function startAuthListener() {
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      userId = user.uid;
-      USER_DISPLAY.innerHTML = `**App ID:** ${appId}<br>**User ID:** ${userId}`;
-      DB_MESSAGE.textContent = "Conectado. Esperando datos...";
-      // Una vez autenticado, inicia la escucha de Firestore
-      startFirestoreListeners(userId);
-    } else {
-      userId = null;
-      USER_DISPLAY.innerHTML = `**App ID:** ${appId}<br>**User ID:** (Anónimo/Desconectado)`;
-      DB_MESSAGE.textContent = "Sesión cerrada. No se puede acceder a la base de datos.";
-    }
-  });
-}
-
-// ====================================================================
-// FIREBASE FIRESTORE OPERATIONS
-// ====================================================================
-
-// Obtiene la referencia a la colección de órdenes privadas del usuario
-function getOrdersCollectionRef(uid) {
-  // Path: /artifacts/{appId}/users/{userId}/orders
-  return collection(db, 'artifacts', appId, 'users', uid, OT_COLLECTION);
-}
-
-// Obtiene la referencia al documento correlativo
-function getCorrelativeDocRef(uid) {
-  // Path: /artifacts/{appId}/users/{userId}/correlatives/lastOt
-  return doc(db, 'artifacts', appId, 'users', uid, 'correlatives', OT_CORRELATIVE_DOC);
-}
-
-// 1. ESCUCHA EN TIEMPO REAL (onSnapshot)
-function startFirestoreListeners(uid) {
-  const ordersRef = getOrdersCollectionRef(uid);
-  const correlativeRef = getCorrelativeDocRef(uid);
-
-  // Escuchar cambios en el Correlativo
-  onSnapshot(correlativeRef, (docSnap) => {
-    if (docSnap.exists()) {
-      lastOtCorrelative = docSnap.data().value || 0;
-    } else {
-      lastOtCorrelative = 0; // Inicializar si no existe
-    }
-    console.log("Correlativo actualizado:", lastOtCorrelative);
-    updateOtDisplay(); // Actualizar N° OT en la UI
-  }, (error) => {
-    console.error("Error al escuchar correlativo:", error);
-    DB_MESSAGE.textContent = "Error al obtener correlativo.";
-  });
-
-  // Escuchar cambios en la Colección de Órdenes
-  // Nota: Firestore no tiene un 'orderBy' simple para el campo 'ot' que es un String,
-  // por lo que se omite el `orderBy` en la query para evitar errores de índice.
-  // La data se ordenará localmente si es necesario.
-  const q = query(ordersRef); 
-  
-  onSnapshot(q, (snapshot) => {
-    allOrders = [];
-    snapshot.forEach((doc) => {
-      // Agregar el ID del documento (que es el número OT) y los datos
-      const order = { id: doc.id, ...doc.data() };
-      allOrders.push(order);
-    });
-
-    // Ordenar localmente por N° OT (descendente)
-    allOrders.sort((a, b) => Number(b.id) - Number(a.id));
-
-    console.log("Órdenes actualizadas:", allOrders.length);
-    DB_MESSAGE.textContent = `Conectado y sincronizado. ${allOrders.length} órdenes.`;
-    
-    // Si el modal está abierto, actualizar la lista
-    if (!document.getElementById('modal').classList.contains('hidden')) {
-      renderOrdersList(allOrders);
-    }
-  }, (error) => {
-    console.error("Error al escuchar órdenes:", error);
-    DB_MESSAGE.textContent = "Error al sincronizar órdenes.";
-  });
-}
-
-// 2. OBTENER NUEVO N° OT (Correlativo)
-async function getNewOtNumber() {
-  // Se obtiene de la variable 'lastOtCorrelative' que se mantiene sincronizada con onSnapshot
-  return lastOtCorrelative + 1;
-}
-
-// 3. GUARDAR/ACTUALIZAR ORDEN (SetDoc)
-async function saveOrder(orderData, otNumber) {
-  if (!userId) {
-    console.error("Usuario no autenticado para guardar.");
-    showCustomAlert("Error de autenticación. No se pudo guardar la OT.");
-    return;
-  }
-
-  const otId = String(otNumber);
-  const ordersRef = getOrdersCollectionRef(userId);
-  const orderDocRef = doc(ordersRef, otId);
-  const correlativeRef = getCorrelativeDocRef(userId);
-
-  try {
-    // 1. Guardar o Actualizar el documento de la Orden
-    await setDoc(orderDocRef, {
-      ...orderData,
-      // Usar timestamp para ordenar si es necesario y para saber cuándo se guardó por última vez
-      lastUpdated: new Date().toISOString(),
-      otNumber: otId // Guardar el número OT como campo dentro del documento también
-    });
-
-    // 2. Actualizar el Correlativo solo si estamos guardando una OT nueva o una superior
-    if (Number(otId) > lastOtCorrelative) {
-      await setDoc(correlativeRef, { value: Number(otId) }, { merge: true });
-      lastOtCorrelative = Number(otId); // Actualizar inmediatamente el estado local
-    }
-
-    showCustomAlert(`OT N° ${otId} guardada y sincronizada correctamente.`);
-    currentLoadedOt = otId; // Mantener la OT cargada
-    return true;
-
-  } catch (e) {
-    console.error("Error al guardar la orden: ", e);
-    showCustomAlert("Error al guardar la OT en Firebase.");
-    return false;
-  }
-}
-
-// 4. ELIMINAR ORDEN (DeleteDoc)
-async function deleteOrder(otId) {
-  if (!userId) {
-    showCustomAlert("Error de autenticación. No se pudo eliminar la OT.");
-    return false;
-  }
-
-  const orderDocRef = doc(getOrdersCollectionRef(userId), String(otId));
-
-  try {
-    await deleteDoc(orderDocRef);
-    showCustomAlert(`OT N° ${otId} eliminada correctamente.`);
-    return true;
-  } catch (e) {
-    console.error("Error al eliminar la orden: ", e);
-    showCustomAlert("Error al eliminar la OT en Firebase.");
-    return false;
-  }
+  // Ocultar el indicador de carga si lo hubiera
+  console.log("Aplicación inicializada y escuchando a Firestore. User ID:", userId);
 }
 
 
-// ====================================================================
-// UTILIDADES DE FORMATO CLP
-// ====================================================================
+// ====================================================================\
+// UTILITIES (CLP FORMAT & UI MESSAGES)
+// ====================================================================\
 
-// Formatea un número (ej. 15000) a string con separador de miles (ej. 15.000)
 function formatCLP(num) {
   if (num === null || num === undefined) return "0";
-  const n = String(num).replace(/[^\\d]/g, ''); // Limpia no dígitos
+  const n = String(num).replace(/[^\d]/g, '');
   if (n === "") return "";
   return new Intl.NumberFormat('es-CL').format(Number(n));
 }
 
-// Desformatea un string (ej. 15.000) a un número entero (ej. 15000)
 function unformatCLP(str) {
   if (str === null || str === undefined) return 0;
-  const cleaned = String(str).replace(/[^\\d]/g, '');
+  const cleaned = String(str).replace(/[^\d]/g, '');
   return parseInt(cleaned, 10) || 0;
 }
 
-// Handler para aplicar formato al teclear (input event)
 function handleFormatOnInput(e) {
   const input = e.target;
-  const rawValue = unformatCLP(input.value);
-  input.value = formatCLP(rawValue);
-  calculateTotal();
+  const value = input.value;
+  const numericValue = unformatCLP(value);
+  const formattedValue = formatCLP(numericValue);
+  
+  // Guardar el valor sin formato en un atributo data para fácil recuperación
+  input.value = formattedValue;
+  input.dataset.numericValue = numericValue;
 }
 
-// ====================================================================
-// LÓGICA DE CÁLCULO
-// ====================================================================
+function showMessage(message, type = 'success', duration = 4000) {
+    const messageBox = document.getElementById('messageBox');
+    messageBox.textContent = message;
+    messageBox.className = `message-box ${type}`;
+    messageBox.classList.remove('hidden');
 
-function calculateTotal() {
-  const manoObra = unformatCLP(document.getElementById('montoManoObraInput').value);
-  const repuestos = unformatCLP(document.getElementById('montoRepuestosInput').value);
-  const otros = unformatCLP(document.getElementById('montoOtrosInput').value);
-  const abonado = unformatCLP(document.getElementById('montoAbonadoInput').value);
-
-  const totalNeto = manoObra + repuestos + otros;
-  const iva = Math.round(totalNeto * 0.19);
-  const totalServicio = totalNeto + iva;
-  const saldoPendiente = totalServicio - abonado;
-
-  document.getElementById('totalNetoDisplay').value = formatCLP(totalNeto);
-  document.getElementById('ivaDisplay').value = formatCLP(iva);
-  document.getElementById('totalServicioDisplay').value = formatCLP(totalServicio);
-
-  // También se podría mostrar el saldo pendiente si se desea
-  // document.getElementById('saldoPendienteDisplay').value = formatCLP(saldoPendiente);
-}
-
-
-// ====================================================================
-// MANEJO DEL FORMULARIO Y DATOS
-// ====================================================================
-
-// Convierte los datos del formulario a un objeto plano
-function getFormData() {
-  const form = document.getElementById('otForm');
-  const formData = new FormData(form);
-  const data = {};
-
-  for (let [key, value] of formData.entries()) {
-    // Para los montos, desformatear a número antes de guardar
-    if (key.startsWith('monto')) {
-      data[key] = unformatCLP(value);
-    } else {
-      data[key] = value.trim();
+    // Ocultar después de la duración
+    if (duration > 0) {
+        setTimeout(() => {
+            messageBox.classList.add('hidden');
+        }, duration);
     }
-  }
-
-  // Agregar los totales calculados al objeto de datos
-  data.totalNeto = unformatCLP(document.getElementById('totalNetoDisplay').value);
-  data.iva = unformatCLP(document.getElementById('ivaDisplay').value);
-  data.totalServicio = unformatCLP(document.getElementById('totalServicioDisplay').value);
-
-  return data;
 }
 
-// Carga datos en el formulario
-function loadFormData(data) {
-  const form = document.getElementById('otForm');
-  for (const key in data) {
-    const input = form.querySelector(`[name="${key}"]`);
-    if (input) {
-      if (key.startsWith('monto')) {
-        // Formatear CLP antes de cargar en el input
-        input.value = formatCLP(data[key]);
-      } else {
-        input.value = data[key];
-      }
+// ====================================================================\
+// FIREBASE FIRESTORE LOGIC
+// ====================================================================\
+
+// Obtiene la referencia a la colección privada de Órdenes de Trabajo del usuario
+function getOrdersCollectionRef() {
+    // Ruta: /artifacts/{appId}/users/{userId}/work_orders
+    const path = `artifacts/${appId}/users/${userId}/work_orders`;
+    return collection(db, path);
+}
+
+// Escucha en tiempo real los cambios en la colección
+function setupFirestoreListener() {
+    if (!db || !userId) {
+        console.error("No se puede iniciar el listener, DB o UserID no están disponibles.");
+        return;
     }
-  }
 
-  // Cargar el N° OT y actualizar el estado
-  const otNumber = data.otNumber || data.id;
-  document.getElementById('otNumber').value = otNumber;
-  currentLoadedOt = otNumber;
-  calculateTotal();
+    const ordersCollectionRef = getOrdersCollectionRef();
+    // Consulta: obtiene todas las órdenes. No se usa orderBy() para evitar errores de índices, se ordena en memoria.
+    const q = query(ordersCollectionRef);
+
+    // onSnapshot para la sincronización en tiempo real
+    onSnapshot(q, (snapshot) => {
+        workOrders = [];
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            // El OT ID (número) es el ID del documento. Lo guardamos como 'ot'
+            workOrders.push({
+                ...data,
+                ot: doc.id
+            });
+        });
+
+        // Ordenar en memoria por el número de OT de forma descendente
+        workOrders.sort((a, b) => unformatCLP(b.ot) - unformatCLP(a.ot));
+        
+        // Si no hay ninguna OT cargada, asegurar que se muestre una nueva OT
+        if (!currentOtId) {
+            updateOtDisplay(getNewOtNumber());
+        } else {
+            // Si la OT actual fue eliminada o modificada, recargar
+            if (!workOrders.find(o => o.ot === currentOtId)) {
+                updateOtDisplay(getNewOtNumber());
+            }
+        }
+        
+        // Volver a renderizar la lista del modal
+        renderOrdersList(workOrders);
+        console.log(`Firestore: ${workOrders.length} órdenes sincronizadas.`);
+    }, (error) => {
+        console.error("Error al escuchar Firestore:", error);
+        showMessage("Error de conexión con la base de datos.", 'danger', 0);
+    });
 }
 
-// Limpia el formulario y prepara para una nueva OT
-async function clearForm() {
-  document.getElementById('otForm').reset();
-  const newOtNumber = await getNewOtNumber();
-  document.getElementById('otNumber').value = String(newOtNumber);
-  currentLoadedOt = null;
-  calculateTotal(); // Inicializa los montos a 0 formateados
-  document.getElementById('fechaRecepcionInput').valueAsDate = new Date(); // Establecer fecha actual
+// Guarda o actualiza una orden en Firestore
+async function saveOrder(formData) {
+    if (!db || !userId) {
+        showMessage("Error: Sesión no lista para guardar.", 'danger');
+        return;
+    }
+
+    const otToSave = formData.ot; // El OT actual es el ID del documento
+
+    try {
+        // Obtenemos la referencia al documento
+        const docRef = doc(getOrdersCollectionRef(), otToSave);
+        
+        // Guardar los datos en el documento con el ID 'otToSave'
+        await setDoc(docRef, formData);
+
+        showMessage(`Orden de Trabajo N° ${otToSave} guardada exitosamente!`, 'success');
+        
+        // Forzar la actualización del display para el siguiente número de OT si es una OT nueva
+        if (currentOtId !== otToSave) {
+            currentOtId = otToSave;
+            // Asegurarse de que el input de OT refleje el ID guardado
+            document.getElementById('otNumber').value = otToSave;
+        }
+
+    } catch (error) {
+        console.error("Error al guardar en Firestore:", error);
+        showMessage("Error al guardar la orden: " + error.message, 'danger', 8000);
+    }
 }
 
-// ------------------------------------
-// MANEJO DE CORRELATIVO
-// ------------------------------------
+// Carga una orden de la caché local sincronizada
+function loadOrder(otId) {
+    const order = workOrders.find(o => o.ot === otId);
+    if (!order) {
+        showMessage(`Error: Orden N° ${otId} no encontrada en la caché local.`, 'danger');
+        return false;
+    }
+    
+    // Limpiar formulario y cargar datos
+    resetForm();
+    currentOtId = otId;
+    document.getElementById('otNumber').value = otId;
+    
+    // Cargar campos principales
+    const form = document.getElementById('otForm');
+    Object.keys(order).forEach(key => {
+        const input = form.querySelector(`[name="${key}"]`);
+        if (input && key !== 'items') {
+            input.value = order[key];
+        }
+    });
 
-// Actualiza la visualización del N° OT
-function updateOtDisplay() {
-  const otInput = document.getElementById('otNumber');
-  // Si no hay una OT cargada, muestra el correlativo siguiente
-  if (!currentLoadedOt) {
-    otInput.value = lastOtCorrelative ? String(lastOtCorrelative + 1) : "1";
-  } else {
-    // Si hay una OT cargada, mantiene su valor
-    otInput.value = currentLoadedOt;
-  }
+    // Cargar items (requiere reconstruir el HTML)
+    document.getElementById('itemsContainer').innerHTML = '';
+    if (order.items && Array.isArray(order.items)) {
+        order.items.forEach(item => addItemRow(item));
+    }
+    
+    calculateTotals();
+    showMessage(`Orden N° ${otId} cargada.`, 'primary');
+    document.getElementById('modal').classList.add('hidden');
+    return true;
 }
 
-// ====================================================================
-// MANEJO DEL MODAL Y LISTA DE ÓRDENES
-// ====================================================================
+// Elimina una orden de Firestore
+async function deleteOrder(otId) {
+    const isConfirmed = window.confirm(`¿Estás seguro de que quieres eliminar la Orden N° ${otId}? Esta acción es permanente.`);
+
+    if (!isConfirmed) return;
+
+    try {
+        const docRef = doc(getOrdersCollectionRef(), otId);
+        await deleteDoc(docRef);
+
+        showMessage(`Orden N° ${otId} eliminada correctamente.`, 'danger');
+        
+        // Si la orden eliminada era la cargada, iniciar una nueva
+        if (currentOtId === otId) {
+            newOt();
+        }
+
+    } catch (error) {
+        console.error("Error al eliminar en Firestore:", error);
+        showMessage("Error al eliminar la orden: " + error.message, 'danger', 8000);
+    }
+}
+
+// ====================================================================\
+// OT MANAGEMENT & UI
+// ====================================================================\
+
+// Calcula el siguiente número de OT
+function getNewOtNumber() {
+    const maxOt = workOrders.reduce((max, order) => {
+        const otNum = unformatCLP(order.ot);
+        return otNum > max ? otNum : max;
+    }, 0);
+    // Retorna el máximo + 1 como string, forzando 4 dígitos si es necesario
+    return String(maxOt + 1).padStart(4, '0');
+}
+
+// Actualiza el display del N° OT
+function updateOtDisplay(otId) {
+    document.getElementById('otNumber').value = otId;
+    currentOtId = otId;
+}
+
+// Inicia una nueva OT
+function newOt() {
+    resetForm();
+    updateOtDisplay(getNewOtNumber());
+    showMessage("Formulario limpiado. Nueva OT lista.", 'primary');
+}
+
+// Resetea el formulario
+function resetForm() {
+    document.getElementById('otForm').reset();
+    document.getElementById('itemsContainer').innerHTML = '';
+    addItemRow(); // Añadir un item por defecto
+    calculateTotals();
+}
+
+// ====================================================================\
+// ITEM MANAGEMENT (Repuestos/Servicios)
+// ====================================================================\
+
+// Crea y añade una fila de item al formulario
+function addItemRow(data = {}) {
+    const container = document.getElementById('itemsContainer');
+    const index = container.children.length;
+
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    row.innerHTML = `
+        <input name="item_desc_${index}" placeholder="Descripción (Repuesto/Servicio)" value="${data.desc || ''}" class="desc-input" required>
+        <input name="item_qty_${index}" placeholder="Qty" type="number" inputmode="numeric" value="${data.qty || '1'}" min="1" required class="qty-input">
+        <input name="item_price_${index}" placeholder="Precio Unitario" type="text" inputmode="numeric" value="${formatCLP(data.price || 0)}" required class="price-input">
+        <span class="total-item">Total: $${formatCLP(data.total || (data.qty || 1) * unformatCLP(data.price || 0))}</span>
+        <button type="button" class="delete-item-btn"><i data-lucide="x"></i></button>
+    `;
+    
+    // Inicializar iconos de lucide
+    lucide.createIcons();
+
+    // Event listeners para la fila
+    const priceInput = row.querySelector(`.price-input`);
+    const qtyInput = row.querySelector(`.qty-input`);
+    const deleteBtn = row.querySelector('.delete-item-btn');
+
+    priceInput.addEventListener('input', (e) => {
+        handleFormatOnInput(e);
+        calculateTotals();
+    });
+    qtyInput.addEventListener('input', calculateTotals);
+    deleteBtn.addEventListener('click', () => {
+        if (container.children.length > 1) {
+            row.remove();
+            calculateTotals();
+        } else {
+            showMessage("Debe haber al menos un item.", 'primary');
+        }
+    });
+
+    container.appendChild(row);
+    calculateTotals(); // Recalcular al añadir
+}
+
+// Calcula Subtotal, IVA y Total
+function calculateTotals() {
+    const container = document.getElementById('itemsContainer');
+    let subtotal = 0;
+    const itemRows = Array.from(container.querySelectorAll('.item-row'));
+
+    itemRows.forEach(row => {
+        const qty = parseInt(row.querySelector('.qty-input').value) || 0;
+        const price = unformatCLP(row.querySelector('.price-input').value);
+        const itemTotal = qty * price;
+        
+        row.querySelector('.total-item').textContent = `Total: $${formatCLP(itemTotal)}`;
+        subtotal += itemTotal;
+    });
+
+    const iva = Math.round(subtotal * 0.19);
+    const total = subtotal + iva;
+
+    document.getElementById('subtotalInput').value = formatCLP(subtotal);
+    document.getElementById('ivaInput').value = formatCLP(iva);
+    document.getElementById('totalInput').value = formatCLP(total);
+}
+
+// ====================================================================\
+// FORM SUBMISSION & DATA EXTRACTION
+// ====================================================================\
+
+function extractFormData() {
+    const form = document.getElementById('otForm');
+    const formData = {};
+
+    // 1. Campos del formulario
+    Array.from(form.elements).forEach(element => {
+        if (element.name && element.name.startsWith('item_') === false) {
+            if (element.id && element.id.endsWith('Input')) {
+                // Para campos con formato CLP (Total, Abono, etc.), guardamos el valor numérico
+                formData[element.name] = unformatCLP(element.value);
+            } else {
+                formData[element.name] = element.value.trim();
+            }
+        }
+    });
+
+    // 2. Número de OT
+    formData.ot = document.getElementById('otNumber').value;
+
+    // 3. Items
+    formData.items = [];
+    const itemRows = Array.from(document.getElementById('itemsContainer').querySelectorAll('.item-row'));
+    
+    itemRows.forEach((row, index) => {
+        const descInput = row.querySelector(`.desc-input`);
+        const qtyInput = row.querySelector(`.qty-input`);
+        const priceInput = row.querySelector(`.price-input`);
+        
+        const price = unformatCLP(priceInput.value);
+        const qty = parseInt(qtyInput.value) || 0;
+        
+        if (descInput.value.trim()) {
+            formData.items.push({
+                desc: descInput.value.trim(),
+                qty: qty,
+                price: price, // Valor numérico
+                total: qty * price // Valor numérico
+            });
+        }
+    });
+    
+    // 4. Metadata
+    formData.date = new Date().toISOString().split('T')[0];
+    formData.timestamp = Date.now();
+    formData.userId = userId;
+
+    return formData;
+}
+
+// Handler principal de guardado
+function handleSave(e) {
+    e.preventDefault();
+    const form = document.getElementById('otForm');
+    
+    // Validación de campos mínimos (nombre cliente y problema)
+    if (!form.nombreCliente.value.trim() || !form.problemaReportado.value.trim()) {
+        showMessage("Por favor, complete el Nombre del Cliente y el Problema Reportado.", 'danger');
+        return;
+    }
+    
+    const formData = extractFormData();
+    saveOrder(formData);
+}
+
+// ====================================================================\
+// MODAL & LIST RENDERING
+// ====================================================================\
 
 function renderOrdersList(orders) {
-  const ordersList = document.getElementById('ordersList');
-  ordersList.innerHTML = '';
-  MODAL_SPINNER.style.display = 'none';
+    const list = document.getElementById('ordersList');
+    const searchValue = document.getElementById('searchOt').value.toLowerCase();
+    list.innerHTML = '';
 
-  if (orders.length === 0) {
-    ordersList.innerHTML = '<p class="text-center">No hay órdenes guardadas en la base de datos.</p>';
-    return;
-  }
+    const filteredOrders = orders.filter(order => 
+        order.ot.includes(searchValue) || 
+        (order.nombreCliente && order.nombreCliente.toLowerCase().includes(searchValue))
+    );
 
-  // Se asume que 'orders' ya viene ordenado descendentemente por OT
-  orders.forEach(order => {
-    const otId = order.id;
-    const orderRow = document.createElement('div');
-    orderRow.className = 'order-row';
-    orderRow.innerHTML = `
-      <div>
-        <strong>OT N° ${otId}</strong> - ${order.clienteNombre}
-        <br>
-        <small>Equipo: ${order.equipoMarca} ${order.equipoModelo || ''} | Estado: ${order.estadoServicio}</small>
-      </div>
-      <div class="order-actions">
-        <button data-ot="${otId}" data-action="load" class="small">Cargar</button>
-        <button data-ot="${otId}" data-action="delete" class="small danger-btn">Eliminar</button>
-      </div>
-    `;
-    ordersList.appendChild(orderRow);
-  });
-}
-
-function handleOrderAction(e) {
-  const button = e.target.closest('button');
-  if (!button) return;
-
-  const otId = button.getAttribute('data-ot');
-  const action = button.getAttribute('data-action');
-
-  if (action === 'load') {
-    // Buscar la orden en el array local
-    const orderToLoad = allOrders.find(o => o.id === otId);
-    if (orderToLoad) {
-      loadFormData(orderToLoad);
-      closeModal();
+    if (filteredOrders.length === 0) {
+        list.innerHTML = `<p class="text-center p-4">${searchValue ? 'No se encontraron resultados.' : 'No hay órdenes de trabajo guardadas.'}</p>`;
+        return;
     }
-  } else if (action === 'delete') {
-    // Usar la alerta personalizada en lugar de window.confirm
-    showCustomConfirm(`¿Está seguro que desea eliminar la OT N° ${otId}?`, async () => {
-      MODAL_SPINNER.style.display = 'block'; // Mostrar spinner mientras se elimina
-      await deleteOrder(otId);
-      // onSnapshot se encargará de actualizar la lista automáticamente
-      MODAL_SPINNER.style.display = 'none';
+
+    filteredOrders.forEach(order => {
+        const row = document.createElement('div');
+        row.className = 'order-row';
+        
+        // El OT es el ID del documento, siempre es un string
+        const otId = String(order.ot); 
+
+        row.innerHTML = `
+            <div class="order-info">
+                <b>OT N° ${otId}</b> - ${order.nombreCliente || 'Cliente sin nombre'}
+                <small>${order.date || ''}</small>
+            </div>
+            <div class="order-actions">
+                <button data-action="load" data-ot-id="${otId}">Cargar</button>
+                <button data-action="print" data-ot-id="${otId}">Imprimir</button>
+                <button data-action="delete" data-ot-id="${otId}" class="small danger">Eliminar</button>
+            </div>
+        `;
+        
+        row.querySelector('[data-action="load"]').addEventListener('click', () => loadOrder(otId));
+        row.querySelector('[data-action="print"]').addEventListener('click', () => printOrder(order));
+        row.querySelector('[data-action="delete"]').addEventListener('click', () => deleteOrder(otId));
+
+        list.appendChild(row);
     });
-  }
 }
 
 function openModal() {
-  document.getElementById('modal').classList.remove('hidden');
-  document.getElementById('modal').setAttribute('aria-hidden', 'false');
-  MODAL_SPINNER.style.display = 'block'; // Mostrar spinner al abrir
-  // Llama a renderOrdersList con la data actual. onSnapshot actualizará si hay cambios.
-  renderOrdersList(allOrders);
+    document.getElementById('modal').classList.remove('hidden');
+    // Renderizar la lista al abrir, ya que workOrders está sincronizado
+    renderOrdersList(workOrders); 
 }
 
 function closeModal() {
-  document.getElementById('modal').classList.add('hidden');
-  document.getElementById('modal').setAttribute('aria-hidden', 'true');
+    document.getElementById('modal').classList.add('hidden');
 }
 
-// ------------------------------------
-// BUSCADOR EN EL MODAL
-// ------------------------------------
-function handleSearch(e) {
-  const query = e.target.value.toLowerCase();
-  const filteredOrders = allOrders.filter(order =>
-    order.id.includes(query) ||
-    order.clienteNombre.toLowerCase().includes(query) ||
-    order.equipoMarca.toLowerCase().includes(query)
-  );
-  renderOrdersList(filteredOrders);
+// ====================================================================\
+// EXCEL EXPORT
+// ====================================================================\
+
+function exportToExcel() {
+    if (workOrders.length === 0) {
+        showMessage("No hay órdenes para exportar.", 'primary');
+        return;
+    }
+
+    // 1. Aplanar los datos para que cada item de cada OT sea una fila separada (formato típico de Excel)
+    const flatData = [];
+    
+    workOrders.forEach(order => {
+        const base = {
+            'N° OT': order.ot,
+            'Fecha': order.date,
+            'Nombre Cliente': order.nombreCliente,
+            'Rut/ID': order.rutId,
+            'Teléfono': order.telefono,
+            'Email': order.email,
+            'Tipo Equipo': order.tipoEquipo,
+            'Marca/Modelo': order.marcaModelo,
+            'N° Serie': order.nroSerie,
+            'Problema Reportado': order.problemaReportado,
+            'Subtotal': order.subtotal,
+            'IVA': order.iva,
+            'TOTAL': order.total,
+            'Monto Abonado': order.montoAbonado,
+        };
+
+        if (order.items && order.items.length > 0) {
+            order.items.forEach(item => {
+                flatData.push({
+                    ...base,
+                    'Item Descripción': item.desc,
+                    'Item Cantidad': item.qty,
+                    'Item Precio Unitario': item.price,
+                    'Item Total': item.total,
+                });
+            });
+        } else {
+             // Incluir órdenes sin items
+            flatData.push({
+                ...base,
+                'Item Descripción': 'N/A',
+                'Item Cantidad': 0,
+                'Item Precio Unitario': 0,
+                'Item Total': 0,
+            });
+        }
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(flatData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "OrdenesDeTrabajo");
+
+    XLSX.writeFile(workbook, "Fueltek_OT_Export.xlsx");
+    showMessage("Datos exportados a Excel.", 'success');
 }
 
+// ====================================================================\
+// PRINTING
+// ====================================================================\
 
-// ====================================================================
-// UTILIDADES DE ALERTA/CONFIRMACIÓN (Reemplazo de alert/confirm)
-// ====================================================================
+function printOrder(order) {
+    const printArea = document.getElementById('printArea');
+    
+    const formattedOrder = { ...order };
+    ['subtotal', 'iva', 'total', 'montoAbonado'].forEach(key => {
+        formattedOrder[key] = formatCLP(order[key]);
+    });
+    
+    if (formattedOrder.items) {
+        formattedOrder.items = formattedOrder.items.map(item => ({
+            ...item,
+            price: formatCLP(item.price),
+            total: formatCLP(item.total)
+        }));
+    }
 
-function showCustomAlert(message) {
-  // Simple implementación temporal: usar console.log o un div de feedback temporal en la UI
-  console.log(`[ALERTA]: ${message}`);
-  DB_MESSAGE.textContent = message;
-  setTimeout(() => DB_MESSAGE.textContent = `Conectado y sincronizado. ${allOrders.length} órdenes.`, 3000);
+    // Construir el HTML de impresión (similar al formulario pero con la data de la orden)
+    printArea.innerHTML = `
+        <!-- Contenido de impresión basado en la orden cargada/seleccionada -->
+        <header>
+            <img src="logo-fueltek.png" alt="Fueltek Logo" class="logo" />
+            <div class="header-info">
+                <h1>FUELTEK</h1>
+                <p>Servicio Técnico Multimarca</p>
+                <small>Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</small>
+            </div>
+        </header>
+
+        <main>
+            <div class="ot-bar">
+                <div class="left">
+                    <label class="ot-label">N° OT:</label>
+                    <span id="printOtNumber">${formattedOrder.ot}</span>
+                </div>
+                <div class="right">
+                    <small>Fecha: ${formattedOrder.date || new Date().toISOString().split('T')[0]}</small>
+                </div>
+            </div>
+
+            <fieldset class="grid-2-col">
+                <legend>Datos del Cliente</legend>
+                <label>Nombre Cliente: <span>${formattedOrder.nombreCliente || '-'}</span></label>
+                <label>Rut/ID: <span>${formattedOrder.rutId || '-'}</span></label>
+                <label>Teléfono: <span>${formattedOrder.telefono || '-'}</span></label>
+                <label>Email: <span>${formattedOrder.email || '-'}</span></label>
+            </fieldset>
+
+            <fieldset class="grid-2-col">
+                <legend>Datos del Equipo</legend>
+                <label>Tipo Equipo: <span>${formattedOrder.tipoEquipo || '-'}</span></label>
+                <label>Marca/Modelo: <span>${formattedOrder.marcaModelo || '-'}</span></label>
+                <label>Año: <span>${formattedOrder.año || '-'}</span></label>
+                <label>N° Serie/VIN: <span>${formattedOrder.nroSerie || '-'}</span></label>
+            </fieldset>
+
+            <fieldset>
+                <legend>Problema Reportado / Trabajos a Realizar</legend>
+                <label>Descripción: <p>${formattedOrder.problemaReportado || '-'}</p></label>
+            </fieldset>
+
+            <fieldset class="print-items-table">
+                <legend>Detalle de Repuestos, Servicios y Valores</legend>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Descripción</th>
+                            <th>Qty</th>
+                            <th class="right">P. Unitario</th>
+                            <th class="right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${formattedOrder.items && formattedOrder.items.length > 0 ? formattedOrder.items.map(item => `
+                            <tr>
+                                <td>${item.desc}</td>
+                                <td>${item.qty}</td>
+                                <td class="right">$${item.price}</td>
+                                <td class="right">$${item.total}</td>
+                            </tr>
+                        `).join('') : '<tr><td colspan="4">Sin detalles.</td></tr>'}
+                    </tbody>
+                </table>
+
+                <div class="total-bar">
+                    <label>Subtotal: <span>$${formattedOrder.subtotal}</span></label>
+                    <label>IVA (19%): <span>$${formattedOrder.iva}</span></label>
+                    <label>TOTAL: <span>$${formattedOrder.total}</span></label>
+                </div>
+
+                <div class="abono-bar">
+                    <label>Monto Abonado: <span>$${formattedOrder.montoAbonado}</span></label>
+                </div>
+            </fieldset>
+
+            <div class="firmas">
+                <div class="firma-box"><label>Firma Taller</label><span class="signature-line"></span></div>
+                <div class="firma-box"><label>Firma Cliente</label><span class="signature-line"></span></div>
+            </div>
+
+            <section class="notas">
+                <h4>Notas importantes</h4>
+                <ul>
+                    <li>Toda herramienta no retirada en 30 días podrá generar cobro por almacenamiento.</li>
+                    <li>FuelTek no se responsabiliza por accesorios no declarados al momento de la recepción.</li>
+                    <li>El cliente declara estar informado sobre los términos del servicio y autoriza la revisión del equipo.</li>
+                </ul>
+            </section>
+        </main>
+        <footer>
+            <p>© 2025 FUELTEK</p>
+        </footer>
+    `;
+
+    window.print();
 }
 
-function showCustomConfirm(message, callback) {
-  // Reemplazar window.confirm por un modal o una lógica de UI
-  if (window.confirm(message)) {
-      callback();
-  }
-}
-
-// ====================================================================
-// EXPORTACIÓN A JSON (Simplificado)
-// ====================================================================
-
-function exportOrdersToJson() {
-  if (allOrders.length === 0) {
-    showCustomAlert("No hay órdenes para exportar.");
-    return;
-  }
-  
-  const json = JSON.stringify(allOrders.map(order => ({ ...order, id: undefined })), null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `fueltek_ordenes_exportadas_${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showCustomAlert(`Exportadas ${allOrders.length} órdenes a JSON.`);
-}
-
-// ====================================================================
-// INICIALIZACIÓN Y EVENT LISTENERS
-// ====================================================================
+// ====================================================================\
+// EVENT LISTENERS
+// ====================================================================\
 
 function setupEventListeners() {
-  const otForm = document.getElementById('otForm');
-  const clpInputs = document.querySelectorAll('.clp-input');
+    // Buttons
+    document.getElementById('saveOtBtn').addEventListener('click', handleSave);
+    document.getElementById('newOtBtn').addEventListener('click', newOt);
+    document.getElementById('addItemBtn').addEventListener('click', () => addItemRow());
+    document.getElementById('openModalBtn').addEventListener('click', openModal);
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
+    document.getElementById('searchOt').addEventListener('input', () => renderOrdersList(workOrders));
+    
+    // Print Button (Imprime la OT actualmente cargada)
+    document.getElementById('printOtBtn').addEventListener('click', () => {
+        if (!currentOtId) {
+            showMessage("Cargue o guarde una OT primero para poder imprimir.", 'primary');
+            return;
+        }
+        const currentOrder = workOrders.find(o => o.ot === currentOtId);
+        if (currentOrder) {
+            printOrder(currentOrder);
+        } else {
+            showMessage("No se encontró la OT cargada para imprimir.", 'danger');
+        }
+    });
 
-  // Listeners para formato CLP
-  clpInputs.forEach(input => {
-    input.addEventListener('input', handleFormatOnInput);
-    input.addEventListener('focus', (e) => e.target.select());
-    // Inicializar el formato al cargar (si tienen valor por defecto, como '0')
-    if (input.value) input.value = formatCLP(unformatCLP(input.value));
-  });
+    // Mobile Menu
+    document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+        const menu = document.querySelector('.ot-bar .right');
+        menu.classList.toggle('mobile-visible');
+        document.getElementById('mobileMenuBtn').querySelector('i').setAttribute('data-lucide', menu.classList.contains('mobile-visible') ? 'x' : 'menu');
+        lucide.createIcons();
+    });
 
-  // Listener principal de Guardar OT
-  document.getElementById('saveBtn').addEventListener('click', async (e) => {
-    e.preventDefault();
-    if (otForm.checkValidity()) {
-      const otNumber = document.getElementById('otNumber').value;
-      const orderData = getFormData();
-      await saveOrder(orderData, otNumber);
-    } else {
-      otForm.reportValidity(); // Mostrar errores de validación nativos
-    }
-  });
+    // Calculate totals on price/qty input (for initial rows and updates)
+    document.getElementById('otForm').addEventListener('input', (e) => {
+        if (e.target.classList.contains('price-input')) {
+            handleFormatOnInput(e);
+            calculateTotals();
+        } else if (e.target.classList.contains('qty-input')) {
+            calculateTotals();
+        }
+    });
+    
+    // Formato de moneda para monto abonado
+    document.getElementById('montoAbonadoInput').addEventListener('input', handleFormatOnInput);
 
-  // Otros botones
-  document.getElementById('newOtBtn').addEventListener('click', clearForm);
-  document.getElementById('clearBtn').addEventListener('click', clearForm);
-  document.getElementById('viewOrdersBtn').addEventListener('click', openModal);
-  document.getElementById('closeModal').addEventListener('click', closeModal);
-  document.getElementById('ordersList').addEventListener('click', handleOrderAction);
-  document.getElementById('searchOt').addEventListener('input', handleSearch);
-  document.getElementById('exportBtn').addEventListener('click', exportOrdersToJson);
-  
-  // Imprimir (La función printOrder se deja simplificada)
-  document.getElementById('printBtn').addEventListener('click', printOrder);
-
-  // Inicializar el formulario con la fecha actual y el primer OT
-  document.getElementById('fechaRecepcionInput').valueAsDate = new Date();
-  
-  // Configurar el comportamiento de 'Enter' en el formulario (evita submit)
-  otForm.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-    }
-  });
+    // Configuración inicial del formulario
+    resetForm();
 }
 
-// ------------------------------------
-// LÓGICA DE IMPRESIÓN (Simplificada/Reusada)
-// ------------------------------------
-function printOrder() {
-  const otNumber = document.getElementById('otNumber').value;
-  const form = document.getElementById('otForm');
-  const printArea = document.getElementById('printArea');
-  const formClone = form.cloneNode(true);
 
-  // Transferir valores de inputs a elementos de texto estáticos para impresión
-  const inputs = formClone.querySelectorAll('input, select, textarea');
-  inputs.forEach(input => {
-    const value = input.value;
-    const displayElement = document.createElement('span');
-    displayElement.textContent = value;
-    displayElement.className = 'print-value';
-    input.parentNode.replaceChild(displayElement, input);
-  });
-
-  // Clonar y preparar la estructura de impresión
-  const printContent = `
-    <header class="print-header">
-      <img src="logo-fueltek.png" alt="Fueltek Logo" class="logo" />
-      <div class="header-info">
-        <h1>FUELTEK</h1>
-        <p>Servicio Técnico Multimarca</p>
-        <small>Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</small>
-      </div>
-    </header>
-    <div class="ot-bar print-ot-bar">
-      <label>N° OT:</label>
-      <span class="ot-number-print">${otNumber}</span>
-    </div>
-    ${formClone.innerHTML}
-  `;
-
-  printArea.innerHTML = printContent;
-  
-  // Estilos de impresión (CSS) se aplican automáticamente con el @media print
-  window.print();
-}
-
-// Función de inicio
-window.onload = async function() {
-  await setupFirebase(); // Inicializa Firebase y autentica
-  startAuthListener();    // Espera a que la autenticación finalice e inicia Firestore Listeners
-  setupEventListeners();  // Configura todos los event listeners
-  lucide.createIcons();   // Inicializa los íconos de Lucide
-};
+// Iniciar la lógica de la aplicación una vez que Firebase esté listo
+document.addEventListener('DOMContentLoaded', initializeAppLogic);
