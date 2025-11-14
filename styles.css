@@ -58,27 +58,35 @@ main{padding:25px}
   position: relative; 
 }
 .ot-bar .left{display:flex;align-items:center;gap:12px}
-.ot-label{font-weight:700;color:var(--dark);font-size:1.1rem}
-#otNumber{
-  width:140px;
-  text-align:center;
-  font-weight:800;
-  font-size:1.3rem;
-  border:3px solid var(--primary);
-  border-radius:8px;
-  padding:8px 10px;
-  background:var(--bg);
-  color:var(--primary);
-}
 
-/* --- CONTROLES: TEXTO+ICONO (ESCRITORIO) --- */
+/* --- REFINAMIENTO CAMPO OT --- */
+.ot-label{
+    font-weight:600; /* Menos énfasis */
+    color:var(--dark);
+    font-size:1rem; /* Más pequeño */
+}
+#otNumber{
+  width:120px; /* Más estrecho */
+  text-align:center;
+  font-weight:700; /* Menos grueso */
+  font-size:1.1rem; /* Más pequeño */
+  border:1px solid var(--border); /* Borde fino y profesional */
+  border-radius:6px; /* Más sutil */
+  padding:6px 8px; /* Menos padding */
+  background:#f0f7ff; /* Fondo ligeramente azul para destacar suavemente */
+  color:var(--primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05) inset; /* Sombra interior sutil */
+}
+/* --- FIN REFINAMIENTO CAMPO OT --- */
+
+/* --- CONTROLES: MEJORA DE ESTÉTICA Y TAMAÑO (ESCRITORIO) --- */
 .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center} 
 .controls button, .import-label {
-  /* ESTILOS PARA ESCRITORIO (TEXTO + ICONO) */
-  height: 40px;
+  /* BOTONES MÁS PEQUEÑOS Y FINOS */
+  height: 35px; 
   width: auto; 
-  padding: 0 12px; 
-  border-radius: 8px;
+  padding: 0 10px; /* Menos padding horizontal */
+  border-radius: 6px; /* Bordes más sutiles */
   border: none;
   background: var(--primary);
   color: white;
@@ -87,14 +95,14 @@ main{padding:25px}
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-  gap: 6px; 
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Sombra más ligera */
+  gap: 5px; /* Menos espacio entre icono y texto */
   font-weight: 500;
   white-space: nowrap; 
 }
-.controls button:hover, .import-label:hover{background:#003a7a;transform:translateY(-1px)}
-.controls button i, .import-label i { width: 18px; height: 18px; } 
-.controls button span, .import-label span { font-size: 0.95rem; } 
+.controls button:hover, .import-label:hover{background:#003a7a;transform:translateY(-1px);box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);}
+.controls button i, .import-label i { width: 16px; height: 16px; } /* Íconos más pequeños */
+.controls button span, .import-label span { font-size: 0.9rem; } /* Texto más pequeño */
 
 /* Estilos de color específicos */
 #saveBtn { background: var(--success); }
@@ -200,8 +208,9 @@ textarea{min-height:140px;resize:vertical}
         margin-bottom: 10px;
     }
     .ot-bar .left { gap: 10px; }
-    .ot-label { font-size: 1rem; }
-    #otNumber { font-size: 1.1rem; width: 100px; }
+    /* El campo OT conserva el estilo profesional aplicado, solo se ajusta el tamaño */
+    #otNumber { font-size: 1rem; width: 90px; } 
+    .ot-label { font-size: 0.95rem; }
 
     /* Menú de hamburguesa y desplegable */
     #mobileMenuBtn { 
@@ -247,11 +256,13 @@ textarea{min-height:140px;resize:vertical}
         border-radius: 4px; 
         gap: 10px;
         white-space: nowrap;
+        font-size: 1rem; /* Restaurar un tamaño de fuente legible para el menú */
+        box-shadow: none; /* Remover sombra para que se vea como menú */
     }
 
     /* Hover simple para mantener el color y dar feedback */
     #mobileMenuDropdown button:hover, #mobileMenuDropdown .import-label:hover {
-        filter: brightness(1.2); /* Oscurece/Aclara el color base */
+        filter: brightness(1.2); /* Aclara el color base */
     }
 
 
