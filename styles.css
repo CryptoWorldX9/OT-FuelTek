@@ -72,7 +72,6 @@ main{padding:25px}
 }
 
 /* --- CONTROLES: ESTILO PILL CON NOMBRE PARA ESCRITORIO --- */
-.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .controls button, .import-label, #mobileMenuBtn{
   width:auto; /* Auto para ajustar al texto */
   height:40px;
@@ -266,6 +265,7 @@ textarea{min-height:140px;resize:vertical}
     /* Adaptar Firmas */
     .firmas { flex-direction: column; gap: 30px; margin: 20px 0; }
     .firma-box { width: 90%; max-width: none; margin: 0 auto; }
+    .firma-box input { width: 100%; max-width: none; }
 }
 
 /* El resto de estilos (modal, notas, footer, print) se mantienen */
