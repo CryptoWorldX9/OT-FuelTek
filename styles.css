@@ -99,7 +99,7 @@ main{padding:25px}
 #mobileMenuDropdown { display: flex; } /* Mostrar los controles en escritorio */
 
 
-/* --- FORM FIELDS RESPONSIVE --- */
+/* --- FORM FIELDS RESPONSIVE Y ANCHO COMPLETO PARA TEXTAREA --- */
 fieldset{border:none;padding:10px 0 15px 0;margin-bottom:25px}
 legend{
     color:var(--dark);
@@ -114,8 +114,9 @@ legend{
 .grid{display:grid;gap:20px}
 .grid-2col{grid-template-columns: 1fr 1fr}
 
-/* Se repiten los estilos de inputs para claridad */
+/* Importante: Establecer 100% de ancho a todos los inputs y textareas */
 .stack input, .stack select, textarea{
+    width: 100%; /* <<--- ANCHO COMPLETO APLICADO A TEXTAREA Y OTROS INPUTS */
     padding:12px;
     border-radius:8px;
     border:1px solid #c9d0d6;
@@ -187,7 +188,7 @@ legend{
     .ot-label { font-size: 1rem; }
     #otNumber { font-size: 1.1rem; width: 100px; }
 
-    /* Menú de hamburguesa y desplegable */
+    /* Menú de hamburguesa y desplegable (MEJORADO) */
     #mobileMenuBtn { display: flex; position: absolute; right: 15px; top: 12px; z-index: 10; }
     #mobileMenuDropdown {
         display: none; /* Oculto por defecto en móvil */
@@ -198,28 +199,47 @@ legend{
         flex-direction: column;
         background: var(--dark); /* Fondo oscuro para el menú */
         border-radius: 8px;
-        padding: 10px;
+        padding: 8px; /* Padding ajustado */
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         z-index: 5;
-        gap: 5px;
+        gap: 5px; /* Espaciado entre botones */
     }
     #mobileMenuDropdown.active {
         display: flex; /* Muestra el menú al activarse */
     }
-    /* Estilos para los botones dentro del menú móvil */
+    /* Estilos para los botones con nombre/ícono (NUEVOS ESTILOS) */
     #mobileMenuDropdown button, #mobileMenuDropdown .import-label {
         width: 100%;
         height: 40px;
+        display: flex; /* Importante para alinear ícono y texto */
+        align-items: center;
         justify-content: flex-start;
-        padding-left: 15px;
+        padding: 0 15px; /* Más ancho para el texto */
         font-weight: 500;
         color: white;
         background: #3e5367;
+        border-radius: 4px; /* Aspecto más cuadrado */
+        transition: background 0.2s;
     }
-    #mobileMenuDropdown button:hover { background: #576574; }
+    #mobileMenuDropdown button:hover, #mobileMenuDropdown .import-label:hover { 
+        background: #576574; 
+    }
+    #mobileMenuDropdown button i, #mobileMenuDropdown .import-label i {
+        margin-right: 10px; /* Espacio entre ícono y texto */
+        flex-shrink: 0;
+    }
+    #mobileMenuDropdown button span, #mobileMenuDropdown .import-label span {
+        flex-grow: 1; /* El texto ocupa el espacio restante */
+        text-align: left;
+    }
     
-    /* Asegurar que el botón de Guardar/Actualizar no se vea afectado */
-    #mobileMenuDropdown #saveBtn { width: 100%; padding: 0 15px; }
+    /* Ajustes específicos para Guardar/Actualizar y Borrar DB */
+    #mobileMenuDropdown #saveBtn { width: 100%; background: var(--success); }
+    #mobileMenuDropdown #saveBtn:hover { background: #1e8449; }
+    #mobileMenuDropdown #clearBtn { background: var(--danger); }
+    #mobileMenuDropdown #clearBtn:hover { background: #a13023; }
+    #mobileMenuDropdown #resetFormBtn { background: #576574; }
+    #mobileMenuDropdown #resetFormBtn:hover { background: #465360; }
 
     /* Adaptar el Formulario */
     .grid-2col { grid-template-columns: 1fr; } /* Columna única */
