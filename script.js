@@ -262,8 +262,8 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("saveBtn").addEventListener("click", async (e) => {
     e.preventDefault();
     
-    // ANTES: if (!form.reportValidity()) return alert("Por favor, rellena todos los campos requeridos (*)");
-    // AHORA: Ya no es obligatorio rellenar campos.
+    // CORRECCIÓN: La validación de campo obligatorio se eliminó de aquí.
+    // El problema restante se solucionó cambiando el tipo de botón en index.html.
     
 
     const fd = new FormData(form);
