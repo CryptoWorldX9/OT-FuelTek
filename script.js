@@ -509,3 +509,6 @@ document.addEventListener("DOMContentLoaded", () => {
     reader.readAsText(file);
   });
 });
+document.getElementById("openMenu").onclick = () => {
+    document.getElementById("mobileMenu").classList.toggle("hidden");
+};
