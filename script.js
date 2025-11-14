@@ -1,28 +1,29 @@
-/* Fueltek v7.0 - script.js
-   - Mejoras de UI/UX y formato CLP (separador de miles con punto) EN TIEMPO REAL
-   - Limpieza de código y unificación del botón Limpiar Campos
+/* Fueltek v7.2 - script.js
+   - MEJORA: Lógica de Menú Móvil (hamburguesa).
+   - MEJORA: Cálculo de Saldo Pendiente en tiempo real.
+   - MEJORA: Mejor UX en el botón Guardar/Actualizar.
 */
 
-const DB_NAME = "fueltek_db_v7"; // Versión de DB actualizada
+const DB_NAME = "fueltek_db_v7";
 const DB_VERSION = 1;
 const STORE = "orders";
 const OT_LOCAL = "fueltek_last_ot_v7";
 
-let currentLoadedOt = null; // guarda el OT cargado para editar
+let currentLoadedOt = null;
 
 // ====================================================================
 // UTILIDADES DE FORMATO CLP
 // ====================================================================
 
-// Formatea un número (ej. 15000) a string con separador de miles (ej. 15.000)
+// Formatea un número a string con separador de miles (ej. 15.000)
 function formatCLP(num) {
   if (num === null || num === undefined) return "0";
-  const n = String(num).replace(/[^\d]/g, ''); // Limpia no dígitos
+  const n = String(num).replace(/[^\d]/g, '');
   if (n === "") return "";
   return new Intl.NumberFormat('es-CL').format(Number(n));
 }
 
-// Desformatea un string (ej. 15.000) a un número entero (ej. 15000)
+// Desformatea un string a un número entero (ej. 15000)
 function unformatCLP(str) {
   if (str === null || str === undefined) return 0;
   const cleaned = String(str).replace(/[^\d]/g, '');
@@ -33,11 +34,8 @@ function unformatCLP(str) {
 function handleFormatOnInput(e) {
   const input = e.target;
   const value = input.value;
-  // Desformatear, luego reformatear.
   const numericValue = unformatCLP(value);
   const formattedValue = formatCLP(numericValue);
-  
-  // Asignar el valor formateado
   input.value = formattedValue;
 }
 
@@ -98,7 +96,6 @@ function dbDeleteAll() {
 }
 
 function getLastOt() {
-  // El número inicial es 726 si no existe
   return parseInt(localStorage.getItem(OT_LOCAL) || "726", 10);
 }
 function setLastOt(n) { localStorage.setItem(OT_LOCAL, String(n)); }
@@ -107,6 +104,53 @@ function nextOtAndSave() {
   setLastOt(n);
   return n;
 }
+
+// ====================================================================
+// MANEJO DE SALDO Y ESTADO DE PAGO (RE-IMPLEMENTADO Y MEJORADO)
+// ====================================================================
+
+const resetSaveButton = () => {
+    document.getElementById("saveBtn").title = "Guardar nueva OT";
+    document.getElementById("saveBtn").innerHTML = '<i data-lucide="save"></i>';
+}
+
+function updateSaldo() {
+    const saldoInput = document.getElementById("saldoPendienteInput");
+    const labelSaldo = document.getElementById("labelSaldo");
+    const valorTrabajoInput = document.getElementById("valorTrabajoInput");
+    const montoAbonadoInput = document.getElementById("montoAbonadoInput");
+    const estadoPago = document.getElementById("estadoPago");
+    const labelAbono = document.getElementById("labelAbono");
+    
+    const valor = unformatCLP(valorTrabajoInput.value);
+    const abono = unformatCLP(montoAbonadoInput.value);
+    const estado = estadoPago.value;
+
+    let saldo = 0;
+    
+    // Lógica para mostrar/ocultar campos y calcular saldo
+    if (estado === "Abonado") {
+        saldo = valor - abono;
+        labelAbono.classList.remove("hidden");
+    } else if (estado === "Pagado") {
+        saldo = 0;
+        labelAbono.classList.add("hidden");
+        montoAbonadoInput.value = formatCLP(valor); // Llenar con el total si es Pagado
+    } else { // Pendiente
+        saldo = valor;
+        labelAbono.classList.add("hidden");
+        montoAbonadoInput.value = "";
+    }
+
+    if (estado === "Pagado" || saldo <= 0) {
+        labelSaldo.classList.add("hidden");
+        saldoInput.value = formatCLP(0);
+    } else {
+        saldoInput.value = formatCLP(saldo);
+        labelSaldo.classList.remove("hidden");
+    }
+}
+
 
 // ====================================================================
 // MANEJO DE EVENTOS DEL DOM
@@ -124,24 +168,57 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeModal = document.getElementById("closeModal");
   const ordersList = document.getElementById("ordersList");
   const searchOt = document.getElementById("searchOt");
+  
+  // Elementos del menú móvil
+  const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+  const mobileMenuDropdown = document.getElementById("mobileMenuDropdown");
 
-  const updateOtDisplay = () => (otInput.value = String(getLastOt() + 1));
+  const updateOtDisplay = () => {
+    otInput.value = String(getLastOt() + 1);
+    resetSaveButton();
+  }
   updateOtDisplay();
   
-  // Agregar listeners para formato de miles EN TIEMPO REAL
+  // Agregar listeners para formato de miles Y ACTUALIZACIÓN DE SALDO EN TIEMPO REAL
   [valorTrabajoInput, montoAbonadoInput].forEach(input => {
-    input.addEventListener("input", handleFormatOnInput);
-    // Aplicar formato al cargar la página o al perder foco si se copia/pega
-    input.addEventListener("blur", handleFormatOnInput);
+    input.addEventListener("input", e => {
+        handleFormatOnInput(e);
+        updateSaldo();
+    });
+    // Aplicar formato y actualizar saldo al perder foco si se copia/pega
+    input.addEventListener("blur", updateSaldo); 
   });
 
-  // Mostrar / ocultar campo Abonado
-  estadoPago.addEventListener("change", () => {
-    if (estadoPago.value === "Abonado") labelAbono.classList.remove("hidden");
-    else { labelAbono.classList.add("hidden"); montoAbonadoInput.value = ""; }
+  // Mostrar / ocultar campo Abonado y recalcular Saldo
+  estadoPago.addEventListener("change", updateSaldo);
+
+  // --- LÓGICA DEL MENÚ MÓVIL (NUEVO) ---
+  
+  // 1. Toggle mobile menu
+  mobileMenuBtn.addEventListener("click", () => {
+    mobileMenuDropdown.classList.toggle("active");
+    // Cambiar icono
+    const icon = mobileMenuBtn.querySelector('i');
+    const newIconName = mobileMenuDropdown.classList.contains('active') ? 'x' : 'menu';
+    icon.innerHTML = `<i data-lucide="${newIconName}"></i>`;
+    lucide.createIcons({ parent: mobileMenuBtn });
   });
 
-  // Reservar nuevo OT (no guarda aún)
+  // 2. Cerrar el menú después de hacer click en cualquier botón de acción
+  mobileMenuDropdown.querySelectorAll("button, .import-label").forEach(btn => {
+    btn.addEventListener("click", () => {
+        // Usa un pequeño timeout para que la acción se registre antes de cerrar
+        setTimeout(() => {
+            mobileMenuDropdown.classList.remove("active");
+            mobileMenuBtn.querySelector('i').innerHTML = `<i data-lucide="menu"></i>`;
+            lucide.createIcons({ parent: mobileMenuBtn });
+        }, 100);
+    });
+  });
+  // -------------------------------------
+
+
+  // Reservar nuevo OT
   document.getElementById("newOtBtn").addEventListener("click", () => {
     const reserved = nextOtAndSave();
     updateOtDisplay();
@@ -157,14 +234,15 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("Base de datos eliminada. Contador reiniciado a 727.");
   });
   
-  // Limpiar campos manualmente (botón Limpiar Campos integrado en la barra superior)
+  // Limpiar campos manualmente
   document.getElementById("resetFormBtn").addEventListener("click", () => {
     if (confirm("¿Seguro que deseas limpiar todos los campos del formulario?")) {
       form.reset();
       labelAbono.classList.add("hidden");
       currentLoadedOt = null;
-      updateOtDisplay(); // Restablece el número OT al siguiente correlativo
-      alert("Campos limpiados.");
+      updateOtDisplay(); // Restablece el número OT al siguiente correlativo y el botón
+      updateSaldo(); // Limpia el saldo
+      alert("Campos limpiados. Listo para una nueva OT.");
     }
   });
 
@@ -172,10 +250,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // Guardar o actualizar
   document.getElementById("saveBtn").addEventListener("click", async (e) => {
     e.preventDefault();
+    
+    // Validación básica de campos requeridos (añadidos en index.html)
+    if (!form.reportValidity()) return alert("Por favor, rellena todos los campos requeridos (*)");
+
+
     const fd = new FormData(form);
     const order = {};
     for (const [k, v] of fd.entries()) {
-      if (k === "accesorios") continue;
+      if (k === "accesorios" || k === "saldoPendiente") continue; // Ignorar saldoPendiente
       order[k] = v;
     }
     order.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
@@ -185,6 +268,12 @@ document.addEventListener("DOMContentLoaded", () => {
     order.valorTrabajo = unformatCLP(order.valorTrabajo); 
     order.estadoPago = order.estadoPago || "Pendiente";
     order.montoAbonado = unformatCLP(order.montoAbonado);
+    
+    // Asegurar que montoAbonado no sea mayor que valorTrabajo si no está pagado
+    if (order.montoAbonado > order.valorTrabajo && order.estadoPago !== "Pagado") {
+        return alert("Error: El monto abonado no puede ser mayor que el valor del trabajo.");
+    }
+
 
     let saveMessage = "guardada";
     let otToSave;
@@ -212,7 +301,8 @@ document.addEventListener("DOMContentLoaded", () => {
     form.reset();
     labelAbono.classList.add("hidden");
     currentLoadedOt = null;
-    updateOtDisplay();
+    updateOtDisplay(); // Restablece el número OT y el botón
+    updateSaldo(); // Limpia el saldo
   });
 
   // Modal - Ver OT
@@ -249,12 +339,12 @@ document.addEventListener("DOMContentLoaded", () => {
           <button class="small" data-ot="${o.ot}" data-action="delete" style="background:#b51b1b" title="Borrar"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
         </div>`;
       ordersList.appendChild(div);
-      lucide.createIcons(); // Vuelve a renderizar los íconos de Lucide en la lista modal
+      // Solo renderiza los íconos de la fila
+      lucide.createIcons({ parent: div }); 
     }
 
     ordersList.querySelectorAll("button").forEach(btn => {
       btn.addEventListener("click", async ev => {
-        // Usa closest para capturar el data-ot y data-action del botón, incluso si el clic es en el icono
         const targetBtn = ev.target.closest('button');
         const ot = targetBtn.dataset.ot;
         const action = targetBtn.dataset.action;
@@ -267,7 +357,16 @@ document.addEventListener("DOMContentLoaded", () => {
             const db = await openDB();
             const tx = db.transaction(STORE, "readwrite");
             tx.objectStore(STORE).delete(ot);
-            tx.oncomplete = () => { alert("OT eliminada"); renderOrdersList(); };
+            tx.oncomplete = () => { 
+                alert("OT eliminada"); 
+                renderOrdersList(); 
+                if (currentLoadedOt === ot) {
+                    currentLoadedOt = null;
+                    form.reset();
+                    updateOtDisplay();
+                    updateSaldo();
+                }
+            };
             tx.onerror = (e) => alert("Error al eliminar: " + e.target.error);
           }
         }
@@ -289,7 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Estado de pago
     estadoPago.value = o.estadoPago || "Pendiente";
-    if (estadoPago.value === "Abonado") labelAbono.classList.remove("hidden"); else labelAbono.classList.add("hidden");
+    updateSaldo(); // Llama a la función para mostrar/ocultar abono y calcular saldo
     
     // Checkboxes
     form.querySelectorAll("input[name='accesorios']").forEach(ch => ch.checked = false);
@@ -299,6 +398,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     
     otInput.value = o.ot;
+    // MEJORA UX: Actualizar el botón de guardar
+    document.getElementById("saveBtn").title = "Actualizar OT #" + o.ot;
+    document.getElementById("saveBtn").innerHTML = '<i data-lucide="refresh-cw"></i>';
+    lucide.createIcons();
+    
     alert("Orden OT #" + o.ot + " cargada. Si modificas algo y guardas, se actualizará esa misma OT.");
   }
 
@@ -307,13 +411,14 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     const fd = new FormData(form);
     const data = {};
-    for (const [k, v] of fd.entries()) if (k !== "accesorios") data[k] = v;
+    for (const [k, v] of fd.entries()) if (k !== "accesorios" && k !== "saldoPendiente") data[k] = v;
     data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
     data.ot = otInput.value || String(getLastOt() + 1);
     
     // Para impresión, usa el valor DESFORMATEADO para el cálculo pero FORMATEADO para la visualización
     data.valorTrabajoNum = unformatCLP(data.valorTrabajo);
     data.montoAbonadoNum = unformatCLP(data.montoAbonado);
+    data.estadoPago = data.estadoPago || "Pendiente"; // Asegurar que tenga estado
     
     buildPrintAndPrint(data);
   });
@@ -321,8 +426,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function buildPrintAndPrint(data) {
     const valorTrabajoF = formatCLP(data.valorTrabajoNum);
     const montoAbonadoF = formatCLP(data.montoAbonadoNum);
-    const saldo = data.valorTrabajoNum - data.montoAbonadoNum;
+    let saldo = data.valorTrabajoNum - data.montoAbonadoNum;
+    if (data.estadoPago === 'Pagado') saldo = 0;
     const saldoF = formatCLP(saldo > 0 ? saldo : 0);
+    const estadoColor = data.estadoPago === 'Pagado' ? '#27ae60' : (data.estadoPago === 'Abonado' ? '#f39c12' : '#c0392b');
 
     const html = `
       <div style="font-family:'Inter', sans-serif;color:#111;padding-bottom:15px;border-bottom:1px solid #ddd;">
@@ -334,13 +441,13 @@ document.addEventListener("DOMContentLoaded", () => {
             <div style="font-size:11px;margin-top:5px;opacity:0.8;">Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</div>
           </div>
           <div style="text-align:right;background:#004d99;color:white;padding:10px 15px;border-radius:8px;">
-            <div style="font-weight:800;font-size:22px;">N° OT: ${data.ot}</div>
+            <div style="font-weight:800;font-size:24px;">N° OT: ${data.ot}</div>
             <div style="font-size:10px;margin-top:5px;">Emitida: ${new Date().toLocaleDateString('es-CL')}</div>
           </div>
         </div>
         <hr style="border:none;border-top:2px solid #004d99;margin:15px 0 18px" />
         
-        <table style="width:100%;border-collapse:collapse;margin-bottom:15px;font-size:10pt;">
+        <table style="width:100%;border-collapse:collapse;margin-bottom:15px;font-size:10pt;table-layout: fixed;">
           <tr>
             <td style="width:50%;padding:8px 0;vertical-align:top;border-right:1px solid #eee;">
               <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">DATOS DEL CLIENTE</strong>
@@ -362,39 +469,39 @@ document.addEventListener("DOMContentLoaded", () => {
         </table>
 
         <div style="display:flex;gap:20px;margin-bottom:15px;border-top:1px solid #ddd;padding-top:15px;">
-            <div style="width:40%;">
+            <div style="width:40%;min-width:300px;">
                 <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">RESUMEN DE PAGO</strong>
                 <table style="width:100%;border-collapse:collapse;font-size:10pt;background:#f8f8f8;border-radius:6px;overflow:hidden;">
                     <tr><td style="padding:5px;border:1px solid #eee;">Valor del Trabajo:</td><td style="padding:5px;text-align:right;font-weight:700;">$${valorTrabajoF} CLP</td></tr>
-                    ${data.estadoPago === 'Abonado' ? `<tr><td style="padding:5px;border:1px solid #eee;">Monto Abonado:</td><td style="padding:5px;text-align:right;">$${montoAbonadoF} CLP</td></tr>` : ''}
-                    <tr><td style="padding:5px;border:1px solid #eee;">Estado de Pago:</td><td style="padding:5px;text-align:right;font-weight:700;color:${data.estadoPago === 'Pagado' ? '#27ae60' : (data.estadoPago === 'Abonado' ? '#f39c12' : '#c0392b')};">${data.estadoPago}</td></tr>
+                    ${data.estadoPago === 'Abonado' || data.estadoPago === 'Pagado' ? `<tr><td style="padding:5px;border:1px solid #eee;">Monto Abonado:</td><td style="padding:5px;text-align:right;">$${montoAbonadoF} CLP</td></tr>` : ''}
+                    <tr><td style="padding:5px;border:1px solid #eee;">Estado de Pago:</td><td style="padding:5px;text-align:right;font-weight:700;color:${estadoColor};">${data.estadoPago}</td></tr>
                     ${data.estadoPago !== 'Pagado' && saldo > 0 ? `<tr><td style="padding:5px;border:1px solid #eee;">SALDO PENDIENTE:</td><td style="padding:5px;text-align:right;font-weight:800;color:#c0392b;">$${saldoF} CLP</td></tr>` : ''}
                 </table>
             </div>
             <div style="flex:1;">
                 <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">REVISIÓN Y ACCESORIOS RECIBIDOS</strong>
-                <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                    ${(data.accesorios||[]).map(s=>`<span style='border:1px solid #ddd;background:#fff;padding:4px 8px;border-radius:4px;font-size:10px'>${s}</span>`).join('') || '<span style="color:#999;">Ningún accesorio o revisión marcada.</span>'}
+                <div style="display:flex;flex-wrap:wrap;gap:6px;border:1px solid #ddd;padding:8px;border-radius:6px;min-height:50px;">
+                    ${(data.accesorios||[]).map(s=>`<span style='border:1px solid #ddd;background:#fff;padding:4px 8px;border-radius:4px;font-size:10px'>${s}</span>`).join('') || '<span style="color:#999;font-style:italic;">Ningún accesorio o revisión marcada.</span>'}
                 </div>
             </div>
         </div>
 
         <div style="margin-top:15px;">
             <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">DIAGNÓSTICO INICIAL</strong>
-            <div style="border:1px solid #ddd;padding:10px;border-radius:6px;min-height:60px;background:#fcfcfc;">${data.diagnostico || "Sin diagnóstico."}</div>
+            <div style="border:1px solid #ddd;padding:10px;border-radius:6px;min-height:70px;background:#fcfcfc;">${data.diagnostico || "Sin diagnóstico."}</div>
         </div>
         <div style="margin-top:15px;">
             <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">TRABAJO REALIZADO / NOTAS DEL TÉCNICO</strong>
-            <div style="border:1px solid #ddd;padding:10px;border-radius:6px;min-height:60px;background:#fcfcfc;">${data.trabajo || "Trabajo Pendiente de Realizar / Sin notas."}</div>
+            <div style="border:1px solid #ddd;padding:10px;border-radius:6px;min-height:70px;background:#fcfcfc;">${data.trabajo || "Trabajo Pendiente de Realizar / Sin notas."}</div>
         </div>
         
         <div style="display:flex;gap:60px;margin-top:35px;padding-top:15px;border-top:1px solid #eee;">
           <div style="flex:1;text-align:center">
-            <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;"></div>
+            <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;">${data.firmaTaller || ""}</div>
             <div style="margin-top:8px;font-weight:600;color:#2c3e50;">Firma Taller</div>
           </div>
           <div style="flex:1;text-align:center">
-            <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;"></div>
+            <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;">${data.firmaCliente || ""}</div>
             <div style="margin-top:8px;font-weight:600;color:#2c3e50;">Firma Cliente</div>
           </div>
         </div>
@@ -419,7 +526,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const orders = await dbGetAll();
     if (orders.length === 0) return alert("No hay órdenes para exportar.");
     
-    // Simplificar los datos para la exportación
     const data = orders.map(o => ({
       'N° OT': o.ot,
       'Cliente': o.clienteNombre,
@@ -443,7 +549,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Órdenes de Trabajo");
-    XLSX.writeFile(wb, "Ordenes_Trabajo_Fueltek.xlsx");
+    XLSX.writeFile(wb, `Ordenes_Trabajo_Fueltek_${new Date().toISOString().slice(0, 10)}.xlsx`);
     alert("Exportación a Excel completada.");
   });
 
@@ -454,7 +560,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "fueltek_db_backup.json";
+    a.download = `fueltek_db_backup_${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -485,7 +591,6 @@ document.addEventListener("DOMContentLoaded", () => {
         let importedCount = 0;
         
         orders.forEach(order => {
-            // Asegurar que el OT sea string para el keyPath
             order.ot = String(order.ot);
             const request = store.put(order);
             request.onsuccess = () => importedCount++;
@@ -494,11 +599,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tx.oncomplete = () => {
             alert(`Importación finalizada. ${importedCount} órdenes procesadas.`);
-            // Opcional: actualizar el correlativo si hay un número OT más alto
             const maxOt = Math.max(...orders.map(o => Number(o.ot)), getLastOt());
             setLastOt(maxOt);
             updateOtDisplay();
-            e.target.value = null; // Limpiar el input file
+            e.target.value = null;
         };
         tx.onerror = (e) => alert("Error en la transacción de importación: " + e.target.error);
       } catch (error) {
@@ -509,6 +613,3 @@ document.addEventListener("DOMContentLoaded", () => {
     reader.readAsText(file);
   });
 });
-document.getElementById("openMenu").onclick = () => {
-    document.getElementById("mobileMenu").classList.toggle("hidden");
-};
