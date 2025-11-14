@@ -29,7 +29,7 @@
 
         <div class="controls">
           <button id="newOtBtn" title="Reservar nuevo OT"><i data-lucide="plus"></i></button>
-          <button id="saveBtn" title="Guardar OT"><i data-lucide="save"></i></button>
+          <button id="saveBtn" type="button" title="Guardar OT"><i data-lucide="save"></i></button> 
           <button id="viewBtn" title="Ver lista de OT"><i data-lucide="list"></i></button>
           <button id="resetFormBtn" title="Limpiar todos los campos"><i data-lucide="eraser"></i></button>
           <button id="exportBtn" title="Exportar Excel"><i data-lucide="download"></i></button>
@@ -125,7 +125,7 @@
         <fieldset>
           <legend>Pago</legend>
           <div class="grid-pay">
-            <label class="stack">Valor del trabajo (CLP)<input name="valorTrabajo" type="text" inputmode="numeric" pattern="[0-9]*" id="valorTrabajoInput" /></label>
+            <label class="stack">Valor del trabajo (CLP)<input name="valorTrabajo" type="text" inputmode="numeric" id="valorTrabajoInput" /></label>
             <label class="stack">Estado de Pago
               <select name="estadoPago" id="estadoPago">
                 <option value="Pendiente">Pendiente de Pago</option>
@@ -133,7 +133,7 @@
                 <option value="Abonado">Abonado</option>
               </select>
             </label>
-            <label class="stack hidden" id="labelAbono">Monto Abonado (CLP)<input name="montoAbonado" type="text" inputmode="numeric" pattern="[0-9]*" id="montoAbonadoInput" /></label>
+            <label class="stack hidden" id="labelAbono">Monto Abonado (CLP)<input name="montoAbonado" type="text" inputmode="numeric" id="montoAbonadoInput" /></label>
           </div>
         </fieldset>
 
