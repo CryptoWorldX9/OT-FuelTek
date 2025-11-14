@@ -1,7 +1,6 @@
 /* Fueltek v7.2 - script.js
-   - MEJORA: Lógica de Menú Móvil (hamburguesa).
-   - MEJORA: Cálculo de Saldo Pendiente en tiempo real.
-   - MEJORA: Mejor UX en el botón Guardar/Actualizar.
+   - Lógica de Menú Móvil (hamburguesa) - (SE MANTIENE)
+   - Cálculo de Saldo Pendiente en tiempo real - (SE MANTIENE)
 */
 
 const DB_NAME = "fueltek_db_v7";
@@ -106,12 +105,12 @@ function nextOtAndSave() {
 }
 
 // ====================================================================
-// MANEJO DE SALDO Y ESTADO DE PAGO (RE-IMPLEMENTADO Y MEJORADO)
+// MANEJO DE SALDO Y ESTADO DE PAGO
 // ====================================================================
 
 const resetSaveButton = () => {
-    document.getElementById("saveBtn").title = "Guardar nueva OT";
-    document.getElementById("saveBtn").innerHTML = '<i data-lucide="save"></i>';
+    document.getElementById("saveBtn").title = "Guardar/Actualizar OT";
+    document.getElementById("saveBtn").innerHTML = '<i data-lucide="save"></i><span>Guardar/Actualizar</span>';
 }
 
 function updateSaldo() {
@@ -192,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mostrar / ocultar campo Abonado y recalcular Saldo
   estadoPago.addEventListener("change", updateSaldo);
 
-  // --- LÓGICA DEL MENÚ MÓVIL (NUEVO) ---
+  // --- LÓGICA DEL MENÚ MÓVIL ---
   
   // 1. Toggle mobile menu
   mobileMenuBtn.addEventListener("click", () => {
@@ -200,6 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Cambiar icono
     const icon = mobileMenuBtn.querySelector('i');
     const newIconName = mobileMenuDropdown.classList.contains('active') ? 'x' : 'menu';
+    // Reemplazar solo el ícono dentro de <i>
     icon.innerHTML = `<i data-lucide="${newIconName}"></i>`;
     lucide.createIcons({ parent: mobileMenuBtn });
   });
@@ -210,6 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Usa un pequeño timeout para que la acción se registre antes de cerrar
         setTimeout(() => {
             mobileMenuDropdown.classList.remove("active");
+            // Revertir el ícono a 'menu' al cerrar
             mobileMenuBtn.querySelector('i').innerHTML = `<i data-lucide="menu"></i>`;
             lucide.createIcons({ parent: mobileMenuBtn });
         }, 100);
@@ -400,7 +401,7 @@ document.addEventListener("DOMContentLoaded", () => {
     otInput.value = o.ot;
     // MEJORA UX: Actualizar el botón de guardar
     document.getElementById("saveBtn").title = "Actualizar OT #" + o.ot;
-    document.getElementById("saveBtn").innerHTML = '<i data-lucide="refresh-cw"></i>';
+    document.getElementById("saveBtn").innerHTML = '<i data-lucide="refresh-cw"></i><span>Actualizar</span>';
     lucide.createIcons();
     
     alert("Orden OT #" + o.ot + " cargada. Si modificas algo y guardas, se actualizará esa misma OT.");
