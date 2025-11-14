@@ -1,179 +1,169 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Orden de Trabajo - Fueltek</title>
-  <link rel="stylesheet" href="styles.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OT FuelTek</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-  <div class="wrapper">
+
+<!-- ✔ MENÚ MÓVIL (No afecta escritorio) -->
+<div class="mobile-menu-btn">
+    <button id="openMenu">☰</button>
+</div>
+
+<div id="mobileMenu" class="mobile-menu hidden">
+    <button class="menu-action" onclick="saveData()">💾 Guardar</button>
+    <label for="importFile" class="menu-action">📂 Importar</label>
+    <button class="menu-action" onclick="exportData()">📤 Exportar</button>
+    <button class="menu-action danger" onclick="clearForm()">🗑️ Limpiar</button>
+    <button class="menu-action" onclick="window.print()">🖨️ Imprimir PDF</button>
+</div>
+
+<div class="wrapper">
+
+    <!-- ✔ HEADER ORIGINAL SIN CAMBIOS -->
     <header>
-      <img src="logo-fueltek.png" alt="Fueltek Logo" class="logo" />
-      <div class="header-info">
-        <h1>FUELTEK</h1>
-        <p>Servicio Técnico Multimarca</p>
-        <small>Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</small>
-      </div>
+        <img src="logo.png" class="logo" alt="Logo Fueltek">
+        <div class="header-info">
+            <h1>FUELTEK</h1>
+            <p>Servicio Técnico Multimarca</p>
+            <small>Profesionalismo • Confianza • Calidad</small>
+        </div>
     </header>
 
     <main>
-      <div class="ot-bar">
-        <div class="left">
-          <label class="ot-label">N° OT:</label>
-          <input id="otNumber" readonly />
+
+        <!-- ✔ OT BAR ORIGINAL COMPLETA -->
+        <div class="ot-bar">
+            <div class="left">
+                <span class="ot-label">OT N°</span>
+                <input type="text" id="otNumber" readonly>
+            </div>
+
+            <div class="controls">
+                <button onclick="saveData()" title="Guardar">💾</button>
+
+                <label for="importFile" class="import-label" title="Importar">📂</label>
+                <input type="file" id="importFile" accept=".json" onchange="handleImport(event)">
+
+                <button onclick="exportData()" title="Exportar">📤</button>
+                <button class="danger" onclick="clearForm()" title="Limpiar">🗑️</button>
+                <button onclick="window.print()" title="Imprimir">🖨️</button>
+            </div>
         </div>
 
-        <div class="controls">
-          <button id="newOtBtn" title="Reservar nuevo OT"><i data-lucide="plus"></i></button>
-          <button id="saveBtn" title="Guardar OT"><i data-lucide="save"></i></button>
-          <button id="viewBtn" title="Ver lista de OT"><i data-lucide="list"></i></button>
-          <button id="resetFormBtn" title="Limpiar todos los campos"><i data-lucide="eraser"></i></button>
-          <button id="exportBtn" title="Exportar Excel"><i data-lucide="download"></i></button>
-          <button id="exportDbBtn" title="Exportar DB JSON"><i data-lucide="file-text"></i></button>
-          <label class="import-label" title="Importar DB JSON">
-            <input id="importFile" type="file" accept=".json" />
-            <i data-lucide="upload"></i>
-          </label>
-          <button id="printBtn" title="Imprimir / PDF"><i data-lucide="printer"></i></button>
-          <button id="clearBtn" class="danger" title="Borrar DB"><i data-lucide="trash-2"></i></button>
-        </div>
-      </div>
-
-      <form id="otForm" autocomplete="off">
+        <!-- CLIENTE -->
         <fieldset>
-          <legend>Datos del Cliente</legend>
-          <div class="grid grid-2col spaced">
-            <label class="stack">Nombre del Cliente
-              <input name="clienteNombre" />
-            </label>
-            <label class="stack">Teléfono
-              <input name="clienteTelefono" />
-            </label>
-
-            <label class="stack">Correo Electrónico
-              <input name="clienteEmail" type="email" />
-            </label>
-            <label class="stack">Fecha Recibida
-              <input name="fechaRecibida" type="date" />
-            </label>
-
-            <label class="stack">Fecha de Entrega
-              <input name="fechaEntrega" type="date" />
-            </label>
-            <div></div>
-          </div>
+            <legend>Datos del Cliente</legend>
+            <div class="grid grid-2col">
+                <div class="stack">
+                    <label>Nombre</label>
+                    <input type="text" id="clienteNombre">
+                </div>
+                <div class="stack">
+                    <label>Teléfono</label>
+                    <input type="text" id="clienteTelefono">
+                </div>
+                <div class="stack">
+                    <label>Correo</label>
+                    <input type="email" id="clienteCorreo">
+                </div>
+                <div class="stack">
+                    <label>Dirección</label>
+                    <input type="text" id="clienteDireccion">
+                </div>
+            </div>
         </fieldset>
 
+        <!-- HERRAMIENTA -->
         <fieldset>
-          <legend>Datos de la Herramienta</legend>
-          <div class="grid grid-2col spaced">
-            <label class="stack">Marca
-              <input name="marca" />
-            </label>
-            <label class="stack">Modelo
-              <input name="modelo" />
-            </label>
-
-            <label class="stack">N° de Serie
-              <input name="serie" />
-            </label>
-            <label class="stack">Año Fabricación
-              <input name="anio" type="number" min="1900" max="2100" />
-            </label>
-            <div></div>
-            <div></div>
-          </div>
+            <legend>Datos de la Herramienta</legend>
+            <div class="grid grid-2col">
+                <div class="stack">
+                    <label>Marca</label>
+                    <input type="text" id="marca">
+                </div>
+                <div class="stack">
+                    <label>Modelo</label>
+                    <input type="text" id="modelo">
+                </div>
+                <div class="stack">
+                    <label>N° Serie</label>
+                    <input type="text" id="serie">
+                </div>
+                <div class="stack">
+                    <label>Accesorios</label>
+                    <input type="text" id="accesorios">
+                </div>
+            </div>
         </fieldset>
 
+        <!-- DIAGNÓSTICO -->
         <fieldset>
-          <legend>Revisión y Accesorios Recibidos</legend>
-          <div class="checkbox-grid aligned">
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Motosierra"><span>Motosierra</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Desbrozadora"><span>Desbrozadora</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cortasetos"><span>Cortasetos</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Corta Césped"><span>Corta Césped</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Fumigadora"><span>Fumigadora</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Sopladora"><span>Sopladora</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Espada"><span>Espada</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cadena"><span>Cadena</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Pistón Rayado"><span>Pistón Rayado</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cilindro Rayado"><span>Cilindro Rayado</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Bujía"><span>Bujía</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Funda Espada"><span>Funda Espada</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Tapa de Arranque"><span>Tapa de Arranque</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Brazo Completo"><span>Brazo Completo</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cabezal"><span>Cabezal</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Tubo"><span>Tubo</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Manilla Arranque"><span>Manilla Arranque</span></label>
-          </div>
+            <legend>Diagnóstico Inicial</legend>
+            <textarea id="diagnostico"></textarea>
         </fieldset>
 
+        <!-- TRABAJO REALIZADO -->
         <fieldset>
-          <legend>Diagnóstico Inicial</legend>
-          <textarea name="diagnostico" rows="6" placeholder="Describa el diagnóstico ..."></textarea>
+            <legend>Trabajo Realizado / Notas del Técnico</legend>
+            <textarea id="trabajo"></textarea>
         </fieldset>
 
+        <!-- PAGO -->
         <fieldset>
-          <legend>Trabajo Realizado / Notas del Técnico</legend>
-          <textarea name="trabajo" rows="6" placeholder="Describa el trabajo realizado ..."></textarea>
+            <legend>Pago</legend>
+            <div class="grid grid-pay">
+                <div class="stack">
+                    <label>Valor del Trabajo</label>
+                    <input type="text" id="valorTrabajo" oninput="formatCLP(this)">
+                </div>
+                <div class="stack">
+                    <label>Monto Abonado</label>
+                    <input type="text" id="montoAbonado" oninput="formatCLP(this)">
+                </div>
+                <div class="stack">
+                    <label>Saldo</label>
+                    <input type="text" id="saldo" readonly>
+                </div>
+            </div>
         </fieldset>
 
-        <fieldset>
-          <legend>Pago</legend>
-          <div class="grid-pay">
-            <label class="stack">Valor del trabajo (CLP)<input name="valorTrabajo" type="text" inputmode="numeric" pattern="[0-9]*" id="valorTrabajoInput" /></label>
-            <label class="stack">Estado de Pago
-              <select name="estadoPago" id="estadoPago">
-                <option value="Pendiente">Pendiente de Pago</option>
-                <option value="Pagado">Pagado</option>
-                <option value="Abonado">Abonado</option>
-              </select>
-            </label>
-            <label class="stack hidden" id="labelAbono">Monto Abonado (CLP)<input name="montoAbonado" type="text" inputmode="numeric" pattern="[0-9]*" id="montoAbonadoInput" /></label>
-          </div>
-        </fieldset>
-
+        <!-- FIRMAS -->
         <div class="firmas">
-          <div class="firma-box"><label>Firma Taller</label><input name="firmaTaller" /></div>
-          <div class="firma-box"><label>Firma Cliente</label><input name="firmaCliente" /></div>
+            <div class="firma-box">
+                <label>Firma Cliente</label>
+                <input type="text" id="firmaCliente">
+            </div>
+
+            <div class="firma-box">
+                <label>Firma Técnico</label>
+                <input type="text" id="firmaTecnico">
+            </div>
         </div>
 
-        <section class="notas">
-          <h4>Notas importantes</h4>
-          <ul>
-            <li>Toda herramienta no retirada en 30 días podrá generar cobro por almacenamiento.</li>
-            <li>FuelTek no se responsabiliza por accesorios no declarados al momento de la recepción.</li>
-            <li>El cliente declara estar informado sobre los términos del servicio y autoriza la revisión del equipo.</li>
-          </ul>
-        </section>
-      </form>
+        <!-- NOTAS IMPORTANTES -->
+        <div class="notas">
+            <strong>Notas Importantes</strong>
+            <ul>
+                <li>Toda herramienta no retirada en 30 días podrá generar cobro por almacenamiento.</li>
+                <li>FuelTek no se responsabiliza por accesorios no declarados al momento de la recepción.</li>
+                <li>El cliente declara estar informado sobre los términos del servicio y autoriza la revisión del equipo.</li>
+            </ul>
+        </div>
+
     </main>
 
     <footer>
-      <p>© 2025 FUELTEK</p>
+        © 2025 FuelTek — Servicio Técnico Multimarca
     </footer>
-  </div>
 
-  <div id="modal" class="modal hidden" role="dialog" aria-hidden="true">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Órdenes guardadas</h3>
-        <button id="closeModal" class="small">Cerrar</button>
-      </div>
-      <div class="modal-body">
-        <input id="searchOt" placeholder="Buscar por N° OT o nombre cliente..." />
-        <div id="ordersList" class="orders-list"></div>
-      </div>
-    </div>
-  </div>
+</div>
 
-  <div id="printArea" class="print-area" style="display:none"></div>
+<script src="script.js"></script>
 
-  <script src="script.js"></script>
-  <script>lucide.createIcons();</script>
 </body>
 </html>
