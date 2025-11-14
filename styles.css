@@ -292,7 +292,11 @@ textarea{min-height:140px;resize:vertical}
 .order-actions button[data-action="delete"] {background: var(--danger);}
 .order-actions button[data-action="delete"]:hover {background: #a13023;}
 footer{background:var(--dark);color:white;padding:15px;text-align:center;font-size:0.85rem}
-@page{size:letter;margin:10mm}
+
+/* --- ESTILOS DE IMPRESIÓN AJUSTADOS --- */
+/* Reducir margen a 6mm para maximizar espacio en hoja carta */
+@page{size:letter;margin:6mm} 
+
 @media print{
   body{background:white}
   .wrapper{box-shadow:none;margin:0;border-radius:0}
@@ -302,8 +306,8 @@ footer{background:var(--dark);color:white;padding:15px;text-align:center;font-si
   #printArea, #printArea *{visibility:visible}
   #printArea{
     position:absolute;left:0;top:0;width:100%;
-    padding:10mm; 
+    padding:6mm; /* Ajustar padding interno para coincidir con margen */
     box-sizing:border-box;
-    font-size:10pt;
+    font-size:9.5pt; /* Reducir ligeramente la fuente base */
   }
 }
