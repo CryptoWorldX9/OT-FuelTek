@@ -1,8 +1,8 @@
-/* Fueltek v7.3 - script.js
-   - Lógica de Menú Móvil (hamburguesa)
-   - Cálculo de Saldo Pendiente en tiempo real
-   - AJUSTES DE ESPACIADO PARA LA IMPRESIÓN
-   - FIX: Se elimina la validación de campos obligatorios.
+/* Fueltek v7.4 - script.js
+   - Lógica de Menú Móvil (hamburguesa) implementada.
+   - FIX: Se elimina la validación de campos obligatorios (al no usar submit).
+   - FIX: Se RESTAURAN los botones a modo texto+icono en DESKTOP y se maneja dinámicamente.
+   - Nota: Se re-introdujo la lógica de `updateSaldo` para manejar la visibilidad del campo Abono.
 */
 
 const DB_NAME = "fueltek_db_v7";
@@ -107,51 +107,35 @@ function nextOtAndSave() {
 }
 
 // ====================================================================
-// MANEJO DE SALDO Y ESTADO DE PAGO
+// MANEJO DE SALDO Y ESTADO DE PAGO / BOTÓN GUARDAR
 // ====================================================================
 
+// FIX: Se restaura el contenido de texto para el botón de escritorio
 const resetSaveButton = () => {
-    document.getElementById("saveBtn").title = "Guardar/Actualizar OT";
-    document.getElementById("saveBtn").innerHTML = '<i data-lucide="save"></i><span>Guardar/Actualizar</span>';
+    document.getElementById("saveBtn").title = "Guardar OT";
+    document.getElementById("saveBtn").innerHTML = '<i data-lucide="save"></i><span>Guardar</span>'; 
     lucide.createIcons();
 }
 
 function updateSaldo() {
-    const saldoInput = document.getElementById("saldoPendienteInput");
-    const labelSaldo = document.getElementById("labelSaldo");
     const valorTrabajoInput = document.getElementById("valorTrabajoInput");
     const montoAbonadoInput = document.getElementById("montoAbonadoInput");
     const estadoPago = document.getElementById("estadoPago");
     const labelAbono = document.getElementById("labelAbono");
     
     const valor = unformatCLP(valorTrabajoInput.value);
-    const abono = unformatCLP(montoAbonadoInput.value);
     const estado = estadoPago.value;
 
-    let saldo = 0;
-    
-    // Lógica para mostrar/ocultar campos y calcular saldo
+    // Lógica para mostrar/ocultar campos
     if (estado === "Abonado") {
-        saldo = valor - abono;
         labelAbono.classList.remove("hidden");
     } else if (estado === "Pagado") {
-        saldo = 0;
         labelAbono.classList.add("hidden");
         // Establecer el monto abonado igual al valor del trabajo si está "Pagado"
         montoAbonadoInput.value = formatCLP(valor); 
     } else { // Pendiente
-        saldo = valor;
         labelAbono.classList.add("hidden");
         montoAbonadoInput.value = "";
-    }
-
-    if (estado === "Pagado" || saldo <= 0) {
-        labelSaldo.classList.add("hidden");
-        // Nota: saldoPendienteInput no existe en el HTML, pero si existiera, se establecería a 0. Se ignora por ahora.
-        // saldoInput.value = formatCLP(0);
-    } else {
-        // saldoInput.value = formatCLP(saldo); // Nota: saldoPendienteInput no existe en el HTML. Se ignora por ahora.
-        labelSaldo.classList.remove("hidden");
     }
 }
 
@@ -177,10 +161,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const mobileMenuDropdown = document.getElementById("mobileMenuDropdown");
     
-  // Crear el input de saldo pendiente (que se usa en updateSaldo, pero no existe en HTML)
-  // Como el HTML no lo tiene, se ignora la actualización del valor, pero se mantiene la lógica de visibilidad.
-
-
   const updateOtDisplay = () => {
     otInput.value = String(getLastOt() + 1);
     resetSaveButton();
@@ -199,6 +179,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Mostrar / ocultar campo Abonado y recalcular Saldo
   estadoPago.addEventListener("change", updateSaldo);
+  
+  // Inicializar estado de pago
+  updateSaldo();
 
   // --- LÓGICA DEL MENÚ MÓVIL ---
   
@@ -206,21 +189,20 @@ document.addEventListener("DOMContentLoaded", () => {
   if(mobileMenuBtn) mobileMenuBtn.addEventListener("click", () => {
     mobileMenuDropdown.classList.toggle("active");
     // Cambiar icono: menú o X
-    const icon = mobileMenuBtn.querySelector('i');
+    const iconContainer = mobileMenuBtn.querySelector('i');
     const newIconName = mobileMenuDropdown.classList.contains('active') ? 'x' : 'menu';
-    icon.innerHTML = `<i data-lucide="${newIconName}"></i>`;
+    if (iconContainer) iconContainer.innerHTML = `<i data-lucide="${newIconName}"></i>`;
     lucide.createIcons({ parent: mobileMenuBtn });
   });
 
   // 2. Cerrar el menú después de hacer click en cualquier botón de acción
   if(mobileMenuDropdown) mobileMenuDropdown.querySelectorAll("button, .import-label").forEach(btn => {
     btn.addEventListener("click", () => {
-        // Usa un pequeño timeout para que la acción se registre antes de cerrar
         setTimeout(() => {
             mobileMenuDropdown.classList.remove("active");
-            // Revertir el ícono a 'menu' al cerrar
             if(mobileMenuBtn) {
-                mobileMenuBtn.querySelector('i').innerHTML = `<i data-lucide="menu"></i>`;
+                const iconContainer = mobileMenuBtn.querySelector('i');
+                if (iconContainer) iconContainer.innerHTML = `<i data-lucide="menu"></i>`;
                 lucide.createIcons({ parent: mobileMenuBtn });
             }
         }, 100);
@@ -262,14 +244,12 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("saveBtn").addEventListener("click", async (e) => {
     e.preventDefault();
     
-    // CORRECCIÓN: La validación de campo obligatorio se eliminó de aquí.
-    // El problema restante se solucionó cambiando el tipo de botón en index.html.
+    // **VALIDACIÓN DE CAMPO REQUERIDO ELIMINADA. SE MANTIENE EL CÓDIGO FUNCIONAL.**
     
-
     const fd = new FormData(form);
     const order = {};
     for (const [k, v] of fd.entries()) {
-      if (k === "accesorios" || k === "saldoPendiente") continue; // Ignorar saldoPendiente
+      if (k === "accesorios") continue; 
       order[k] = v;
     }
     order.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
@@ -280,12 +260,10 @@ document.addEventListener("DOMContentLoaded", () => {
     order.estadoPago = order.estadoPago || "Pendiente";
     order.montoAbonado = unformatCLP(order.montoAbonado);
     
-    // Asegurar que montoAbonado no sea mayor que valorTrabajo si no está pagado
+    // Validación de lógica de negocio, no de campo obligatorio
     if (order.montoAbonado > order.valorTrabajo && order.estadoPago !== "Pagado") {
-        // Validación de lógica de negocio, no de campo obligatorio
         return alert("Error: El monto abonado no puede ser mayor que el valor del trabajo.");
     }
-
 
     let saveMessage = "guardada";
     let otToSave;
@@ -400,7 +378,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Estado de pago
     estadoPago.value = o.estadoPago || "Pendiente";
-    updateSaldo(); // Llama a la función para mostrar/ocultar abono y calcular saldo
+    updateSaldo(); // Llama a la función para mostrar/ocultar abono
     
     // Checkboxes
     form.querySelectorAll("input[name='accesorios']").forEach(ch => ch.checked = false);
@@ -410,7 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     
     otInput.value = o.ot;
-    // MEJORA UX: Actualizar el botón de guardar/actualizar
+    // FIX: Se actualiza el contenido de texto para el botón de escritorio
     document.getElementById("saveBtn").title = "Actualizar OT #" + o.ot;
     document.getElementById("saveBtn").innerHTML = '<i data-lucide="refresh-cw"></i><span>Actualizar</span>';
     lucide.createIcons();
@@ -423,7 +401,7 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     const fd = new FormData(form);
     const data = {};
-    for (const [k, v] of fd.entries()) if (k !== "accesorios" && k !== "saldoPendiente") data[k] = v;
+    for (const [k, v] of fd.entries()) if (k !== "accesorios") data[k] = v;
     data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
     data.ot = otInput.value || String(getLastOt() + 1);
     
