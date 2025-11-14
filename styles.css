@@ -55,7 +55,7 @@ main{padding:25px}
   border:1px solid var(--border);
   gap:12px;
   box-shadow:0 2px 8px rgba(0,0,0,0.05);
-  position: relative; /* Para el menú móvil */
+  position: relative; 
 }
 .ot-bar .left{display:flex;align-items:center;gap:12px}
 .ot-label{font-weight:700;color:var(--dark);font-size:1.1rem}
@@ -71,21 +71,30 @@ main{padding:25px}
   color:var(--primary);
 }
 
-/* --- CONTROLES: ESTILO PILL CON NOMBRE PARA ESCRITORIO --- */
-.controls button, .import-label, #mobileMenuBtn{
-  width:auto; /* Auto para ajustar al texto */
-  height:40px;
-  padding: 0 10px; /* Padding horizontal para el texto */
-  border-radius:8px;border:none;background:var(--primary);color:white;
-  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
-  transition:all 0.2s ease;
-  box-shadow:0 2px 5px rgba(0,0,0,0.15);
-  gap: 6px; /* Espacio entre ícono y texto */
+/* --- CONTROLES: RESTAURADOS A TEXTO+ICONO (ESCRITORIO) --- */
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center} /* Se añade display:flex;gap:8px; */
+.controls button, .import-label {
+  /* ESTILOS PARA ESCRITORIO (TEXTO + ICONO) */
+  height: 40px;
+  width: auto; /* Permite que el botón se ajuste al contenido (texto + icono) */
+  padding: 0 12px; /* Padding para el texto */
+  border-radius: 8px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  gap: 6px; /* Espacio entre el icono y el texto */
   font-weight: 500;
-  white-space: nowrap;
+  white-space: nowrap; /* Evita que el texto se divida */
 }
-.controls button:hover, .import-label:hover, #mobileMenuBtn:hover{background:#003a7a;transform:translateY(-1px)}
-.controls button i, .import-label i { width: 18px; height: 18px; } /* Ícono pequeño */
+.controls button:hover, .import-label:hover{background:#003a7a;transform:translateY(-1px)}
+.controls button i, .import-label i { width: 18px; height: 18px; } /* Ícono */
+.controls button span, .import-label span { font-size: 0.95rem; } /* Texto */
 
 /* Estilos de color específicos */
 #saveBtn { background: var(--success); }
@@ -98,10 +107,10 @@ main{padding:25px}
 /* Ocultar elementos específicos en Desktop */
 #mobileMenuBtn { display: none; }
 .mobile-only { display: none; }
-
 .import-label input{display:none}
 
-/* --- FORM FIELDS: ANCHO COMPLETO PARA TEXTAREA --- */
+
+/* --- FORM FIELDS --- */
 fieldset{border:1px solid var(--border);border-radius:10px;padding:15px;margin-bottom:25px}
 legend{
     color:var(--dark);
@@ -118,7 +127,7 @@ legend{
 
 .stack{display:flex;flex-direction:column;gap:6px;font-size:0.9rem}
 .stack input, .stack select, textarea{
-    width: 100%; /* <<--- ANCHO COMPLETO GARANTIZADO */
+    width: 100%; 
     padding:12px;
     border-radius:8px;
     border:1px solid #c9d0d6;
@@ -153,13 +162,14 @@ textarea{min-height:140px;resize:vertical}
 .checkbox-item:hover{background:#f0f7ff;border-color:var(--primary)}
 .checkbox-item input[type="checkbox"]{width:18px;height:18px;margin:0;flex:0 0 auto;accent-color:var(--primary)}
 
-/* payment grid: 4 columnas para Saldo */
-.grid-pay{display:grid;grid-template-columns:repeat(4, 1fr);gap:20px}
+/* payment grid: 3 columnas */
+.grid-pay{display:grid;grid-template-columns:repeat(3, 1fr);gap:20px} 
 .hidden{display:none !important}
 
 /* firmas centradas */
 .firmas{display:flex;justify-content:space-around;gap:50px;margin:40px 0}
 .firma-box{width:45%;max-width:300px;text-align:center}
+.firma-box label{font-weight:600;color:#555}
 .firma-box input{width:100%;height:45px;text-align:center;border-radius:6px;border:1px solid var(--border);margin-top:5px;background:#f9f9f9;font-family: inherit;}
 
 /* notas */
@@ -180,7 +190,6 @@ textarea{min-height:140px;resize:vertical}
         text-align: center;
         padding: 15px 15px 10px 15px;
     }
-    .header-info { text-align: center; }
     .header-info h1 { font-size: 1.8rem; }
     .logo { width: 60px; height: 60px; margin-bottom: 5px; }
 
@@ -194,66 +203,56 @@ textarea{min-height:140px;resize:vertical}
     .ot-label { font-size: 1rem; }
     #otNumber { font-size: 1.1rem; width: 100px; }
 
-    /* Menú de hamburguesa y desplegable (NUEVOS ESTILOS) */
+    /* Menú de hamburguesa y desplegable */
     #mobileMenuBtn { 
         display: flex; /* Mostrar botón hamburguesa */
         position: absolute; 
         right: 15px; 
         top: 12px; 
         z-index: 10; 
-        width: 40px; /* Tamaño de botón fijo */
+        width: 40px; 
         height: 40px;
         padding: 0;
     }
+    /* Ocultar los botones de escritorio cuando el menú móvil está inactivo */
+    .controls { display: none; } 
     #mobileMenuDropdown {
         display: none; /* Oculto por defecto en móvil */
         position: absolute;
-        top: 60px; /* Debajo de la barra superior */
+        top: 60px; 
         right: 15px;
-        width: 250px;
+        width: 200px; 
         flex-direction: column;
-        background: var(--dark); /* Fondo oscuro para el menú */
+        background: var(--dark); 
         border-radius: 8px;
         padding: 8px; 
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         z-index: 5;
         gap: 5px; 
     }
+    /* El selector es más específico que .controls { display: none; } */
     #mobileMenuDropdown.active {
         display: flex; /* Muestra el menú al activarse */
     }
-    /* Estilos para los botones con nombre/ícono en el menú desplegable */
+    
+    /* Estilos para los botones dentro del menú móvil (mostrando texto) */
     #mobileMenuDropdown button, #mobileMenuDropdown .import-label {
         width: 100%;
         height: 40px;
         display: flex; 
         align-items: center;
         justify-content: flex-start;
-        padding: 0 15px; 
+        padding: 0 10px; 
         color: white;
-        background: #3e5367; /* Color de fondo para los items de menú */
-        border-radius: 4px; /* Aspecto más cuadrado */
+        background: #3e5367; 
+        border-radius: 4px; 
         gap: 10px;
+        white-space: nowrap;
     }
+    
     #mobileMenuDropdown button:hover, #mobileMenuDropdown .import-label:hover { 
         background: #576574; 
     }
-    #mobileMenuDropdown button i, #mobileMenuDropdown .import-label i {
-        flex-shrink: 0;
-    }
-    #mobileMenuDropdown button span, #mobileMenuDropdown .import-label span {
-        flex-grow: 1; 
-        text-align: left;
-    }
-    
-    /* Ajustes específicos de color para botones en móvil */
-    #mobileMenuDropdown #saveBtn { background: var(--success); }
-    #mobileMenuDropdown #saveBtn:hover { background: #1e8449; }
-    #mobileMenuDropdown #clearBtn { background: var(--danger); }
-    #mobileMenuDropdown #clearBtn:hover { background: #a13023; }
-    #mobileMenuDropdown #resetFormBtn { background: #576574; }
-    #mobileMenuDropdown #resetFormBtn:hover { background: #465360; }
-
 
     /* Adaptar el Formulario */
     .grid-2col { grid-template-columns: 1fr; } /* Columna única */
@@ -265,7 +264,6 @@ textarea{min-height:140px;resize:vertical}
     /* Adaptar Firmas */
     .firmas { flex-direction: column; gap: 30px; margin: 20px 0; }
     .firma-box { width: 90%; max-width: none; margin: 0 auto; }
-    .firma-box input { width: 100%; max-width: none; }
 }
 
 /* El resto de estilos (modal, notas, footer, print) se mantienen */
