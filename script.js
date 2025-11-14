@@ -1,6 +1,6 @@
-/* Fueltek v7.2 - script.js
-   - Lógica de Menú Móvil (hamburguesa) - (SE MANTIENE)
-   - Cálculo de Saldo Pendiente en tiempo real - (SE MANTIENE)
+/* Fueltek v7.3 - script.js
+   - Lógica de Menú Móvil (hamburguesa)
+   - Cálculo de Saldo Pendiente en tiempo real
 */
 
 const DB_NAME = "fueltek_db_v7";
@@ -111,6 +111,7 @@ function nextOtAndSave() {
 const resetSaveButton = () => {
     document.getElementById("saveBtn").title = "Guardar/Actualizar OT";
     document.getElementById("saveBtn").innerHTML = '<i data-lucide="save"></i><span>Guardar/Actualizar</span>';
+    lucide.createIcons();
 }
 
 function updateSaldo() {
@@ -134,7 +135,8 @@ function updateSaldo() {
     } else if (estado === "Pagado") {
         saldo = 0;
         labelAbono.classList.add("hidden");
-        montoAbonadoInput.value = formatCLP(valor); // Llenar con el total si es Pagado
+        // Establecer el monto abonado igual al valor del trabajo si está "Pagado"
+        montoAbonadoInput.value = formatCLP(valor); 
     } else { // Pendiente
         saldo = valor;
         labelAbono.classList.add("hidden");
@@ -196,10 +198,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 1. Toggle mobile menu
   mobileMenuBtn.addEventListener("click", () => {
     mobileMenuDropdown.classList.toggle("active");
-    // Cambiar icono
+    // Cambiar icono: menú o X
     const icon = mobileMenuBtn.querySelector('i');
     const newIconName = mobileMenuDropdown.classList.contains('active') ? 'x' : 'menu';
-    // Reemplazar solo el ícono dentro de <i>
     icon.innerHTML = `<i data-lucide="${newIconName}"></i>`;
     lucide.createIcons({ parent: mobileMenuBtn });
   });
@@ -252,7 +253,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("saveBtn").addEventListener("click", async (e) => {
     e.preventDefault();
     
-    // Validación básica de campos requeridos (añadidos en index.html)
+    // Validación de campos requeridos
     if (!form.reportValidity()) return alert("Por favor, rellena todos los campos requeridos (*)");
 
 
@@ -399,7 +400,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     
     otInput.value = o.ot;
-    // MEJORA UX: Actualizar el botón de guardar
+    // MEJORA UX: Actualizar el botón de guardar/actualizar
     document.getElementById("saveBtn").title = "Actualizar OT #" + o.ot;
     document.getElementById("saveBtn").innerHTML = '<i data-lucide="refresh-cw"></i><span>Actualizar</span>';
     lucide.createIcons();
@@ -416,7 +417,7 @@ document.addEventListener("DOMContentLoaded", () => {
     data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
     data.ot = otInput.value || String(getLastOt() + 1);
     
-    // Para impresión, usa el valor DESFORMATEADO para el cálculo pero FORMATEADO para la visualización
+    // Para impresión, usa el valor DESFORMATEADO para el cálculo
     data.valorTrabajoNum = unformatCLP(data.valorTrabajo);
     data.montoAbonadoNum = unformatCLP(data.montoAbonado);
     data.estadoPago = data.estadoPago || "Pendiente"; // Asegurar que tenga estado
@@ -431,6 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (data.estadoPago === 'Pagado') saldo = 0;
     const saldoF = formatCLP(saldo > 0 ? saldo : 0);
     const estadoColor = data.estadoPago === 'Pagado' ? '#27ae60' : (data.estadoPago === 'Abonado' ? '#f39c12' : '#c0392b');
+    const estadoPagoText = data.estadoPago || "Pendiente";
 
     const html = `
       <div style="font-family:'Inter', sans-serif;color:#111;padding-bottom:15px;border-bottom:1px solid #ddd;">
@@ -474,9 +476,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">RESUMEN DE PAGO</strong>
                 <table style="width:100%;border-collapse:collapse;font-size:10pt;background:#f8f8f8;border-radius:6px;overflow:hidden;">
                     <tr><td style="padding:5px;border:1px solid #eee;">Valor del Trabajo:</td><td style="padding:5px;text-align:right;font-weight:700;">$${valorTrabajoF} CLP</td></tr>
-                    ${data.estadoPago === 'Abonado' || data.estadoPago === 'Pagado' ? `<tr><td style="padding:5px;border:1px solid #eee;">Monto Abonado:</td><td style="padding:5px;text-align:right;">$${montoAbonadoF} CLP</td></tr>` : ''}
-                    <tr><td style="padding:5px;border:1px solid #eee;">Estado de Pago:</td><td style="padding:5px;text-align:right;font-weight:700;color:${estadoColor};">${data.estadoPago}</td></tr>
-                    ${data.estadoPago !== 'Pagado' && saldo > 0 ? `<tr><td style="padding:5px;border:1px solid #eee;">SALDO PENDIENTE:</td><td style="padding:5px;text-align:right;font-weight:800;color:#c0392b;">$${saldoF} CLP</td></tr>` : ''}
+                    ${estadoPagoText === 'Abonado' || estadoPagoText === 'Pagado' ? `<tr><td style="padding:5px;border:1px solid #eee;">Monto Abonado:</td><td style="padding:5px;text-align:right;">$${montoAbonadoF} CLP</td></tr>` : ''}
+                    <tr><td style="padding:5px;border:1px solid #eee;">Estado de Pago:</td><td style="padding:5px;text-align:right;font-weight:700;color:${estadoColor};">${estadoPagoText}</td></tr>
+                    ${estadoPagoText !== 'Pagado' && saldo > 0 ? `<tr><td style="padding:5px;border:1px solid #eee;">SALDO PENDIENTE:</td><td style="padding:5px;text-align:right;font-weight:800;color:#c0392b;">$${saldoF} CLP</td></tr>` : ''}
                 </table>
             </div>
             <div style="flex:1;">
