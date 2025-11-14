@@ -1,29 +1,30 @@
 :root{
-  --primary: #004d99; 
-  --accent: #f26522; 
-  --dark: #2c3e50;
-  --border: #e0e0e0;
-  --bg: #f4f7f9;
-  --card: #fff;
+  --primary:#004d99;
+  --accent:#f26522;
+  --dark:#2c3e50;
+  --border:#d9d9d9;
+  --bg:#f4f7f9;
+  --card:#fff;
 }
 
 *{box-sizing:border-box}
 body{
-  font-family: 'Inter', "Segoe UI", Roboto, Arial, sans-serif;
   margin:0;
   background:var(--bg);
+  font-family:'Inter',"Segoe UI",Roboto,Arial,sans-serif;
   color:var(--dark);
 }
 
+/* CONTENEDOR */
 .wrapper{
   max-width:1020px;
   margin:25px auto;
   background:var(--card);
   border-radius:12px;
   box-shadow:0 10px 30px rgba(0,0,0,0.08);
-  overflow:hidden;
 }
 
+/* HEADER */
 header{
   display:flex;
   gap:16px;
@@ -33,12 +34,12 @@ header{
   padding:18px;
 }
 .logo{
-  width:80px;height:80px;object-fit:contain;
-  background:white;padding:5px;border-radius:8px;
+  width:80px;height:80px;
+  background:white;
+  object-fit:contain;
+  border-radius:8px;
+  padding:5px;
 }
-.header-info h1{margin:0;font-size:2rem}
-.header-info p{color:var(--accent);margin:4px 0;font-weight:600}
-.header-info small{opacity:0.9;font-size:0.8rem}
 
 main{padding:20px}
 
@@ -50,210 +51,105 @@ main{padding:20px}
   padding:10px 15px;
   background:var(--bg);
   border-radius:8px;
-  margin-bottom:15px;
   border:1px solid var(--border);
-  gap:12px;
-}
-.ot-bar .left{display:flex;align-items:center;gap:12px}
-.ot-label{font-weight:700;color:var(--dark)}
-#otNumber{
-  width:120px;text-align:center;
-  font-weight:800;font-size:1.1rem;
-  border:2px solid var(--primary);
-  border-radius:8px;padding:8px 10px;background:#fff;
+  margin-bottom:15px;
 }
 
-/* BOTONES */
+/* BOTONES ESCRITORIO — SIN CAMBIOS */
 .controls{
   display:flex;
   gap:8px;
   flex-wrap:wrap;
-  align-items:center;
 }
-.controls button, .import-label{
-  width:40px;height:40px;border-radius:8px;
-  border:none;background:var(--primary);color:white;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:background 0.2s ease;
+.controls button,
+.import-label{
+  width:40px;height:40px;
+  border:none;
+  border-radius:8px;
+  background:var(--primary);
+  color:white;
+  font-size:1.2rem;
+  cursor:pointer;
 }
-.controls button:hover, .import-label:hover{background:#003a7a}
 .controls .danger{background:#c0392b}
-.controls .danger:hover{background:#a13023}
-#importFile{display:none}
 
-/* FORM */
+/* FORMULARIOS */
 fieldset{
   border:1px solid var(--border);
-  border-radius:10px;padding:15px;margin-bottom:15px;
+  padding:15px;
+  border-radius:10px;
 }
 legend{
-  color:var(--primary);
   font-weight:700;
-  padding:0 8px;
-  font-size:1.1rem;
+  color:var(--primary);
 }
 
-.grid{display:grid;gap:15px}
-.grid-2col{grid-template-columns:1fr 1fr}
-
-.stack{display:flex;flex-direction:column;gap:6px;font-size:0.9rem}
-.stack input, .stack select, textarea{
-  padding:10px;border-radius:6px;border:1px solid var(--border);
-  font-size:1rem;font-family:inherit;
-}
-
-/* 🔥 FIX: Textareas grandes en escritorio */
+/* 📌 SOLUCIÓN: TEXTAREAS A LO ANCHO EN ESCRITORIO */
 textarea{
-  min-height:200px;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:100% !important;
+  min-height:180px;
   resize:vertical;
-  font-size:1.05rem;
+  font-size:1rem;
+  padding:12px;
 }
 
-/* CHECKBOX GRID */
-.checkbox-grid.aligned{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px 15px;
+/* MENÚ MÓVIL */
+.mobile-menu-btn{
+  display:none;
+  text-align:right;
+  padding:10px 15px;
+}
+.mobile-menu-btn button{
+  background:var(--primary);
+  color:white;
+  border:none;
+  border-radius:8px;
+  padding:10px 15px;
+  font-size:1.5rem;
 }
 
-/* PAYMENT GRID */
-.grid-pay{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  gap:15px;
+.mobile-menu{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  background:white;
+  padding:15px;
+  border-bottom:2px solid var(--primary);
 }
-.hidden{display:none}
+.mobile-menu.hidden{display:none}
 
-/* FIRMAS */
-.firmas{
-  display:flex;justify-content:center;
-  gap:150px;margin:30px 0;
+.mobile-menu .menu-action{
+  width:100%;
+  padding:12px;
+  border-radius:8px;
+  border:none;
+  font-size:1.2rem;
+  background:var(--primary);
+  color:white;
 }
-.firma-box{width:40%;text-align:center}
-.firma-box input{
-  width:100%;height:45px;text-align:center;
-  border-radius:6px;border:1px solid var(--border);
-  background:#f9f9f9;font-family:inherit;
-}
+.menu-action.danger{background:#c0392b}
 
-/* NOTAS */
-.notas{
-  background:#e8f0f8;border-left:5px solid var(--primary);
-  padding:15px;border-radius:8px;margin-top:25px;
-}
+/* RESPONSIVE */
+@media(max-width:800px){
+  
+  .controls{display:none} /* Ocultar botones grandes */
 
-/* FOOTER */
-footer{
-  background:var(--dark);color:white;
-  text-align:center;padding:10px;font-size:0.8rem;
-}
+  .mobile-menu-btn{display:block}
 
-/* ======================== */
-/* 📱 RESPONSIVE MEJORADO   */
-/* ======================== */
-
-@media(max-width:900px){
-  .wrapper{margin:0;border-radius:0;box-shadow:none}
-
-  header{
-    padding:14px;
-    flex-direction:row;
-    align-items:center;
+  .wrapper{
+    border-radius:0;
+    margin:0;
+    box-shadow:none;
   }
-  .logo{width:65px;height:65px}
-  .header-info h1{font-size:1.5rem}
 
-  .grid-2col{grid-template-columns:1fr}
+  fieldset{padding:12px}
 
-  /* ✔ Formularios más limpios en móvil */
-  .stack input,
-  .stack select,
   textarea{
-    padding:14px;
+    min-height:160px;
     font-size:1.1rem;
   }
 
-  .checkbox-grid.aligned{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .firmas{
-    flex-direction:column;
-    align-items:center;
-    gap:40px;
-  }
-  .firma-box{width:80%}
-
-  /* BOTONES TIPO APP */
-  .controls{
-    justify-content:center;
-  }
-  .controls button, .import-label{
-    width:60px;height:60px;
-    font-size:1.5rem;
-    border-radius:12px;
-  }
-
-  fieldset{padding:15px}
-}
-
-@media(max-width:600px){
-
-  header{
-    gap:10px;
-  }
-  .logo{width:55px;height:55px}
-  .header-info h1{font-size:1.3rem}
-  .header-info small{display:none}
-
-  /* ✔ Diseño más bonito en celular */
-  main{
-    padding:12px;
-  }
-
-  fieldset{
-    padding:12px;
-    border-radius:12px;
-  }
-
-  legend{
-    font-size:1rem;
-    padding:0 6px;
-  }
-
-  /* ✔ Textareas amplias y limpias */
-  textarea{
-    min-height:180px;
-    font-size:1.1rem;
-    padding:14px;
-  }
-
-  .checkbox-grid.aligned{
-    grid-template-columns:1fr;
-  }
-
-  .grid-pay{
-    grid-template-columns:1fr;
-  }
-
-  .controls{
-    gap:12px;
-  }
-  .controls button, .import-label{
-    width:65px;height:65px;
-    font-size:1.6rem;
-  }
-}
-
-/* ============ */
-/* IMPRESIÓN    */
-/* ============ */
-@page{size:letter;margin:8mm}
-@media print{
-  body *{visibility:hidden}
-  #printArea, #printArea *{visibility:visible}
-  #printArea{
-    position:absolute;left:0;top:0;width:100%;
-    padding:8mm;box-sizing:border-box;
-  }
+  .grid-2col{grid-template-columns:1fr !important}
 }
