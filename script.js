@@ -1,6 +1,7 @@
 /* Fueltek v7.3 - script.js
    - Lógica de Menú Móvil (hamburguesa)
    - Cálculo de Saldo Pendiente en tiempo real
+   - AJUSTES DE ESPACIADO PARA LA IMPRESIÓN
 */
 
 const DB_NAME = "fueltek_db_v7";
@@ -435,81 +436,81 @@ document.addEventListener("DOMContentLoaded", () => {
     const estadoPagoText = data.estadoPago || "Pendiente";
 
     const html = `
-      <div style="font-family:'Inter', sans-serif;color:#111;padding-bottom:15px;border-bottom:1px solid #ddd;">
-        <div style="display:flex;align-items:center;gap:20px">
-          <img src="logo-fueltek.png" style="width:100px;height:100px;object-fit:contain;border:1px solid #eee;padding:5px;border-radius:8px;" alt="logo" />
+      <div style="font-family:'Inter', sans-serif;color:#111;padding-bottom:10px;border-bottom:1px solid #ddd;">
+        <div style="display:flex;align-items:center;gap:15px">
+          <img src="logo-fueltek.png" style="width:80px;height:80px;object-fit:contain;border:1px solid #eee;padding:5px;border-radius:8px;" alt="logo" />
           <div style="flex-grow:1">
-            <h2 style="margin:0;color:#004d99;font-size:24px;">ORDEN DE TRABAJO - FUELTEK</h2>
-            <div style="color:#f26522;font-weight:600;font-size:16px;">Servicio Técnico Multimarca</div>
-            <div style="font-size:11px;margin-top:5px;opacity:0.8;">Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</div>
+            <h2 style="margin:0;color:#004d99;font-size:20px;">ORDEN DE TRABAJO - FUELTEK</h2>
+            <div style="color:#f26522;font-weight:600;font-size:14px;">Servicio Técnico Multimarca</div>
+            <div style="font-size:10px;margin-top:3px;opacity:0.8;">Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</div>
           </div>
-          <div style="text-align:right;background:#004d99;color:white;padding:10px 15px;border-radius:8px;">
-            <div style="font-weight:800;font-size:24px;">N° OT: ${data.ot}</div>
-            <div style="font-size:10px;margin-top:5px;">Emitida: ${new Date().toLocaleDateString('es-CL')}</div>
+          <div style="text-align:right;background:#004d99;color:white;padding:8px 12px;border-radius:6px;">
+            <div style="font-weight:800;font-size:20px;">N° OT: ${data.ot}</div>
+            <div style="font-size:9px;margin-top:5px;">Emitida: ${new Date().toLocaleDateString('es-CL')}</div>
           </div>
         </div>
-        <hr style="border:none;border-top:2px solid #004d99;margin:15px 0 18px" />
+        <hr style="border:none;border-top:2px solid #004d99;margin:10px 0 12px" />
         
-        <table style="width:100%;border-collapse:collapse;margin-bottom:15px;font-size:10pt;table-layout: fixed;">
+        <table style="width:100%;border-collapse:collapse;margin-bottom:10px;font-size:9.5pt;table-layout: fixed;">
           <tr>
-            <td style="width:50%;padding:8px 0;vertical-align:top;border-right:1px solid #eee;">
-              <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">DATOS DEL CLIENTE</strong>
+            <td style="width:50%;padding:6px 0;vertical-align:top;border-right:1px solid #eee;">
+              <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:10pt;">DATOS DEL CLIENTE</strong>
               <span style="display:block;">Nombre: <b>${data.clienteNombre || "-"}</b></span>
               <span style="display:block;">Teléfono: ${data.clienteTelefono || "-"}</span>
               <span style="display:block;">Email: ${data.clienteEmail || "-"}</span>
               <span style="display:block;">Fecha Recibida: <b>${data.fechaRecibida || "-"}</b></span>
               <span style="display:block;">Fecha Entrega: <b>${data.fechaEntrega || "-"}</b></span>
             </td>
-            <td style="width:50%;padding:8px 0 8px 15px;vertical-align:top;">
-              <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">DATOS DE LA HERRAMIENTA</strong>
+            <td style="width:50%;padding:6px 0 6px 15px;vertical-align:top;">
+              <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:10pt;">DATOS DE LA HERRAMIENTA</strong>
               <span style="display:block;">Marca: <b>${data.marca || "-"}</b></span>
               <span style="display:block;">Modelo: <b>${data.modelo || "-"}</b></span>
               <span style="display:block;">N° Serie: ${data.serie || "-"}</span>
               <span style="display:block;">Año Fabricación: ${data.anio || "-"}</span>
-              <div style="height:20px;"></div>
+              <div style="height:15px;"></div>
             </td>
           </tr>
         </table>
 
-        <div style="display:flex;gap:20px;margin-bottom:15px;border-top:1px solid #ddd;padding-top:15px;">
+        <div style="display:flex;gap:15px;margin-bottom:10px;border-top:1px solid #ddd;padding-top:10px;">
             <div style="width:40%;min-width:300px;">
-                <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">RESUMEN DE PAGO</strong>
-                <table style="width:100%;border-collapse:collapse;font-size:10pt;background:#f8f8f8;border-radius:6px;overflow:hidden;">
-                    <tr><td style="padding:5px;border:1px solid #eee;">Valor del Trabajo:</td><td style="padding:5px;text-align:right;font-weight:700;">$${valorTrabajoF} CLP</td></tr>
-                    ${estadoPagoText === 'Abonado' || estadoPagoText === 'Pagado' ? `<tr><td style="padding:5px;border:1px solid #eee;">Monto Abonado:</td><td style="padding:5px;text-align:right;">$${montoAbonadoF} CLP</td></tr>` : ''}
-                    <tr><td style="padding:5px;border:1px solid #eee;">Estado de Pago:</td><td style="padding:5px;text-align:right;font-weight:700;color:${estadoColor};">${estadoPagoText}</td></tr>
-                    ${estadoPagoText !== 'Pagado' && saldo > 0 ? `<tr><td style="padding:5px;border:1px solid #eee;">SALDO PENDIENTE:</td><td style="padding:5px;text-align:right;font-weight:800;color:#c0392b;">$${saldoF} CLP</td></tr>` : ''}
+                <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:10pt;">RESUMEN DE PAGO</strong>
+                <table style="width:100%;border-collapse:collapse;font-size:9pt;background:#f8f8f8;border-radius:6px;overflow:hidden;">
+                    <tr><td style="padding:4px;border:1px solid #eee;">Valor del Trabajo:</td><td style="padding:4px;text-align:right;font-weight:700;">$${valorTrabajoF} CLP</td></tr>
+                    ${estadoPagoText === 'Abonado' || estadoPagoText === 'Pagado' ? `<tr><td style="padding:4px;border:1px solid #eee;">Monto Abonado:</td><td style="padding:4px;text-align:right;">$${montoAbonadoF} CLP</td></tr>` : ''}
+                    <tr><td style="padding:4px;border:1px solid #eee;">Estado de Pago:</td><td style="padding:4px;text-align:right;font-weight:700;color:${estadoColor};">${estadoPagoText}</td></tr>
+                    ${estadoPagoText !== 'Pagado' && saldo > 0 ? `<tr><td style="padding:4px;border:1px solid #eee;">SALDO PENDIENTE:</td><td style="padding:4px;text-align:right;font-weight:800;color:#c0392b;">$${saldoF} CLP</td></tr>` : ''}
                 </table>
             </div>
             <div style="flex:1;">
-                <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">REVISIÓN Y ACCESORIOS RECIBIDOS</strong>
-                <div style="display:flex;flex-wrap:wrap;gap:6px;border:1px solid #ddd;padding:8px;border-radius:6px;min-height:50px;">
-                    ${(data.accesorios||[]).map(s=>`<span style='border:1px solid #ddd;background:#fff;padding:4px 8px;border-radius:4px;font-size:10px'>${s}</span>`).join('') || '<span style="color:#999;font-style:italic;">Ningún accesorio o revisión marcada.</span>'}
+                <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:10pt;">REVISIÓN Y ACCESORIOS RECIBIDOS</strong>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;border:1px solid #ddd;padding:6px;border-radius:6px;min-height:50px;">
+                    ${(data.accesorios||[]).map(s=>`<span style='border:1px solid #ddd;background:#fff;padding:3px 6px;border-radius:4px;font-size:9px'>${s}</span>`).join('') || '<span style="color:#999;font-style:italic;font-size:9px;">Ningún accesorio o revisión marcada.</span>'}
                 </div>
             </div>
         </div>
 
-        <div style="margin-top:15px;">
-            <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">DIAGNÓSTICO INICIAL</strong>
-            <div style="border:1px solid #ddd;padding:10px;border-radius:6px;min-height:70px;background:#fcfcfc;">${data.diagnostico || "Sin diagnóstico."}</div>
+        <div style="margin-top:10px;">
+            <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:10pt;">DIAGNÓSTICO INICIAL</strong>
+            <div style="border:1px solid #ddd;padding:8px;border-radius:6px;min-height:70px;background:#fcfcfc;font-size:9.5pt;">${data.diagnostico || "Sin diagnóstico."}</div>
         </div>
-        <div style="margin-top:15px;">
-            <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:11pt;">TRABAJO REALIZADO / NOTAS DEL TÉCNICO</strong>
-            <div style="border:1px solid #ddd;padding:10px;border-radius:6px;min-height:70px;background:#fcfcfc;">${data.trabajo || "Trabajo Pendiente de Realizar / Sin notas."}</div>
-        </div>
-        
-        <div style="display:flex;gap:60px;margin-top:35px;padding-top:15px;border-top:1px solid #eee;">
-          <div style="flex:1;text-align:center">
-            <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;">${data.firmaTaller || ""}</div>
-            <div style="margin-top:8px;font-weight:600;color:#2c3e50;">Firma Taller</div>
-          </div>
-          <div style="flex:1;text-align:center">
-            <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;">${data.firmaCliente || ""}</div>
-            <div style="margin-top:8px;font-weight:600;color:#2c3e50;">Firma Cliente</div>
-          </div>
+        <div style="margin-top:10px;">
+            <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:10pt;">TRABAJO REALIZADO / NOTAS DEL TÉCNICO</strong>
+            <div style="border:1px solid #ddd;padding:8px;border-radius:6px;min-height:70px;background:#fcfcfc;font-size:9.5pt;">${data.trabajo || "Trabajo Pendiente de Realizar / Sin notas."}</div>
         </div>
         
-        <div style="margin-top:30px;padding:12px;background:#f0f7ff;border:1px solid #d0e0f0;border-radius:6px;font-size:9pt;color:#444;">
+        <div style="display:flex;gap:40px;margin-top:25px;padding-top:10px;border-top:1px solid #eee;">
+          <div style="flex:1;text-align:center">
+            <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;font-size:9.5pt;">${data.firmaTaller || ""}</div>
+            <div style="margin-top:6px;font-weight:600;color:#2c3e50;font-size:9.5pt;">Firma Taller</div>
+          </div>
+          <div style="flex:1;text-align:center">
+            <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;font-size:9.5pt;">${data.firmaCliente || ""}</div>
+            <div style="margin-top:6px;font-weight:600;color:#2c3e50;font-size:9.5pt;">Firma Cliente</div>
+          </div>
+        </div>
+        
+        <div style="margin-top:20px;padding:8px;background:#f0f7ff;border:1px solid #d0e0f0;border-radius:6px;font-size:9pt;color:#444;">
             <strong style="color:#004d99;">Notas importantes:</strong>
             <ul style="margin:5px 0 0 15px;padding:0;">
                 <li>Toda herramienta no retirada en 30 días podrá generar cobro por almacenamiento.</li>
