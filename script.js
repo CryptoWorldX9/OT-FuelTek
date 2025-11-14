@@ -1,8 +1,6 @@
-/* Fueltek v7.4 - script.js
-   - Lógica de Menú Móvil (hamburguesa) implementada.
-   - FIX: Se elimina la validación de campos obligatorios (al no usar submit).
-   - FIX: Se RESTAURAN los botones a modo texto+icono en DESKTOP y se maneja dinámicamente.
-   - Nota: Se re-introdujo la lógica de `updateSaldo` para manejar la visibilidad del campo Abono.
+/* Fueltek v7.5 - script.js
+   - FIX: Se asegura que las claves de IndexedDB sean siempre String para corregir el error de carga de OT.
+   - Lógica de Menú Móvil y guardado sin validación obligatoria se mantienen.
 */
 
 const DB_NAME = "fueltek_db_v7";
@@ -50,6 +48,7 @@ function openDB() {
     req.onupgradeneeded = e => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains(STORE)) {
+        // Aseguramos que el keyPath sea 'ot'
         db.createObjectStore(STORE, { keyPath: "ot" });
       }
     };
@@ -62,6 +61,7 @@ function dbPut(order) {
   return openDB().then(db => new Promise((res, rej) => {
     const tx = db.transaction(STORE, "readwrite");
     const store = tx.objectStore(STORE);
+    // order.ot DEBE ser string (ya manejado en el guardado)
     const r = store.put(order);
     r.onsuccess = () => { res(true); db.close(); };
     r.onerror = () => { rej(r.error); db.close(); };
@@ -82,7 +82,8 @@ function dbGet(key) {
   return openDB().then(db => new Promise((res, rej) => {
     const tx = db.transaction(STORE, "readonly");
     const store = tx.objectStore(STORE);
-    const r = store.get(key);
+    // FIX: Asegurar que la clave buscada sea siempre string para IndexedDB
+    const r = store.get(String(key)); 
     r.onsuccess = () => { res(r.result); db.close(); };
     r.onerror = () => { rej(r.error); db.close(); };
   }));
@@ -198,6 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 2. Cerrar el menú después de hacer click en cualquier botón de acción
   if(mobileMenuDropdown) mobileMenuDropdown.querySelectorAll("button, .import-label").forEach(btn => {
     btn.addEventListener("click", () => {
+        // Usar setTimeout para que la acción del botón (ej. guardar) se ejecute primero
         setTimeout(() => {
             mobileMenuDropdown.classList.remove("active");
             if(mobileMenuBtn) {
@@ -244,8 +246,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("saveBtn").addEventListener("click", async (e) => {
     e.preventDefault();
     
-    // **VALIDACIÓN DE CAMPO REQUERIDO ELIMINADA. SE MANTIENE EL CÓDIGO FUNCIONAL.**
-    
     const fd = new FormData(form);
     const order = {};
     for (const [k, v] of fd.entries()) {
@@ -270,7 +270,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Si se cargó una OT existente, mantener el mismo número
     if (currentLoadedOt) {
-      order.ot = currentLoadedOt;
+      // FIX: Asegurar que el OT sea string para IndexedDB
+      order.ot = String(currentLoadedOt);
       otToSave = currentLoadedOt;
       saveMessage = "actualizada";
     } else {
@@ -310,7 +311,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .filter(o => {
         if (!filter) return true;
         const f = filter.toLowerCase();
-        return (o.ot && o.ot.toLowerCase().includes(f)) ||
+        return (String(o.ot).toLowerCase().includes(f)) ||
                (o.clienteNombre && o.clienteNombre.toLowerCase().includes(f));
       })
       .sort((a, b) => Number(b.ot) - Number(a.ot));
@@ -336,7 +337,8 @@ document.addEventListener("DOMContentLoaded", () => {
     ordersList.querySelectorAll("button").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const targetBtn = ev.target.closest('button');
-        const ot = targetBtn.dataset.ot;
+        // FIX: Aseguramos que el OT extraído del data-attribute sea string para la consulta
+        const ot = String(targetBtn.dataset.ot);
         const action = targetBtn.dataset.action;
         if (action === "print") {
           const dat = await dbGet(ot); buildPrintAndPrint(dat);
@@ -367,7 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function loadOrderToForm(o) {
     if (!o) return alert("Orden no encontrada.");
     form.reset();
-    currentLoadedOt = o.ot; // se marcará como cargada para actualizar
+    currentLoadedOt = String(o.ot); // Aseguramos que el OT cargado sea string
     const fields = ["clienteNombre","clienteTelefono","clienteEmail","fechaRecibida","fechaEntrega",
       "marca","modelo","serie","anio","diagnostico","trabajo","firmaTaller","firmaCliente"];
     fields.forEach(k => { const el = form.querySelector(`[name="${k}"]`); if (el) el.value = o[k] || ""; });
@@ -396,7 +398,7 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("Orden OT #" + o.ot + " cargada. Si modificas algo y guardas, se actualizará esa misma OT.");
   }
 
-  // Imprimir actual o vista previa
+  // Imprimir actual o vista previa (se mantiene la lógica)
   document.getElementById("printBtn").addEventListener("click", e => {
     e.preventDefault();
     const fd = new FormData(form);
@@ -582,6 +584,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let importedCount = 0;
         
         orders.forEach(order => {
+            // Asegurar que el OT sea string para el keyPath
             order.ot = String(order.ot);
             const request = store.put(order);
             request.onsuccess = () => importedCount++;
