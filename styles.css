@@ -71,13 +71,13 @@ main{padding:25px}
   color:var(--primary);
 }
 
-/* --- CONTROLES: RESTAURADOS A TEXTO+ICONO (ESCRITORIO) --- */
-.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center} /* Se añade display:flex;gap:8px; */
+/* --- CONTROLES: TEXTO+ICONO (ESCRITORIO) --- */
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center} 
 .controls button, .import-label {
   /* ESTILOS PARA ESCRITORIO (TEXTO + ICONO) */
   height: 40px;
-  width: auto; /* Permite que el botón se ajuste al contenido (texto + icono) */
-  padding: 0 12px; /* Padding para el texto */
+  width: auto; 
+  padding: 0 12px; 
   border-radius: 8px;
   border: none;
   background: var(--primary);
@@ -88,13 +88,13 @@ main{padding:25px}
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-  gap: 6px; /* Espacio entre el icono y el texto */
+  gap: 6px; 
   font-weight: 500;
-  white-space: nowrap; /* Evita que el texto se divida */
+  white-space: nowrap; 
 }
 .controls button:hover, .import-label:hover{background:#003a7a;transform:translateY(-1px)}
-.controls button i, .import-label i { width: 18px; height: 18px; } /* Ícono */
-.controls button span, .import-label span { font-size: 0.95rem; } /* Texto */
+.controls button i, .import-label i { width: 18px; height: 18px; } 
+.controls button span, .import-label span { font-size: 0.95rem; } 
 
 /* Estilos de color específicos */
 #saveBtn { background: var(--success); }
@@ -223,7 +223,7 @@ textarea{min-height:140px;resize:vertical}
         right: 15px;
         width: 200px; 
         flex-direction: column;
-        background: var(--dark); 
+        background: var(--dark); /* Fondo del menú */
         border-radius: 8px;
         padding: 8px; 
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
@@ -235,30 +235,38 @@ textarea{min-height:140px;resize:vertical}
         display: flex; /* Muestra el menú al activarse */
     }
     
-    /* Estilos para los botones dentro del menú móvil (mostrando texto) */
+    /* FIX: Estilos para los botones dentro del menú móvil (conservando colores específicos) */
     #mobileMenuDropdown button, #mobileMenuDropdown .import-label {
         width: 100%;
         height: 40px;
         display: flex; 
         align-items: center;
-        justify-content: flex-start;
+        justify-content: flex-start; /* Alineación a la izquierda */
         padding: 0 10px; 
-        color: white;
-        background: #3e5367; 
+        /* Se remueve el override de color para que los estilos específicos se apliquen */
         border-radius: 4px; 
         gap: 10px;
         white-space: nowrap;
     }
-    
-    #mobileMenuDropdown button:hover, #mobileMenuDropdown .import-label:hover { 
-        background: #576574; 
+
+    /* Hover simple para mantener el color y dar feedback */
+    #mobileMenuDropdown button:hover, #mobileMenuDropdown .import-label:hover {
+        filter: brightness(1.2); /* Oscurece/Aclara el color base */
     }
+
 
     /* Adaptar el Formulario */
     .grid-2col { grid-template-columns: 1fr; } /* Columna única */
     .grid-pay { grid-template-columns: 1fr; } /* Una columna para el pago en móvil */
     .checkbox-grid.aligned { 
         grid-template-columns: 1fr 1fr; /* Dos columnas para la lista de accesorios */
+    }
+
+    /* FIX: Campos de fecha (input[type="date"]) para evitar desbordamiento */
+    .stack input[type="date"] {
+        min-width: 0; /* Permite que el input se comprima */
+        /* Asegurarse de que el input ocupe el espacio sin desbordar */
+        width: 100%;
     }
 
     /* Adaptar Firmas */
