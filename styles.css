@@ -1,6 +1,6 @@
 :root{
-  --primary: #004d99; /* Azul Corporativo */
-  --accent: #f26522; /* Naranja Contraste */
+  --primary: #004d99; 
+  --accent: #f26522; 
   --dark: #2c3e50;
   --border: #e0e0e0;
   --bg: #f4f7f9;
@@ -40,7 +40,6 @@ header{
 .header-info p{color:var(--accent);margin:4px 0;font-weight:600}
 .header-info small{opacity:0.9;font-size:0.8rem}
 
-/* MAIN */
 main{padding:20px}
 
 /* OT BAR */
@@ -102,7 +101,13 @@ legend{
   padding:10px;border-radius:6px;border:1px solid var(--border);
   font-size:1rem;font-family:inherit;
 }
-textarea{min-height:140px;resize:vertical}
+
+/* 🔥 FIX: Textareas grandes en escritorio */
+textarea{
+  min-height:200px;
+  resize:vertical;
+  font-size:1.05rem;
+}
 
 /* CHECKBOX GRID */
 .checkbox-grid.aligned{
@@ -143,20 +148,8 @@ footer{
   text-align:center;padding:10px;font-size:0.8rem;
 }
 
-/* MODAL */
-.modal{
-  position:fixed;left:0;top:0;width:100%;height:100%;
-  display:flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,0.55);z-index:40;
-}
-.modal.hidden{display:none}
-.modal-content{
-  width:90%;max-width:900px;background:#fff;
-  border-radius:10px;padding:20px;
-}
-
 /* ======================== */
-/* 📱 RESPONSIVE MÓVIL      */
+/* 📱 RESPONSIVE MEJORADO   */
 /* ======================== */
 
 @media(max-width:900px){
@@ -172,6 +165,14 @@ footer{
 
   .grid-2col{grid-template-columns:1fr}
 
+  /* ✔ Formularios más limpios en móvil */
+  .stack input,
+  .stack select,
+  textarea{
+    padding:14px;
+    font-size:1.1rem;
+  }
+
   .checkbox-grid.aligned{
     grid-template-columns:repeat(2,1fr);
   }
@@ -184,24 +185,47 @@ footer{
   .firma-box{width:80%}
 
   /* BOTONES TIPO APP */
-  .controls button, .import-label{
-    width:55px;height:55px;font-size:1.4rem;
+  .controls{
+    justify-content:center;
   }
+  .controls button, .import-label{
+    width:60px;height:60px;
+    font-size:1.5rem;
+    border-radius:12px;
+  }
+
+  fieldset{padding:15px}
 }
 
 @media(max-width:600px){
-  header{
-    padding:12px;
-  }
-  .logo{width:55px;height:55px}
-  .header-info small{display:none}
 
-  .controls{
-    justify-content:center;
+  header{
     gap:10px;
   }
-  .controls button, .import-label{
-    width:60px;height:60px;border-radius:12px;
+  .logo{width:55px;height:55px}
+  .header-info h1{font-size:1.3rem}
+  .header-info small{display:none}
+
+  /* ✔ Diseño más bonito en celular */
+  main{
+    padding:12px;
+  }
+
+  fieldset{
+    padding:12px;
+    border-radius:12px;
+  }
+
+  legend{
+    font-size:1rem;
+    padding:0 6px;
+  }
+
+  /* ✔ Textareas amplias y limpias */
+  textarea{
+    min-height:180px;
+    font-size:1.1rem;
+    padding:14px;
   }
 
   .checkbox-grid.aligned{
@@ -212,8 +236,13 @@ footer{
     grid-template-columns:1fr;
   }
 
-  fieldset{padding:12px}
-  textarea{min-height:110px}
+  .controls{
+    gap:12px;
+  }
+  .controls button, .import-label{
+    width:65px;height:65px;
+    font-size:1.6rem;
+  }
 }
 
 /* ============ */
