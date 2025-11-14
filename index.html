@@ -6,57 +6,8 @@
   <title>Orden de Trabajo - Fueltek</title>
   <link rel="stylesheet" href="styles.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <!-- ELIMINADO: <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script> -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  
-  <!-- === FIREBASE IMPORTS === -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, collection, query, onSnapshot, orderBy, where, getDocs, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // Variables globales de entorno (deben ser proporcionadas por el entorno de Canvas)
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { /* Configuración de Firebase de respaldo */ };
-    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-    
-    // Configuración de Firebase del usuario (para referencia)
-    const providedFirebaseConfig = {
-      apiKey: "AIzaSyATGBP6B5YoOk8kkovZydhQ9rLjjmxwgds",
-      authDomain: "ot-fueltek.firebaseapp.com",
-      projectId: "ot-fueltek",
-      storageBucket: "ot-fueltek.firebasestorage.app",
-      messagingSenderId: "884528621368",
-      appId: "1:884528621368:web:d82923bef09c48ad3b83cd",
-      measurementId: "G-DCNFDEJN0Y"
-    };
-
-    // Inicialización y Autenticación
-    const app = initializeApp(firebaseConfig.apiKey ? firebaseConfig : providedFirebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    setLogLevel('debug'); // Habilitar logs para depuración
-
-    window.firebase = {
-      app,
-      db,
-      auth,
-      appId,
-      signInAnonymously,
-      signInWithCustomToken,
-      onAuthStateChanged,
-      signOut,
-      doc, setDoc, collection, query, onSnapshot, orderBy, where, getDocs, deleteDoc, updateDoc
-    };
-
-    // Iniciar el script principal (script.js) después de que la autenticación esté lista.
-    const script = document.createElement('script');
-    script.src = 'script.js';
-    script.type = 'module'; // Es crucial para que los imports de script.js funcionen con los módulos de Firebase
-    document.body.appendChild(script);
-
-  </script>
 </head>
 <body>
   <div class="wrapper">
@@ -66,8 +17,6 @@
         <h1>FUELTEK</h1>
         <p>Servicio Técnico Multimarca</p>
         <small>Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</small>
-        <!-- Nuevo elemento para mostrar el ID de usuario -->
-        <small id="userIdDisplay" style="font-size:0.7rem; color: #aaa; margin-top: 5px;"></small>
       </div>
     </header>
 
@@ -75,95 +24,66 @@
       <div class="ot-bar">
         <div class="left">
           <label class="ot-label">N° OT:</label>
-          <input id="otNumber" readonly />
+          <!-- El número de OT es la clave de Firestore. Lo haremos visible aquí -->
+          <input id="otNumber" readonly /> 
         </div>
 
-        <div class="controls">
-          <button id="newOtBtn" title="Reservar nuevo OT"><i data-lucide="file-plus"></i> Nuevo</button>
-          <button id="saveBtn" title="Guardar orden (Ctrl+S)" class="primary-btn"><i data-lucide="save"></i> Guardar</button>
-          <button id="printBtn" title="Imprimir/PDF"><i data-lucide="printer"></i> Imprimir</button>
-          <button id="viewOrdersBtn" title="Ver órdenes guardadas"><i data-lucide="list-checks"></i> Ver Órdenes</button>
-          <button id="clearBtn" title="Limpiar todos los campos"><i data-lucide="x-circle"></i> Limpiar Campos</button>
-          <!-- Botón de Exportar, la funcionalidad de Importar se simplificará -->
-          <button id="exportBtn" title="Exportar todas las órdenes"><i data-lucide="download"></i> Exportar</button>
+        <button id="mobileMenuBtn" class="mobile-only" title="Menú"><i data-lucide="menu"></i></button>
+
+        <div class="right desktop-only">
+          <button id="newOtBtn"><i data-lucide="plus"></i> Nueva OT</button>
+          <button id="saveOtBtn" class="success"><i data-lucide="save"></i> Guardar</button>
+          <button id="printOtBtn" class="accent"><i data-lucide="printer"></i> Imprimir</button>
+          <button id="openModalBtn" class="primary"><i data-lucide="folder"></i> Ver Órdenes</button>
+          <button id="exportExcelBtn" class="primary"><i data-lucide="file-spreadsheet"></i> Exportar Excel</button>
         </div>
       </div>
+      
+      <!-- Contenedor para mensajes de estado/error -->
+      <div id="messageBox" class="message-box hidden" role="alert"></div>
 
-      <!-- Nuevo elemento para el feedback de la base de datos -->
-      <div id="dbMessage" class="db-message">Conectando a Firebase...</div>
+      <!-- Información de la sesión Firebase -->
+      <div class="session-info">
+        <small id="authStatus"></small>
+      </div>
 
       <form id="otForm">
-        <section class="ot-data">
-          <h3>Datos de la Orden</h3>
-          <div class="grid-2">
-            <label>Fecha de Recepción: <input type="date" name="fechaRecepcion" id="fechaRecepcionInput" required /></label>
-            <label>Fecha de Entrega Estimada: <input type="date" name="fechaEntregaEstimada" /></label>
-            <label>Técnico a cargo: <input type="text" name="tecnicoCargo" list="tecnicos" value="Fueltek" /></label>
-            <datalist id="tecnicos">
-              <option value="Fueltek">
-              <option value="Técnico A">
-              <option value="Técnico B">
-            </datalist>
-            <label>Estado del Servicio:
-              <select name="estadoServicio" required>
-                <option value="Pendiente" selected>Pendiente</option>
-                <option value="En Proceso">En Proceso</option>
-                <option value="Finalizado - Pendiente Retiro">Finalizado - Pendiente Retiro</option>
-                <option value="Entregado">Entregado</option>
-                <option value="Anulado">Anulado</option>
-              </select>
-            </label>
+        <fieldset class="grid-2-col">
+          <legend>Datos del Cliente</legend>
+          <label>Nombre Cliente: <input name="nombreCliente" required /></label>
+          <label>Rut/ID: <input name="rutId" /></label>
+          <label>Teléfono: <input name="telefono" type="tel" /></label>
+          <label>Email: <input name="email" type="email" /></label>
+        </fieldset>
+
+        <fieldset class="grid-2-col">
+          <legend>Datos del Equipo</legend>
+          <label>Tipo Equipo: <input name="tipoEquipo" /></label>
+          <label>Marca/Modelo: <input name="marcaModelo" /></label>
+          <label>Año: <input name="año" type="number" inputmode="numeric" /></label>
+          <label>N° Serie/VIN: <input name="nroSerie" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Problema Reportado / Trabajos a Realizar</legend>
+          <label>Descripción: <textarea name="problemaReportado" rows="4" required></textarea></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Detalle de Repuestos, Servicios y Valores</legend>
+          <div id="itemsContainer">
+            <!-- Los items se agregarán aquí por JavaScript -->
           </div>
-        </section>
+          <button type="button" id="addItemBtn" class="primary small"><i data-lucide="plus"></i> Agregar Item</button>
 
-        <section class="client-data">
-          <h3>Datos del Cliente</h3>
-          <div class="grid-2">
-            <label>RUT/C.I.: <input type="text" name="clienteRut" placeholder="Ej: 12.345.678-9" /></label>
-            <label>Nombre Cliente: <input type="text" name="clienteNombre" required /></label>
-            <label>Teléfono: <input type="tel" name="clienteTelefono" /></label>
-            <label>Email: <input type="email" name="clienteEmail" /></label>
+          <div class="total-bar">
+            <label>Subtotal: <input name="subtotal" type="text" inputmode="numeric" id="subtotalInput" readonly /></label>
+            <label>IVA (19%): <input name="iva" type="text" inputmode="numeric" id="ivaInput" readonly /></label>
+            <label>TOTAL: <input name="total" type="text" inputmode="numeric" id="totalInput" readonly /></label>
           </div>
-        </section>
 
-        <section class="equipment-data">
-          <h3>Datos del Equipo</h3>
-          <div class="grid-3">
-            <label>Tipo Equipo: <input type="text" name="equipoTipo" list="tiposEquipo" required /></label>
-            <datalist id="tiposEquipo">
-              <option value="Módulo ECU">
-              <option value="Ecu de motor">
-              <option value="Módulo ABS/ESP">
-              <option value="Tablero/Cluster">
-              <option value="Inyector/Bomba">
-            </datalist>
-            <label>Marca: <input type="text" name="equipoMarca" /></label>
-            <label>Modelo: <input type="text" name="equipoModelo" /></label>
-            <label>Año/Placa: <input type="text" name="equipoAnio" /></label>
-            <label>Número de Serie/Part Number: <input type="text" name="equipoSerie" /></label>
-            <label>Kilometraje/Horas: <input type="text" name="equipoKm" inputmode="numeric" pattern="[0-9]*" /></label>
-          </div>
-          <label>Falla Reportada por Cliente: <textarea name="fallaReportada" rows="3" required></textarea></label>
-          <label>Accesorios recibidos (Ej: con arnés, caja, etc.): <input type="text" name="accesoriosRecibidos" /></label>
-        </section>
-
-        <section class="service-details">
-          <h3>Detalles y Diagnóstico del Servicio</h3>
-          <label>Diagnóstico Técnico (Inicial/Final): <textarea name="diagnosticoTecnico" rows="4"></textarea></label>
-          <label>Trabajo Realizado y Solución: <textarea name="trabajoRealizado" rows="4"></textarea></label>
-          <label>Garantía: <input type="text" name="garantia" value="90 días" /></label>
-        </section>
-
-        <fieldset class="financial-data">
-          <legend>Información de Pago</legend>
-          <div class="grid-3">
-            <label>Mano de Obra (Neto): <input type="text" name="montoManoObra" class="clp-input" inputmode="numeric" pattern="[0-9]*" id="montoManoObraInput" value="0" /></label>
-            <label>Repuestos/Materiales (Neto): <input type="text" name="montoRepuestos" class="clp-input" inputmode="numeric" pattern="[0-9]*" id="montoRepuestosInput" value="0" /></label>
-            <label>Otros Cargos (Neto): <input type="text" name="montoOtros" class="clp-input" inputmode="numeric" pattern="[0-9]*" id="montoOtrosInput" value="0" /></label>
-            <label>Total Neto: <input type="text" id="totalNetoDisplay" readonly value="0" /></label>
-            <label>IVA (19%): <input type="text" id="ivaDisplay" readonly value="0" /></label>
-            <label class="total-final">Total Servicio (CLP): <input type="text" id="totalServicioDisplay" readonly value="0" /></label>
-            <label>Monto Abonado (a cuenta): <input type="text" name="montoAbonado" class="clp-input" inputmode="numeric" pattern="[0-9]*" id="montoAbonadoInput" value="0" /></label>
+          <div class="abono-bar">
+            <label>Monto Abonado: <input name="montoAbonado" type="text" inputmode="numeric" id="montoAbonadoInput" /></label>
           </div>
         </fieldset>
 
@@ -196,17 +116,93 @@
       </div>
       <div class="modal-body">
         <input id="searchOt" placeholder="Buscar por N° OT o nombre cliente..." />
-        <div id="ordersList" class="orders-list">
-          <!-- Spinner de carga -->
-          <div class="loading-spinner" id="modalSpinner"></div>
-        </div>
+        <div id="ordersList" class="orders-list"></div>
+        <p class="mt-4"><small>Los datos se guardan en Firebase Firestore bajo tu ID de usuario.</small></p>
       </div>
     </div>
   </div>
 
   <div id="printArea" class="print-area" style="display:none"></div>
 
-  <!-- El script principal ahora se carga dinámicamente -->
-  <!-- <script src="script.js"></script> -->
+  <!-- Importaciones de Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, collection, setDoc, deleteDoc, query, onSnapshot, getDocs, orderBy, where, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Mantenemos la configuración que el usuario proporcionó como referencia,
+    // pero el entorno inyecta la configuración real en __firebase_config
+    /*
+    const USER_CONFIG = {
+        apiKey: "AIzaSyATGBP6B5YoOk8kkovZydhQ9rLjjmxwgds",
+        authDomain: "ot-fueltek.firebaseapp.com",
+        projectId: "ot-fueltek",
+        storageBucket: "ot-fueltek.firebasestorage.app",
+        messagingSenderId: "884528621368",
+        appId: "1:884528621368:web:d82923bef09c48ad3b83cd",
+        measurementId: "G-DCNFDEJN0Y"
+    };
+    */
+    
+    // VARIABLES GLOBALES DEL ENTORNO
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    let db;
+    let auth;
+    let userId = null;
+    let isAuthReady = false;
+
+    // Inicialización y Autenticación
+    if (Object.keys(firebaseConfig).length > 0) {
+      setLogLevel('debug'); // Para ver logs de Firebase
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      auth = getAuth(app);
+    } else {
+      console.error("Firebase config is missing.");
+    }
+
+    // Exportar variables y funciones necesarias al ámbito global (window)
+    window.firebase = { db, auth, appId, setDoc, doc, collection, deleteDoc, query, onSnapshot, getDocs, getDoc, where };
+    
+    // Autenticación
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            userId = user.uid;
+            document.getElementById('authStatus').textContent = `ID de Usuario: ${userId.substring(0, 8)}... (Autenticado)`;
+        } else {
+            // Si la autenticación falla o no hay usuario, intentar de forma anónima
+            try {
+                // Generar un ID aleatorio para usuarios no autenticados (opcional, pero útil para datos privados)
+                userId = crypto.randomUUID(); 
+                await signInAnonymously(auth);
+                document.getElementById('authStatus').textContent = `ID de Usuario: ${userId.substring(0, 8)}... (Anónimo)`;
+            } catch (error) {
+                console.error("Error en autenticación anónima:", error);
+                document.getElementById('authStatus').textContent = "ERROR de autenticación";
+            }
+        }
+        isAuthReady = true;
+        
+        // Cargar script.js y comenzar la lógica de la aplicación SOLO cuando la autenticación esté lista
+        const script = document.createElement('script');
+        script.src = 'script.js';
+        script.setAttribute('type', 'module'); // Se mantiene como módulo para la lógica del script
+        document.body.appendChild(script);
+    });
+
+    // Intento de inicio de sesión con token personalizado (si está disponible)
+    if (auth && initialAuthToken) {
+        setPersistence(auth, browserSessionPersistence).then(() => {
+             signInWithCustomToken(auth, initialAuthToken).catch((error) => {
+                console.error("Error al iniciar sesión con Custom Token:", error);
+             });
+        });
+    }
+
+  </script>
 </body>
 </html>
