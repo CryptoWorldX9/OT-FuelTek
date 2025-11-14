@@ -6,8 +6,57 @@
   <title>Orden de Trabajo - Fueltek</title>
   <link rel="stylesheet" href="styles.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <!-- ELIMINADO: <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script> -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- === FIREBASE IMPORTS === -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, collection, query, onSnapshot, orderBy, where, getDocs, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Variables globales de entorno (deben ser proporcionadas por el entorno de Canvas)
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { /* Configuración de Firebase de respaldo */ };
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    
+    // Configuración de Firebase del usuario (para referencia)
+    const providedFirebaseConfig = {
+      apiKey: "AIzaSyATGBP6B5YoOk8kkovZydhQ9rLjjmxwgds",
+      authDomain: "ot-fueltek.firebaseapp.com",
+      projectId: "ot-fueltek",
+      storageBucket: "ot-fueltek.firebasestorage.app",
+      messagingSenderId: "884528621368",
+      appId: "1:884528621368:web:d82923bef09c48ad3b83cd",
+      measurementId: "G-DCNFDEJN0Y"
+    };
+
+    // Inicialización y Autenticación
+    const app = initializeApp(firebaseConfig.apiKey ? firebaseConfig : providedFirebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    setLogLevel('debug'); // Habilitar logs para depuración
+
+    window.firebase = {
+      app,
+      db,
+      auth,
+      appId,
+      signInAnonymously,
+      signInWithCustomToken,
+      onAuthStateChanged,
+      signOut,
+      doc, setDoc, collection, query, onSnapshot, orderBy, where, getDocs, deleteDoc, updateDoc
+    };
+
+    // Iniciar el script principal (script.js) después de que la autenticación esté lista.
+    const script = document.createElement('script');
+    script.src = 'script.js';
+    script.type = 'module'; // Es crucial para que los imports de script.js funcionen con los módulos de Firebase
+    document.body.appendChild(script);
+
+  </script>
 </head>
 <body>
   <div class="wrapper">
@@ -17,6 +66,8 @@
         <h1>FUELTEK</h1>
         <p>Servicio Técnico Multimarca</p>
         <small>Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</small>
+        <!-- Nuevo elemento para mostrar el ID de usuario -->
+        <small id="userIdDisplay" style="font-size:0.7rem; color: #aaa; margin-top: 5px;"></small>
       </div>
     </header>
 
@@ -27,115 +78,92 @@
           <input id="otNumber" readonly />
         </div>
 
-        <button id="mobileMenuBtn" class="mobile-only" title="Menú"><i data-lucide="menu"></i></button>
-
-        <div id="mobileMenuDropdown" class="controls">
-          <button id="newOtBtn" title="Reservar nuevo OT"><i data-lucide="plus"></i><span>Nuevo OT</span></button>
-          <button id="saveBtn" type="button" title="Guardar OT"><i data-lucide="save"></i><span>Guardar</span></button>
-          <button id="viewBtn" title="Ver lista de OT"><i data-lucide="list"></i><span>Ver Lista</span></button>
-          <button id="resetFormBtn" title="Limpiar todos los campos"><i data-lucide="eraser"></i><span>Limpiar</span></button>
-          <button id="exportBtn" title="Exportar Excel"><i data-lucide="download"></i><span>Exportar Excel</span></button>
-          <button id="exportDbBtn" title="Exportar DB JSON"><i data-lucide="file-text"></i><span>Exportar DB</span></button>
-          <label class="import-label" title="Importar DB JSON">
-            <input id="importFile" type="file" accept=".json" />
-            <i data-lucide="upload"></i><span>Importar DB</span>
-          </label>
-          <button id="printBtn" title="Imprimir / PDF"><i data-lucide="printer"></i><span>Imprimir</span></button>
-          <button id="clearBtn" class="danger" title="Borrar DB"><i data-lucide="trash-2"></i><span>Borrar DB</span></button>
+        <div class="controls">
+          <button id="newOtBtn" title="Reservar nuevo OT"><i data-lucide="file-plus"></i> Nuevo</button>
+          <button id="saveBtn" title="Guardar orden (Ctrl+S)" class="primary-btn"><i data-lucide="save"></i> Guardar</button>
+          <button id="printBtn" title="Imprimir/PDF"><i data-lucide="printer"></i> Imprimir</button>
+          <button id="viewOrdersBtn" title="Ver órdenes guardadas"><i data-lucide="list-checks"></i> Ver Órdenes</button>
+          <button id="clearBtn" title="Limpiar todos los campos"><i data-lucide="x-circle"></i> Limpiar Campos</button>
+          <!-- Botón de Exportar, la funcionalidad de Importar se simplificará -->
+          <button id="exportBtn" title="Exportar todas las órdenes"><i data-lucide="download"></i> Exportar</button>
         </div>
       </div>
 
-      <form id="otForm" autocomplete="off">
-        <fieldset>
-          <legend>Datos del Cliente</legend>
-          <div class="grid grid-2col spaced">
-            <label class="stack">Nombre del Cliente
-              <input name="clienteNombre" />
-            </label>
-            <label class="stack">Teléfono
-              <input name="clienteTelefono" />
-            </label>
+      <!-- Nuevo elemento para el feedback de la base de datos -->
+      <div id="dbMessage" class="db-message">Conectando a Firebase...</div>
 
-            <label class="stack">Correo Electrónico
-              <input name="clienteEmail" type="email" />
-            </label>
-            <label class="stack">Fecha Recibida
-              <input name="fechaRecibida" type="date" />
-            </label>
-
-            <label class="stack">Fecha de Entrega
-              <input name="fechaEntrega" type="date" />
-            </label>
-            <div></div>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Datos de la Herramienta</legend>
-          <div class="grid grid-2col spaced">
-            <label class="stack">Marca
-              <input name="marca" />
-            </label>
-            <label class="stack">Modelo
-              <input name="modelo" />
-            </label>
-
-            <label class="stack">N° de Serie
-              <input name="serie" />
-            </label>
-            <label class="stack">Año Fabricación
-              <input name="anio" type="number" min="1900" max="2100" />
-            </label>
-            <div></div>
-            <div></div>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Revisión y Accesorios Recibidos</legend>
-          <div class="checkbox-grid aligned">
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Motosierra"><span>Motosierra</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Desbrozadora"><span>Desbrozadora</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cortasetos"><span>Cortasetos</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Corta Césped"><span>Corta Césped</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Fumigadora"><span>Fumigadora</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Sopladora"><span>Sopladora</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Espada"><span>Espada</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cadena"><span>Cadena</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Pistón Rayado"><span>Pistón Rayado</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cilindro Rayado"><span>Cilindro Rayado</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Bujía"><span>Bujía</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Funda Espada"><span>Funda Espada</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Tapa de Arranque"><span>Tapa de Arranque</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Brazo Completo"><span>Brazo Completo</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cabezal"><span>Cabezal</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Tubo"><span>Tubo</span></label>
-            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Manilla Arranque"><span>Manilla Arranque</span></label>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Diagnóstico Inicial</legend>
-          <textarea name="diagnostico" rows="6" placeholder="Describa el diagnóstico ..."></textarea>
-        </fieldset>
-
-        <fieldset>
-          <legend>Trabajo Realizado / Notas del Técnico</legend>
-          <textarea name="trabajo" rows="6" placeholder="Describa el trabajo realizado ..."></textarea>
-        </fieldset>
-
-        <fieldset>
-          <legend>Pago</legend>
-          <div class="grid-pay">
-            <label class="stack">Valor del trabajo (CLP)<input name="valorTrabajo" type="text" inputmode="numeric" id="valorTrabajoInput" /></label>
-            <label class="stack">Estado de Pago
-              <select name="estadoPago" id="estadoPago">
-                <option value="Pendiente">Pendiente de Pago</option>
-                <option value="Pagado">Pagado</option>
-                <option value="Abonado">Abonado</option>
+      <form id="otForm">
+        <section class="ot-data">
+          <h3>Datos de la Orden</h3>
+          <div class="grid-2">
+            <label>Fecha de Recepción: <input type="date" name="fechaRecepcion" id="fechaRecepcionInput" required /></label>
+            <label>Fecha de Entrega Estimada: <input type="date" name="fechaEntregaEstimada" /></label>
+            <label>Técnico a cargo: <input type="text" name="tecnicoCargo" list="tecnicos" value="Fueltek" /></label>
+            <datalist id="tecnicos">
+              <option value="Fueltek">
+              <option value="Técnico A">
+              <option value="Técnico B">
+            </datalist>
+            <label>Estado del Servicio:
+              <select name="estadoServicio" required>
+                <option value="Pendiente" selected>Pendiente</option>
+                <option value="En Proceso">En Proceso</option>
+                <option value="Finalizado - Pendiente Retiro">Finalizado - Pendiente Retiro</option>
+                <option value="Entregado">Entregado</option>
+                <option value="Anulado">Anulado</option>
               </select>
             </label>
-            <label class="stack hidden" id="labelAbono">Monto Abonado (CLP)<input name="montoAbonado" type="text" inputmode="numeric" id="montoAbonadoInput" /></label>
+          </div>
+        </section>
+
+        <section class="client-data">
+          <h3>Datos del Cliente</h3>
+          <div class="grid-2">
+            <label>RUT/C.I.: <input type="text" name="clienteRut" placeholder="Ej: 12.345.678-9" /></label>
+            <label>Nombre Cliente: <input type="text" name="clienteNombre" required /></label>
+            <label>Teléfono: <input type="tel" name="clienteTelefono" /></label>
+            <label>Email: <input type="email" name="clienteEmail" /></label>
+          </div>
+        </section>
+
+        <section class="equipment-data">
+          <h3>Datos del Equipo</h3>
+          <div class="grid-3">
+            <label>Tipo Equipo: <input type="text" name="equipoTipo" list="tiposEquipo" required /></label>
+            <datalist id="tiposEquipo">
+              <option value="Módulo ECU">
+              <option value="Ecu de motor">
+              <option value="Módulo ABS/ESP">
+              <option value="Tablero/Cluster">
+              <option value="Inyector/Bomba">
+            </datalist>
+            <label>Marca: <input type="text" name="equipoMarca" /></label>
+            <label>Modelo: <input type="text" name="equipoModelo" /></label>
+            <label>Año/Placa: <input type="text" name="equipoAnio" /></label>
+            <label>Número de Serie/Part Number: <input type="text" name="equipoSerie" /></label>
+            <label>Kilometraje/Horas: <input type="text" name="equipoKm" inputmode="numeric" pattern="[0-9]*" /></label>
+          </div>
+          <label>Falla Reportada por Cliente: <textarea name="fallaReportada" rows="3" required></textarea></label>
+          <label>Accesorios recibidos (Ej: con arnés, caja, etc.): <input type="text" name="accesoriosRecibidos" /></label>
+        </section>
+
+        <section class="service-details">
+          <h3>Detalles y Diagnóstico del Servicio</h3>
+          <label>Diagnóstico Técnico (Inicial/Final): <textarea name="diagnosticoTecnico" rows="4"></textarea></label>
+          <label>Trabajo Realizado y Solución: <textarea name="trabajoRealizado" rows="4"></textarea></label>
+          <label>Garantía: <input type="text" name="garantia" value="90 días" /></label>
+        </section>
+
+        <fieldset class="financial-data">
+          <legend>Información de Pago</legend>
+          <div class="grid-3">
+            <label>Mano de Obra (Neto): <input type="text" name="montoManoObra" class="clp-input" inputmode="numeric" pattern="[0-9]*" id="montoManoObraInput" value="0" /></label>
+            <label>Repuestos/Materiales (Neto): <input type="text" name="montoRepuestos" class="clp-input" inputmode="numeric" pattern="[0-9]*" id="montoRepuestosInput" value="0" /></label>
+            <label>Otros Cargos (Neto): <input type="text" name="montoOtros" class="clp-input" inputmode="numeric" pattern="[0-9]*" id="montoOtrosInput" value="0" /></label>
+            <label>Total Neto: <input type="text" id="totalNetoDisplay" readonly value="0" /></label>
+            <label>IVA (19%): <input type="text" id="ivaDisplay" readonly value="0" /></label>
+            <label class="total-final">Total Servicio (CLP): <input type="text" id="totalServicioDisplay" readonly value="0" /></label>
+            <label>Monto Abonado (a cuenta): <input type="text" name="montoAbonado" class="clp-input" inputmode="numeric" pattern="[0-9]*" id="montoAbonadoInput" value="0" /></label>
           </div>
         </fieldset>
 
@@ -168,14 +196,17 @@
       </div>
       <div class="modal-body">
         <input id="searchOt" placeholder="Buscar por N° OT o nombre cliente..." />
-        <div id="ordersList" class="orders-list"></div>
+        <div id="ordersList" class="orders-list">
+          <!-- Spinner de carga -->
+          <div class="loading-spinner" id="modalSpinner"></div>
+        </div>
       </div>
     </div>
   </div>
 
   <div id="printArea" class="print-area" style="display:none"></div>
 
-  <script src="script.js"></script>
-  <script>lucide.createIcons();</script>
+  <!-- El script principal ahora se carga dinámicamente -->
+  <!-- <script src="script.js"></script> -->
 </body>
 </html>
