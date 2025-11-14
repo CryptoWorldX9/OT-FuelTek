@@ -2,6 +2,7 @@
    - Lógica de Menú Móvil (hamburguesa)
    - Cálculo de Saldo Pendiente en tiempo real
    - AJUSTES DE ESPACIADO PARA LA IMPRESIÓN
+   - FIX: Se elimina la validación de campos obligatorios.
 */
 
 const DB_NAME = "fueltek_db_v7";
@@ -146,9 +147,10 @@ function updateSaldo() {
 
     if (estado === "Pagado" || saldo <= 0) {
         labelSaldo.classList.add("hidden");
-        saldoInput.value = formatCLP(0);
+        // Nota: saldoPendienteInput no existe en el HTML, pero si existiera, se establecería a 0. Se ignora por ahora.
+        // saldoInput.value = formatCLP(0);
     } else {
-        saldoInput.value = formatCLP(saldo);
+        // saldoInput.value = formatCLP(saldo); // Nota: saldoPendienteInput no existe en el HTML. Se ignora por ahora.
         labelSaldo.classList.remove("hidden");
     }
 }
@@ -174,6 +176,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // Elementos del menú móvil
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const mobileMenuDropdown = document.getElementById("mobileMenuDropdown");
+    
+  // Crear el input de saldo pendiente (que se usa en updateSaldo, pero no existe en HTML)
+  // Como el HTML no lo tiene, se ignora la actualización del valor, pero se mantiene la lógica de visibilidad.
+
 
   const updateOtDisplay = () => {
     otInput.value = String(getLastOt() + 1);
@@ -197,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- LÓGICA DEL MENÚ MÓVIL ---
   
   // 1. Toggle mobile menu
-  mobileMenuBtn.addEventListener("click", () => {
+  if(mobileMenuBtn) mobileMenuBtn.addEventListener("click", () => {
     mobileMenuDropdown.classList.toggle("active");
     // Cambiar icono: menú o X
     const icon = mobileMenuBtn.querySelector('i');
@@ -207,14 +213,16 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // 2. Cerrar el menú después de hacer click en cualquier botón de acción
-  mobileMenuDropdown.querySelectorAll("button, .import-label").forEach(btn => {
+  if(mobileMenuDropdown) mobileMenuDropdown.querySelectorAll("button, .import-label").forEach(btn => {
     btn.addEventListener("click", () => {
         // Usa un pequeño timeout para que la acción se registre antes de cerrar
         setTimeout(() => {
             mobileMenuDropdown.classList.remove("active");
             // Revertir el ícono a 'menu' al cerrar
-            mobileMenuBtn.querySelector('i').innerHTML = `<i data-lucide="menu"></i>`;
-            lucide.createIcons({ parent: mobileMenuBtn });
+            if(mobileMenuBtn) {
+                mobileMenuBtn.querySelector('i').innerHTML = `<i data-lucide="menu"></i>`;
+                lucide.createIcons({ parent: mobileMenuBtn });
+            }
         }, 100);
     });
   });
@@ -254,9 +262,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("saveBtn").addEventListener("click", async (e) => {
     e.preventDefault();
     
-    // Validación de campos requeridos
-    if (!form.reportValidity()) return alert("Por favor, rellena todos los campos requeridos (*)");
-
+    // ANTES: if (!form.reportValidity()) return alert("Por favor, rellena todos los campos requeridos (*)");
+    // AHORA: Ya no es obligatorio rellenar campos.
+    
 
     const fd = new FormData(form);
     const order = {};
@@ -274,6 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Asegurar que montoAbonado no sea mayor que valorTrabajo si no está pagado
     if (order.montoAbonado > order.valorTrabajo && order.estadoPago !== "Pagado") {
+        // Validación de lógica de negocio, no de campo obligatorio
         return alert("Error: El monto abonado no puede ser mayor que el valor del trabajo.");
     }
 
