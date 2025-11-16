@@ -1,8 +1,9 @@
 /* Fueltek v7.5 - script.js
    Versión Corregida FINAL:
    1. Blindaje contra errores de elementos nulos que bloquean la ejecución del script.
-   2. Corrección de la lógica de correlativo OT para sincronizar con la base de datos (DB).
-   3. Corrección de visualización de iconos de acción en el listado de OT.
+   2. Corrección de la lógica de correlativo OT para SINCRONIZAR con Firebase/IndexedDB.
+   3. El correlativo de OT ahora inicia en 10725.
+   4. Corrección de visualización de iconos de acción en el listado de OT.
 */
 
 /* -------------------------
@@ -11,7 +12,9 @@
 const DB_NAME = "fueltek_db_v7";
 const DB_VERSION = 1;
 const STORE = "orders";
-const OT_LOCAL = "fueltek_last_ot_v7";
+// La base mínima para el contador. El primer OT será OT_START + 1 (10725)
+const OT_START = 10724; 
+const OT_LOCAL = "fueltek_last_ot_v7"; // LocalStorage para caché del último OT conocido
 
 let currentLoadedOt = null;
 
@@ -113,58 +116,57 @@ function dbDeleteAll() {
 }
 
 /* ====================================================================
-   CORRELATIVO / LOCALSTORAGE
+   CORRELATIVO / LOCALSTORAGE (Solo caché y valor por defecto)
    ==================================================================== */
 function getLastOt() {
-  return parseInt(localStorage.getItem(OT_LOCAL) || "726", 10);
+  // Ahora, si no existe, usa la nueva constante OT_START (10724)
+  return parseInt(localStorage.getItem(OT_LOCAL) || String(OT_START), 10); 
 }
 function setLastOt(n) { localStorage.setItem(OT_LOCAL, String(n)); }
-function nextOtAndSave() {
-  const n = getLastOt() + 1;
-  setLastOt(n);
-  return n;
-}
 
-// ✅ FIX: Función para encontrar el OT máximo en la DB
+
+// ✅ FIX: Función para encontrar el OT máximo en la DB (Firebase -> IndexedDB)
 async function findMaxOtInDB() {
     let allOrders = [];
-    // Intentar leer desde Firebase o IndexedDB
-    if (typeof firestore !== 'undefined') {
+    
+    // 1. Intentar leer desde Firebase (Fuente de verdad)
+    const isFirebaseReady = typeof firestore !== 'undefined';
+    
+    if (isFirebaseReady) {
         try {
-            allOrders = await firebaseGetAllOrders();
+            allOrders = await firebaseGetAllOrders(); 
         } catch (e) {
+            console.warn("Firebase read failed, falling back to IndexedDB:", e);
+            // 2. Fallback: IndexedDB
             allOrders = await dbGetAll();
         }
     } else {
+        // 3. Solo IndexedDB disponible
         allOrders = await dbGetAll();
     }
     
-    // Convertir OT keys a números y encontrar el máximo, valor mínimo 726
+    // Convertir OT keys a números y encontrar el máximo, valor mínimo OT_START (10724)
     const maxDbOt = allOrders.reduce((max, order) => {
         const otNum = Number(order.ot);
         return (otNum > max) ? otNum : max;
-    }, 726); 
-    
+    }, OT_START); // <-- Usa la nueva constante de inicio
+
     return maxDbOt;
 }
 
-// ✅ FIX: Modificación para sincronizar el correlativo
+// ✅ FIX: Modificación para SINCRONIZAR el correlativo
 const updateOtDisplay = async () => { 
     const otInput = document.getElementById("otNumber");
     if (!otInput) return; // ✅ Blindaje
     
-    const currentLocalOt = getLastOt();
-    const maxDbOt = await findMaxOtInDB();
-
-    const trueMaxOt = Math.max(currentLocalOt, maxDbOt);
+    // Obtener el máximo real de la DB (sincronizado)
+    const maxDbOt = await findMaxOtInDB(); 
     
-    // Solo actualizar localStorage si la DB tiene un valor más alto (sincronización)
-    if (trueMaxOt > currentLocalOt) {
-        setLastOt(trueMaxOt);
-    }
+    // Asegurarse de que el localStorage se actualice con el valor sincronizado
+    setLastOt(maxDbOt);
 
-    // Mostrar el siguiente OT disponible
-    otInput.value = String(getLastOt() + 1);
+    // Mostrar el siguiente OT disponible (maxDbOt + 1)
+    otInput.value = String(maxDbOt + 1);
     resetSaveButton();
 }
 
@@ -291,7 +293,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const mobileMenuDropdown = document.getElementById("mobileMenuDropdown");
     
-  // Función de inicialización OT (se llama con await)
+  // Función de inicialización OT (se llama con await para sincronizar con la DB)
   await updateOtDisplay(); 
   
   // --- LISTENERS DE INPUTS Y ESTADO DE PAGO (Seguros) ---
@@ -354,21 +356,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   // Reservar nuevo OT
   if (newOtBtn && form) { // ✅ Blindaje
-    newOtBtn.addEventListener("click", () => {
-      const reserved = nextOtAndSave();
-      updateOtDisplay(); // Muestra el siguiente OT
+    newOtBtn.addEventListener("click", async () => {
+      // ✅ FIX: El número de OT actual es el que está en pantalla (siguiente disponible)
+      const nextAvailableOt = otInput.value; 
+      await updateOtDisplay(); // Refresca y sincroniza el contador
       form.reset();
       if (labelAbono) labelAbono.classList.add("hidden");
       currentLoadedOt = null;
       updateSaldo(); 
-      alert("Reservado N° OT: " + reserved + ". En pantalla verás el siguiente disponible (" + (getLastOt() + 1) + ").");
+      alert("Listo para la OT N° " + nextAvailableOt + " (siguiente sincronizada).");
     });
   }
   
   // Borrar base de datos completa
   if (clearBtn) { // ✅ Blindaje
     clearBtn.addEventListener("click", async () => {
-      if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ toda la base de datos de Órdenes de Trabajo (IndexedDB) y reiniciará el contador a 727. ¿Desea continuar?")) return;
+      if (!confirm(`⚠️ ADVERTENCIA: Esta acción BORRARÁ toda la base de datos de Órdenes de Trabajo (IndexedDB) y reiniciará el contador a ${OT_START + 1}. ¿Desea continuar?`)) return;
       
       try {
           await dbDeleteAll();
@@ -382,13 +385,13 @@ document.addEventListener("DOMContentLoaded", async () => {
            console.warn("Borrar todas las órdenes de Firestore debe hacerse manualmente en la consola de Firebase, pero el código de eliminación local ha sido ejecutado.");
       }
       
-      setLastOt(726);
+      setLastOt(OT_START); // Reinicia el contador local
       await updateOtDisplay();
       if (form) form.reset();
       if (labelAbono) labelAbono.classList.add("hidden");
       currentLoadedOt = null;
       updateSaldo(); 
-      alert("Base de datos local eliminada. Contador reiniciado a 727.");
+      alert(`Base de datos local eliminada. Contador reiniciado a ${OT_START + 1}.`);
     });
   }
   
@@ -436,11 +439,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       let otToSave;
 
       if (currentLoadedOt) {
+        // ACTUALIZAR OT existente
         order.ot = String(currentLoadedOt);
         otToSave = currentLoadedOt;
         saveMessage = "actualizada";
       } else {
-        otToSave = String(getLastOt() + 1);
+        // ✅ FIX: GUARDAR NUEVA OT - Obtener el número sincronizado de la DB
+        const maxOt = await findMaxOtInDB(); 
+        otToSave = String(maxOt + 1);
         order.ot = otToSave;
       }
 
@@ -452,6 +458,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         if (!currentLoadedOt) {
+            // ✅ FIX: Si se guardó una OT NUEVA, actualizar el contador local con el número recién usado
             setLastOt(Number(otToSave)); 
         }
         alert(`Orden ${saveMessage} correctamente ✅ (OT #${otToSave})`);
@@ -463,12 +470,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       form.reset();
       if (labelAbono) labelAbono.classList.add("hidden");
       currentLoadedOt = null;
-      await updateOtDisplay(); 
+      await updateOtDisplay(); // Sincroniza y muestra el siguiente correlativo
       updateSaldo(); 
     });
   }
 
-  // Modal - Ver OT (Funciona gracias al blindaje)
+  // Modal - Ver OT
   if (viewBtn && modal) { // ✅ Blindaje
     viewBtn.addEventListener("click", async () => {
       await renderOrdersList();
@@ -498,7 +505,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       for (const [k, v] of fd.entries()) if (k !== "accesorios") data[k] = v;
       data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
       
-      data.ot = otInput.value || String(getLastOt() + 1);
+      // Usa el OT que está cargado o el que está en pantalla (siguiente)
+      data.ot = currentLoadedOt || otInput.value || String(getLastOt() + 1); 
       
       data.valorTrabajoNum = unformatCLP(data.valorTrabajo);
       data.montoAbonadoNum = unformatCLP(data.montoAbonado);
@@ -545,7 +553,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }));
 
       try {
-        // Se asume que XLSX está disponible globalmente
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Órdenes de Trabajo");
@@ -615,9 +622,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           tx.oncomplete = async () => {
             alert(`Importación finalizada. ${importedCount} órdenes procesadas.`);
-            const maxOt = Math.max(...orders.map(o => Number(o.ot)), getLastOt());
-            setLastOt(maxOt);
-            await updateOtDisplay();
+            // Al importar, sincronizar el correlativo con el valor más alto
+            await updateOtDisplay(); 
             e.target.value = null; 
           };
           tx.onerror = (e) => alert("Error en la transacción de importación: " + e.target.error);
@@ -642,6 +648,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     let all = [];
     if (typeof firestore !== 'undefined') {
       try {
+        // Fuente de verdad para la lista: Firebase
         all = await firebaseGetAllOrders();
       } catch (e) {
         console.warn("Firebase read failed, falling back to IndexedDB:", e);
