@@ -1,6 +1,8 @@
 /* Fueltek v7.5 - script.js
-   Versión Corregida FINAL: Blindaje contra errores de elementos nulos 
-   que bloquean la ejecución del script y el funcionamiento de los botones.
+   Versión Corregida FINAL:
+   1. Blindaje contra errores de elementos nulos que bloquean la ejecución del script.
+   2. Corrección de la lógica de correlativo OT para sincronizar con la base de datos (DB).
+   3. Corrección de visualización de iconos de acción en el listado de OT.
 */
 
 /* -------------------------
@@ -123,17 +125,61 @@ function nextOtAndSave() {
   return n;
 }
 
+// ✅ FIX: Función para encontrar el OT máximo en la DB
+async function findMaxOtInDB() {
+    let allOrders = [];
+    // Intentar leer desde Firebase o IndexedDB
+    if (typeof firestore !== 'undefined') {
+        try {
+            allOrders = await firebaseGetAllOrders();
+        } catch (e) {
+            allOrders = await dbGetAll();
+        }
+    } else {
+        allOrders = await dbGetAll();
+    }
+    
+    // Convertir OT keys a números y encontrar el máximo, valor mínimo 726
+    const maxDbOt = allOrders.reduce((max, order) => {
+        const otNum = Number(order.ot);
+        return (otNum > max) ? otNum : max;
+    }, 726); 
+    
+    return maxDbOt;
+}
+
+// ✅ FIX: Modificación para sincronizar el correlativo
+const updateOtDisplay = async () => { 
+    const otInput = document.getElementById("otNumber");
+    if (!otInput) return; // ✅ Blindaje
+    
+    const currentLocalOt = getLastOt();
+    const maxDbOt = await findMaxOtInDB();
+
+    const trueMaxOt = Math.max(currentLocalOt, maxDbOt);
+    
+    // Solo actualizar localStorage si la DB tiene un valor más alto (sincronización)
+    if (trueMaxOt > currentLocalOt) {
+        setLastOt(trueMaxOt);
+    }
+
+    // Mostrar el siguiente OT disponible
+    otInput.value = String(getLastOt() + 1);
+    resetSaveButton();
+}
+
+
 /* ====================================================================
    BOTÓN GUARDAR - RESET
    ==================================================================== */
 const resetSaveButton = () => {
     const saveBtn = document.getElementById("saveBtn");
-    if (!saveBtn) return; // ✅ Protección
-
+    if (!saveBtn) return; // ✅ Blindaje
+    
     saveBtn.title = "Guardar OT";
-    // Usamos el HTML directo para que Lucide lo recoja en la ejecución principal
+    // Usamos el HTML directo para que Lucide lo recoja 
     saveBtn.innerHTML = '<i data-lucide="save"></i><span>Guardar</span>'; 
-    tryCreateIcons(); // Protección Lucide
+    tryCreateIcons({ parent: saveBtn }); // Usar tryCreateIcons y acotar el padre
 }
 
 /* ====================================================================
@@ -145,7 +191,7 @@ function updateSaldo() {
     const estadoPago = document.getElementById("estadoPago");
     const labelAbono = document.getElementById("labelAbono");
     
-    // Si falta algún elemento, salimos sin intentar interactuar
+    // ✅ Blindaje: Si falta algún elemento, salimos
     if (!valorTrabajoInput || !montoAbonadoInput || !estadoPago || !labelAbono) return;
 
     const valor = unformatCLP(valorTrabajoInput.value);
@@ -166,46 +212,49 @@ function updateSaldo() {
 /* ====================================================================
    FIREBASE - funciones auxiliares (sin cambios, ya eran seguras)
    ==================================================================== */
-
-const isFirebaseReady = () => typeof firestore !== 'undefined';
-
 async function firebaseSaveOrder(order) {
-  if (!isFirebaseReady()) return Promise.reject("Firestore no inicializado");
+  if (typeof firestore === 'undefined') return Promise.reject("Firestore no inicializado");
   try {
     const copy = Object.assign({}, order);
     await firestore.collection("orders").doc(String(order.ot)).set(copy);
+    console.log("Firebase: OT guardada", order.ot);
     return true;
   } catch (error) {
+    console.error("Firebase ERROR al guardar:", error);
     throw error;
   }
 }
 
 async function firebaseGetAllOrders() {
-  if (!isFirebaseReady()) return Promise.reject("Firestore no inicializado");
+  if (typeof firestore === 'undefined') return Promise.reject("Firestore no inicializado");
   try {
     const snap = await firestore.collection("orders").get();
     return snap.docs.map(d => d.data());
   } catch (error) {
+    console.error("Firebase ERROR al cargar:", error);
     throw error;
   }
 }
 
 async function firebaseGetOrder(ot) {
-  if (!isFirebaseReady()) throw new Error("Firestore no inicializado");
+  if (typeof firestore === 'undefined') throw new Error("Firestore no inicializado");
   try {
     const doc = await firestore.collection("orders").doc(String(ot)).get();
     return doc.exists ? doc.data() : null;
   } catch (error) {
+    console.error("Firebase ERROR al obtener OT:", error);
     throw error;
   }
 }
 
 async function firebaseDeleteOrder(ot) {
-  if (!isFirebaseReady()) throw new Error("Firestore no inicializado");
+  if (typeof firestore === 'undefined') throw new Error("Firestore no inicializado");
   try {
     await firestore.collection("orders").doc(String(ot)).delete();
+    console.log("Firebase: OT eliminada", ot);
     return true;
   } catch (error) {
+    console.error("Firebase ERROR al eliminar:", error);
     throw error;
   }
 }
@@ -213,7 +262,7 @@ async function firebaseDeleteOrder(ot) {
 /* ====================================================================
    DOMContentLoaded - eventos principales (MÁXIMA PROTECCIÓN)
    ==================================================================== */
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   // Obtener todos los elementos necesarios al inicio
   const otInput = document.getElementById("otNumber");
   const form = document.getElementById("otForm");
@@ -227,22 +276,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const ordersList = document.getElementById("ordersList");
   const searchOt = document.getElementById("searchOt");
   
+  // Elementos de botones
+  const newOtBtn = document.getElementById("newOtBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const resetFormBtn = document.getElementById("resetFormBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const viewBtn = document.getElementById("viewBtn"); // Botón Ver Lista
+  const printBtn = document.getElementById("printBtn");
+  const exportBtn = document.getElementById("exportBtn");
+  const exportDbBtn = document.getElementById("exportDbBtn");
+  const importFile = document.getElementById("importFile");
+
   // Elementos del menú móvil
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const mobileMenuDropdown = document.getElementById("mobileMenuDropdown");
     
-  // Función de inicialización OT
-  const updateOtDisplay = () => {
-    // Muestra el siguiente OT disponible, no el último guardado
-    if (otInput) otInput.value = String(getLastOt() + 1);
-    resetSaveButton();
-  }
-  updateOtDisplay(); 
+  // Función de inicialización OT (se llama con await)
+  await updateOtDisplay(); 
   
   // --- LISTENERS DE INPUTS Y ESTADO DE PAGO (Seguros) ---
   
   // Agregar listeners para formato de miles Y ACTUALIZACIÓN DE SALDO EN TIEMPO REAL
-  // Usamos un array de los inputs que SÍ se encontraron para evitar el error 'null'
   const inputsToFormat = [valorTrabajoInput, montoAbonadoInput].filter(el => el);
   inputsToFormat.forEach(input => {
     input.addEventListener("input", e => {
@@ -253,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Mostrar / ocultar campo Abonado y recalcular Saldo
-  if (estadoPago) { // ✅ Protección de elemento
+  if (estadoPago) { // ✅ Blindaje
       estadoPago.addEventListener("change", updateSaldo);
   }
   
@@ -262,17 +316,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // --- LÓGICA DEL MENÚ MÓVIL (Seguro) ---
-  if (mobileMenuBtn && mobileMenuDropdown) { // ✅ Protección de elementos
+  if (mobileMenuBtn && mobileMenuDropdown) { // ✅ Blindaje de elementos
     // 1. Toggle mobile menu
     mobileMenuBtn.addEventListener("click", () => {
         mobileMenuDropdown.classList.toggle("active");
         
-        const iconContainer = mobileMenuBtn.querySelector('[data-lucide]');
+        const iconContainer = mobileMenuBtn.querySelector('i'); // Asumimos que el icono está dentro de <i>
         const newIconName = mobileMenuDropdown.classList.contains('active') ? 'x' : 'menu';
         
         if (iconContainer) {
-            iconContainer.setAttribute('data-lucide', newIconName);
-            tryCreateIcons({ attrs: { width: 24, height: 24 }, parent: mobileMenuBtn }); // Protección Lucide
+            // Reemplazamos el innerHTML para que Lucide actúe
+            iconContainer.innerHTML = `<i data-lucide="${newIconName}"></i>`; 
+            tryCreateIcons({ parent: iconContainer }); 
         }
     });
 
@@ -281,10 +336,12 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.addEventListener("click", () => {
           setTimeout(() => {
               mobileMenuDropdown.classList.remove("active");
-              const iconContainer = mobileMenuBtn.querySelector('[data-lucide]');
-              if (iconContainer) {
-                  iconContainer.setAttribute('data-lucide', 'menu');
-                  tryCreateIcons({ attrs: { width: 24, height: 24 }, parent: mobileMenuBtn }); // Protección Lucide
+              if (mobileMenuBtn) {
+                  const iconContainer = mobileMenuBtn.querySelector('i');
+                  if (iconContainer) {
+                      iconContainer.innerHTML = `<i data-lucide="menu"></i>`;
+                      tryCreateIcons({ parent: iconContainer }); 
+                  }
               }
           }, 100);
       });
@@ -296,12 +353,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- LISTENERS DE BOTONES DE ACCIÓN (MÁXIMA PROTECCIÓN) ---
   
   // Reservar nuevo OT
-  const newOtBtn = document.getElementById("newOtBtn");
-  if (newOtBtn) { // ✅ Protección
+  if (newOtBtn && form) { // ✅ Blindaje
     newOtBtn.addEventListener("click", () => {
       const reserved = nextOtAndSave();
-      updateOtDisplay();
-      if (form) form.reset();
+      updateOtDisplay(); // Muestra el siguiente OT
+      form.reset();
       if (labelAbono) labelAbono.classList.add("hidden");
       currentLoadedOt = null;
       updateSaldo(); 
@@ -310,8 +366,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   
   // Borrar base de datos completa
-  const clearBtn = document.getElementById("clearBtn");
-  if (clearBtn) { // ✅ Protección
+  if (clearBtn) { // ✅ Blindaje
     clearBtn.addEventListener("click", async () => {
       if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ toda la base de datos de Órdenes de Trabajo (IndexedDB) y reiniciará el contador a 727. ¿Desea continuar?")) return;
       
@@ -323,12 +378,12 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
       }
       
-      if (isFirebaseReady() && confirm("¿También desea intentar BORRAR todas las órdenes de Firebase Firestore?")) {
+      if (typeof firestore !== 'undefined' && confirm("¿También desea intentar BORRAR todas las órdenes de Firebase Firestore?")) {
            console.warn("Borrar todas las órdenes de Firestore debe hacerse manualmente en la consola de Firebase, pero el código de eliminación local ha sido ejecutado.");
       }
       
       setLastOt(726);
-      updateOtDisplay();
+      await updateOtDisplay();
       if (form) form.reset();
       if (labelAbono) labelAbono.classList.add("hidden");
       currentLoadedOt = null;
@@ -338,11 +393,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   
   // Limpiar campos manualmente
-  const resetFormBtn = document.getElementById("resetFormBtn");
-  if (resetFormBtn) { // ✅ Protección
+  if (resetFormBtn && form) { // ✅ Blindaje
     resetFormBtn.addEventListener("click", () => {
       if (confirm("¿Seguro que deseas limpiar todos los campos del formulario?")) {
-        if (form) form.reset();
+        form.reset();
         if (labelAbono) labelAbono.classList.add("hidden");
         currentLoadedOt = null;
         updateOtDisplay(); 
@@ -354,8 +408,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // Guardar o actualizar
-  const saveBtn = document.getElementById("saveBtn");
-  if (saveBtn && form) { // ✅ Protección
+  if (saveBtn && form) { // ✅ Blindaje
     saveBtn.addEventListener("click", async (e) => {
       e.preventDefault();
       
@@ -365,23 +418,19 @@ document.addEventListener("DOMContentLoaded", () => {
         if (k === "accesorios") continue; 
         order[k] = v;
       }
-      // Se asume que form está disponible aquí gracias al chequeo del if principal
       order.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
       order.fechaGuardado = new Date().toISOString();
       
-      // Conversiones de seguridad de datos
       order.valorTrabajo = unformatCLP(order.valorTrabajo); 
       order.estadoPago = order.estadoPago || "Pendiente";
       order.montoAbonado = unformatCLP(order.montoAbonado);
       
-      // Validación de lógica de negocio
-      if (order.montoAbonado > order.valorTrabajo) {
+      if (order.montoAbonado > order.valorTrabajo && order.estadoPago !== "Pagado") {
           return alert("Error: El monto abonado no puede ser mayor que el valor del trabajo.");
       }
       if (order.estadoPago === "Pagado") {
           order.montoAbonado = order.valorTrabajo;
       }
-
 
       let saveMessage = "guardada";
       let otToSave;
@@ -398,7 +447,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         await dbPut(order);
         
-        if (isFirebaseReady()) {
+        if (typeof firestore !== 'undefined') {
           firebaseSaveOrder(order).catch(err => console.error("Firebase save error (non-blocking):", err));
         }
 
@@ -411,36 +460,37 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error(err);
       }
 
-      // Limpiar form y mostrar siguiente correlativo
-      if (form) form.reset();
+      form.reset();
       if (labelAbono) labelAbono.classList.add("hidden");
       currentLoadedOt = null;
-      updateOtDisplay(); 
+      await updateOtDisplay(); 
       updateSaldo(); 
     });
   }
 
-  // Modal - Ver OT
-  const viewBtn = document.getElementById("viewBtn");
-  if (viewBtn) { // ✅ Protección
+  // Modal - Ver OT (Funciona gracias al blindaje)
+  if (viewBtn && modal) { // ✅ Blindaje
     viewBtn.addEventListener("click", async () => {
       await renderOrdersList();
-      if (modal) modal.classList.remove("hidden");
+      modal.classList.remove("hidden");
+      // Reseteamos el campo de búsqueda
+      if (searchOt) searchOt.value = ""; 
     });
   }
-  if (closeModal) { // ✅ Protección
+  
+  if (closeModal && modal) { // ✅ Blindaje
     closeModal.addEventListener("click", () => {
-        if (modal) modal.classList.add("hidden");
+        modal.classList.add("hidden");
         if (searchOt) searchOt.value = ""; 
     });
   }
-  if (searchOt) { // ✅ Protección
+  
+  if (searchOt) { // ✅ Blindaje
     searchOt.addEventListener("input", () => renderOrdersList(searchOt.value.trim()));
   }
 
   // Imprimir actual o vista previa
-  const printBtn = document.getElementById("printBtn");
-  if (printBtn && form) { // ✅ Protección
+  if (printBtn && form) { // ✅ Blindaje
     printBtn.addEventListener("click", e => {
       e.preventDefault();
       const fd = new FormData(form);
@@ -448,7 +498,7 @@ document.addEventListener("DOMContentLoaded", () => {
       for (const [k, v] of fd.entries()) if (k !== "accesorios") data[k] = v;
       data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
       
-      data.ot = currentLoadedOt || String(getLastOt() + 1);
+      data.ot = otInput.value || String(getLastOt() + 1);
       
       data.valorTrabajoNum = unformatCLP(data.valorTrabajo);
       data.montoAbonadoNum = unformatCLP(data.montoAbonado);
@@ -459,11 +509,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   
   // Implementación de Exportar/Importar DB JSON y Exportar a Excel
-  const exportBtn = document.getElementById("exportBtn");
-  if (exportBtn) { // ✅ Protección
+  if (exportBtn) { // ✅ Blindaje
     exportBtn.addEventListener("click", async () => {
       let orders = [];
-      if (isFirebaseReady()) {
+      if (typeof firestore !== 'undefined') {
         try {
           orders = await firebaseGetAllOrders();
         } catch (e) {
@@ -495,9 +544,8 @@ document.addEventListener("DOMContentLoaded", () => {
         'Fecha Guardado': new Date(o.fechaGuardado).toLocaleString('es-CL'),
       }));
 
-      // Se asume que XLSX está disponible globalmente, si no, fallará aquí,
-      // pero no afectará a los listeners previos.
       try {
+        // Se asume que XLSX está disponible globalmente
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Órdenes de Trabajo");
@@ -510,8 +558,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  const exportDbBtn = document.getElementById("exportDbBtn");
-  if (exportDbBtn) { // ✅ Protección
+  if (exportDbBtn) { // ✅ Blindaje
     exportDbBtn.addEventListener("click", async () => {
       const orders = await dbGetAll(); 
       const dataStr = JSON.stringify(orders, null, 2);
@@ -528,15 +575,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  const importFile = document.getElementById("importFile");
-  if (importFile) { // ✅ Protección
+  if (importFile) { // ✅ Blindaje
     importFile.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
       reader.onload = async (event) => {
-        // ... (la lógica de importación se mantiene, ya es segura internamente)
         try {
           const orders = JSON.parse(event.target.result);
           if (!Array.isArray(orders) || orders.some(o => typeof o.ot === 'undefined')) {
@@ -554,37 +599,28 @@ document.addEventListener("DOMContentLoaded", () => {
           const store = tx.objectStore(STORE);
           let importedCount = 0;
           
-          const promises = orders.map(order => {
-              return new Promise((resolve, reject) => {
-                  order.ot = String(order.ot);
-                  const request = store.put(order);
-                  request.onsuccess = () => {
-                      importedCount++;
-                      if (isFirebaseReady()) {
-                          firebaseSaveOrder(order).catch(err => console.error("Error firebase import (non-blocking):", err));
-                      }
-                      resolve();
-                  };
-                  request.onerror = (e) => {
-                      console.error("Error al importar OT:", order.ot, e.target.error);
-                      resolve(); 
-                  };
-              });
+          orders.forEach(order => {
+              order.ot = String(order.ot);
+              const request = store.put(order);
+              request.onsuccess = () => {
+                  importedCount++;
+                  if (typeof firestore !== 'undefined') {
+                      firebaseSaveOrder(order).catch(err => console.error("Error firebase import (non-blocking):", err));
+                  }
+              };
+              request.onerror = (e) => {
+                  console.error("Error al importar OT:", order.ot, e.target.error);
+              };
           });
 
-          await Promise.all(promises);
-
-          await new Promise((resolve, reject) => {
-              tx.oncomplete = resolve;
-              tx.onerror = (e) => reject("Error en la transacción de importación: " + e.target.error);
-              tx.onabort = () => reject("Transacción de importación abortada.");
-          });
-
-          alert(`Importación finalizada. ${importedCount} órdenes procesadas.`);
-          const maxOt = Math.max(...orders.map(o => Number(o.ot)), getLastOt());
-          setLastOt(maxOt);
-          updateOtDisplay();
-          e.target.value = null; 
+          tx.oncomplete = async () => {
+            alert(`Importación finalizada. ${importedCount} órdenes procesadas.`);
+            const maxOt = Math.max(...orders.map(o => Number(o.ot)), getLastOt());
+            setLastOt(maxOt);
+            await updateOtDisplay();
+            e.target.value = null; 
+          };
+          tx.onerror = (e) => alert("Error en la transacción de importación: " + e.target.error);
           
         } catch (error) {
           alert("Error al leer, parsear o procesar el archivo JSON: " + error.message);
@@ -596,56 +632,248 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- FUNCIONES INTERNAS (Sin cambios) ---
-  function renderOrdersList(filter = "") {
-    // ... (lógica de renderOrdersList)
-    if (!ordersList) return; // ✅ Protección
+
+  // --- FUNCIONES INTERNAS ---
+  async function renderOrdersList(filter = "") {
+    if (!ordersList) return; // ✅ Blindaje
 
     ordersList.innerHTML = "<div style='padding:10px;color:#666'>Cargando...</div>";
 
-    // Intentamos leer desde Firebase si está disponible, si no fallback a IndexedDB
     let all = [];
-    if (isFirebaseReady()) {
-      // ... (código de firebase/indexedDB)
+    if (typeof firestore !== 'undefined') {
+      try {
+        all = await firebaseGetAllOrders();
+      } catch (e) {
+        console.warn("Firebase read failed, falling back to IndexedDB:", e);
+        all = await dbGetAll();
+      }
     } else {
-      // ... (código de indexedDB)
+      all = await dbGetAll();
     }
-    // ... (lógica de filtrado y renderizado)
-    
-    // Al crear los botones dinámicos
-    // ...
-    // Solo renderiza los íconos de la fila
-    tryCreateIcons({ parent: div }); // Protección Lucide
-    // ...
+
+    const rows = all
+      .filter(o => {
+        if (!filter) return true;
+        const f = filter.toLowerCase();
+        return (String(o.ot).toLowerCase().includes(f)) ||
+               (o.clienteNombre && o.clienteNombre.toLowerCase().includes(f));
+      })
+      .sort((a, b) => Number(b.ot) - Number(a.ot));
+
+    if (rows.length === 0) { ordersList.innerHTML = "<div style='padding:10px'>No hay órdenes guardadas.</div>"; return; }
+
+    ordersList.innerHTML = "";
+    for (const o of rows) {
+      const div = document.createElement("div");
+      div.className = "order-row";
+      // ✅ FIX: Se elimina el estilo de tamaño de los <i> para usar attrs en createIcons
+      div.innerHTML = `
+        <div><b>OT #${o.ot}</b> — ${o.clienteNombre || "Sin Nombre"}<br><small>${o.marca || ""} ${o.modelo || ""}</small></div>
+        <div class="order-actions">
+          <button class="small" data-ot="${o.ot}" data-action="print" title="Imprimir"><i data-lucide="printer"></i></button>
+          <button class="small" data-ot="${o.ot}" data-action="load" title="Cargar para Editar"><i data-lucide="edit"></i></button>
+          <button class="small" data-ot="${o.ot}" data-action="delete" style="background:#b51b1b" title="Borrar"><i data-lucide="trash-2"></i></button>
+        </div>`;
+      ordersList.appendChild(div);
+      // ✅ FIX: Se establece el tamaño 14x14px para los iconos de la lista
+      tryCreateIcons({ parent: div, attrs: { width: 14, height: 14 } }); 
+    }
+
+    ordersList.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        const targetBtn = ev.target.closest('button');
+        if (!targetBtn) return; // ✅ Blindaje adicional
+        
+        const ot = String(targetBtn.dataset.ot);
+        const action = targetBtn.dataset.action;
+        
+        if (action === "print") {
+          let dat = null;
+          if (typeof firestore !== 'undefined') {
+            try { dat = await firebaseGetOrder(ot); } catch (e) { console.warn("firebase get order failed:", e); }
+          }
+          if (!dat) dat = await dbGet(ot);
+          if (dat) buildPrintAndPrint(dat);
+          else alert("Orden no encontrada para imprimir.");
+        } else if (action === "load") {
+          let dat = null;
+          if (typeof firestore !== 'undefined') {
+            try { dat = await firebaseGetOrder(ot); } catch (e) { console.warn("firebase get order failed:", e); }
+          }
+          if (!dat) dat = await dbGet(ot);
+          if (dat) { 
+              loadOrderToForm(dat); 
+              if (modal) modal.classList.add("hidden"); 
+          }
+          else alert("Orden no encontrada para cargar.");
+        } else if (action === "delete") {
+          if (confirm("¿Borrar definitivamente OT #" + ot + "?")) {
+            try {
+              await dbDelete(ot);
+            } catch (e) {
+              console.error("Error al borrar en IndexedDB:", e);
+            }
+            if (typeof firestore !== 'undefined') {
+              try {
+                await firebaseDeleteOrder(ot);
+              } catch (e) {
+                console.error("Error al borrar en Firebase:", e);
+              }
+            }
+
+            alert("OT eliminada");
+            renderOrdersList();
+            if (currentLoadedOt === ot) {
+                currentLoadedOt = null;
+                if (form) form.reset();
+                updateOtDisplay();
+                updateSaldo();
+            }
+          }
+        }
+      });
+    });
   }
-  
+
   function loadOrderToForm(o) {
     if (!o) return alert("Orden no encontrada.");
-    if (form) form.reset(); // ✅ Protección
+    if (form) form.reset(); // ✅ Blindaje
     currentLoadedOt = String(o.ot); 
-    // ... (lógica de carga de datos)
+    const fields = ["clienteNombre","clienteTelefono","clienteEmail","fechaRecibida","fechaEntrega",
+      "marca","modelo","serie","anio","diagnostico","trabajo","firmaTaller","firmaCliente"];
+    fields.forEach(k => { 
+        const el = form.querySelector(`[name="${k}"]`); 
+        if (el) el.value = o[k] || ""; // ✅ Blindaje
+    });
+    
+    if (valorTrabajoInput) valorTrabajoInput.value = formatCLP(o.valorTrabajo);
+    if (montoAbonadoInput) montoAbonadoInput.value = formatCLP(o.montoAbonado);
+    if (estadoPago) estadoPago.value = o.estadoPago || "Pendiente";
+    
+    updateSaldo(); 
+    
+    form.querySelectorAll("input[name='accesorios']").forEach(ch => ch.checked = false);
+    if (Array.isArray(o.accesorios)) o.accesorios.forEach(val => {
+      const el = Array.from(form.querySelectorAll("input[name='accesorios']")).find(c => c.value === val);
+      if (el) el.checked = true;
+    });
+    
+    if (otInput) otInput.value = o.ot;
     
     // Actualiza el contenido de texto para el botón de escritorio
-    const saveBtn = document.getElementById("saveBtn");
-    if (saveBtn) { // ✅ Protección
+    if (saveBtn) { // ✅ Blindaje
         saveBtn.title = "Actualizar OT #" + o.ot;
         saveBtn.innerHTML = '<i data-lucide="refresh-cw"></i><span>Actualizar</span>';
-        tryCreateIcons(); // Protección Lucide
+        tryCreateIcons({ parent: saveBtn });
     }
     
     alert("Orden OT #" + o.ot + " cargada. Si modificas algo y guardas, se actualizará esa misma OT.");
   }
 
   function buildPrintAndPrint(data) {
-    // ... (lógica de impresión)
-    if (!printArea) { // ✅ Protección
+    if (!printArea) { // ✅ Blindaje
         console.error("No se encontró el área de impresión (printArea).");
         return;
     }
-    // ...
+    
+    const valorNum = (typeof data.valorTrabajoNum !== 'undefined') ? data.valorTrabajoNum : unformatCLP(data.valorTrabajo || 0);
+    const abonoNum = (typeof data.montoAbonadoNum !== 'undefined') ? data.montoAbonadoNum : unformatCLP(data.montoAbonado || 0);
+
+    const valorTrabajoF = formatCLP(valorNum);
+    const montoAbonadoF = formatCLP(abonoNum);
+    let saldo = valorNum - abonoNum;
+    if (data.estadoPago === 'Pagado') saldo = 0;
+    const saldoF = formatCLP(saldo > 0 ? saldo : 0);
+    const estadoColor = data.estadoPago === 'Pagado' ? '#27ae60' : (data.estadoPago === 'Abonado' ? '#f39c12' : '#c0392b');
+    const estadoPagoText = data.estadoPago || "Pendiente";
+
+    const html = `
+      <div style="font-family:'Inter', sans-serif;color:#111;padding-bottom:10px;border-bottom:1px solid #ddd;">
+        <div style="display:flex;align-items:center;gap:15px">
+          <img src="logo-fueltek.png" style="width:80px;height:80px;object-fit:contain;border:1px solid #eee;padding:5px;border-radius:8px;" alt="logo" />
+          <div style="flex-grow:1">
+            <h2 style="margin:0;color:#004d99;font-size:20px;">ORDEN DE TRABAJO - FUELTEK</h2>
+            <div style="color:#f26522;font-weight:600;font-size:14px;">Servicio Técnico Multimarca</div>
+            <div style="font-size:10px;margin-top:3px;opacity:0.8;">Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</div>
+          </div>
+          <div style="text-align:right;background:#004d99;color:white;padding:8px 12px;border-radius:6px;">
+            <div style="font-weight:800;font-size:20px;">N° OT: ${data.ot}</div>
+            <div style="font-size:9px;margin-top:5px;">Emitida: ${new Date().toLocaleDateString('es-CL')}</div>
+          </div>
+        </div>
+        <hr style="border:none;border-top:2px solid #004d99;margin:10px 0 12px" />
+        
+        <table style="width:100%;border-collapse:collapse;margin-bottom:10px;font-size:9.5pt;table-layout: fixed;">
+          <tr>
+            <td style="width:50%;padding:6px 0;vertical-align:top;border-right:1px solid #eee;">
+              <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:10pt;">DATOS DEL CLIENTE</strong>
+              <span style="display:block;">Nombre: <b>${data.clienteNombre || "-"}</b></span>
+              <span style="display:block;">Teléfono: ${data.clienteTelefono || "-"}</span>
+              <span style="display:block;">Email: ${data.clienteEmail || "-"}</span>
+              <span style="display:block;">Fecha Recibida: <b>${data.fechaRecibida || "-"}</b></span>
+              <span style="display:block;">Fecha Entrega: <b>${data.fechaEntrega || "-"}</b></span>
+            </td>
+            <td style="width:50%;padding:6px 0 6px 15px;vertical-align:top;">
+              <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:10pt;">DATOS DE LA HERRAMIENTA</strong>
+              <span style="display:block;">Marca: <b>${data.marca || "-"}</b></span>
+              <span style="display:block;">Modelo: <b>${data.modelo || "-"}</b></span>
+              <span style="display:block;">N° Serie: ${data.serie || "-"}</span>
+              <span style="display:block;">Año Fabricación: ${data.anio || "-"}</span>
+              <div style="height:15px;"></div>
+            </td>
+          </tr>
+        </table>
+
+        <div style="display:flex;gap:15px;margin-bottom:10px;border-top:1px solid #ddd;padding-top:10px;">
+            <div style="width:40%;min-width:300px;">
+                <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:10pt;">RESUMEN DE PAGO</strong>
+                <table style="width:100%;border-collapse:collapse;font-size:9pt;background:#f8f8f8;border-radius:6px;overflow:hidden;">
+                    <tr><td style="padding:4px;border:1px solid #eee;">Valor del Trabajo:</td><td style="padding:4px;text-align:right;font-weight:700;">$${valorTrabajoF} CLP</td></tr>
+                    ${estadoPagoText === 'Abonado' || estadoPagoText === 'Pagado' ? `<tr><td style="padding:4px;border:1px solid #eee;">Monto Abonado:</td><td style="padding:4px;text-align:right;">$${montoAbonadoF} CLP</td></tr>` : ''}
+                    <tr><td style="padding:4px;border:1px solid #eee;">Estado de Pago:</td><td style="padding:4px;text-align:right;font-weight:700;color:${estadoColor};">${estadoPagoText}</td></tr>
+                    ${estadoPagoText !== 'Pagado' && saldo > 0 ? `<tr><td style="padding:4px;border:1px solid #eee;">SALDO PENDIENTE:</td><td style="padding:4px;text-align:right;font-weight:800;color:#c0392b;">$${saldoF} CLP</td></tr>` : ''}
+                </table>
+            </div>
+            <div style="flex:1;">
+                <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:10pt;">REVISIÓN Y ACCESORIOS RECIBIDOS</strong>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;border:1px solid #ddd;padding:6px;border-radius:6px;min-height:50px;">
+                    ${(data.accesorios||[]).map(s=>`<span style='border:1px solid #ddd;background:#fff;padding:3px 6px;border-radius:4px;font-size:9px'>${s}</span>`).join('') || '<span style="color:#999;font-style:italic;font-size:9px;">Ningún accesorio o revisión marcada.</span>'}
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top:10px;">
+            <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:10pt;">DIAGNÓSTICO INICIAL</strong>
+            <div style="border:1px solid #ddd;padding:8px;border-radius:6px;min-height:70px;background:#fcfcfc;font-size:9.5pt;">${data.diagnostico || "Sin diagnóstico."}</div>
+        </div>
+        <div style="margin-top:10px;">
+            <strong style="color:#004d99;display:block;margin-bottom:5px;font-size:10pt;">TRABAJO REALIZADO / NOTAS DEL TÉCNICO</strong>
+            <div style="border:1px solid #ddd;padding:8px;border-radius:6px;min-height:70px;background:#fcfcfc;font-size:9.5pt;">${data.trabajo || "Trabajo Pendiente de Realizar / Sin notas."}</div>
+        </div>
+        
+        <div style="display:flex;gap:40px;margin-top:25px;padding-top:10px;border-top:1px solid #eee;">
+          <div style="flex:1;text-align:center">
+            <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;font-size:9.5pt;">${data.firmaTaller || ""}</div>
+            <div style="margin-top:6px;font-weight:600;color:#2c3e50;font-size:9.5pt;">Firma Taller</div>
+          </div>
+          <div style="flex:1;text-align:center">
+            <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;font-size:9.5pt;">${data.firmaCliente || ""}</div>
+            <div style="margin-top:6px;font-weight:600;color:#2c3e50;font-size:9.5pt;">Firma Cliente</div>
+          </div>
+        </div>
+        
+        <div style="margin-top:20px;padding:8px;background:#f0f7ff;border:1px solid #d0e0f0;border-radius:6px;font-size:9pt;color:#444;">
+            <strong style="color:#004d99;">Notas importantes:</strong>
+            <ul style="margin:5px 0 0 15px;padding:0;">
+                <li>Toda herramienta no retirada en 30 días podrá generar cobro por almacenamiento.</li>
+                <li>FuelTek no se responsabiliza por accesorios no declarados al momento de la recepción.</li>
+                <li>El cliente declara estar informado sobre los términos del servicio y autoriza la revisión del equipo.</li>
+            </ul>
+        </div>
+      </div>`;
+    printArea.innerHTML = html;
+    printArea.style.display = "block";
+    window.print();
+    setTimeout(() => printArea.style.display = "none", 800);
   }
 });
-
-// NOTA: El código completo de las funciones `renderOrdersList`, `loadOrderToForm` y `buildPrintAndPrint`
-// se mantiene con las correcciones anteriores, añadiendo únicamente la verificación 
-// de existencia (`if (!element) return;`) en los puntos más críticos.
