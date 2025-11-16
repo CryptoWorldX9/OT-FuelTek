@@ -79,38 +79,75 @@ main{padding:25px}
 }
 /* --- FIN REFINAMIENTO CAMPO OT --- */
 
-/* --- CONTROLES: MEJORA DE ESTÉTICA Y TAMAÑO (ESCRITORIO) --- */
+/* --- CONTROLES: MEJORA VISUAL PARA ESCRITORIO (MÁS FINO Y ELEGANTE) --- */
 .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center} 
 .controls button, .import-label {
-  /* BOTONES MÁS PEQUEÑOS Y FINOS */
-  height: 35px; 
+  /* ESTILO BASE (OUTLINED/DELINEADO) - FINO Y SUTIL */
+  height: 38px; /* Ligeramente más alto */
   width: auto; 
-  padding: 0 10px; /* Menos padding horizontal */
-  border-radius: 6px; /* Bordes más sutiles */
-  border: none;
-  background: var(--primary);
-  color: white;
+  padding: 0 12px; 
+  border-radius: 8px; /* Bordes más suaves */
+  border: 1px solid var(--primary); 
+  background: var(--card); /* Fondo blanco */
+  color: var(--primary); /* Texto del color primario */
+  
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Sombra más ligera */
-  gap: 5px; /* Menos espacio entre icono y texto */
-  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Sombra muy sutil */
+  gap: 6px; 
+  font-weight: 600;
   white-space: nowrap; 
 }
-.controls button:hover, .import-label:hover{background:#003a7a;transform:translateY(-1px);box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);}
-.controls button i, .import-label i { width: 16px; height: 16px; } /* Íconos más pequeños */
-.controls button span, .import-label span { font-size: 0.9rem; } /* Texto más pequeño */
+/* Estilo Hover para botones Outlined (se rellenan y elevan) */
+.controls button:hover, .import-label:hover{
+    background:var(--primary);
+    color: white; /* El texto se vuelve blanco en hover */
+    transform:translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15); /* Sombra de elevación sutil */
+}
+.controls button i, .import-label i { width: 18px; height: 18px; } /* Íconos un poco más grandes */
+.controls button span, .import-label span { font-size: 1rem; } /* Tamaño de texto normalizado */
 
-/* Estilos de color específicos */
-#saveBtn { background: var(--success); }
-#saveBtn:hover { background: #1e8449; }
-#resetFormBtn {background:#576574}
-#resetFormBtn:hover {background:#465360}
-.controls .danger{background:var(--danger)}
-.controls .danger:hover{background:#a13023}
+/* Estilos de color específicos (override para mantener el look sólido o adaptado) */
+
+/* 1. GUARDAR/ACTUALIZAR: Fuerte énfasis, siempre sólido */
+#saveBtn { 
+    background: var(--success);
+    border-color: var(--success);
+    color: white; 
+}
+#saveBtn:hover { 
+    background: #1e8449; 
+    border-color: #1e8449;
+}
+
+/* 2. LIMPIAR CAMPOS: Outlined pero con color Dark */
+#resetFormBtn {
+    background: var(--card);
+    color: var(--dark);
+    border-color: var(--dark);
+}
+#resetFormBtn:hover {
+    background: var(--dark);
+    color: white;
+    border-color: var(--dark);
+}
+
+/* 3. BORRAR BASE DE DATOS: Fuerte énfasis, siempre sólido */
+.controls .danger{
+    background:var(--danger);
+    border-color: var(--danger);
+    color: white;
+}
+.controls .danger:hover{
+    background:#a13023;
+    border-color: #a13023;
+}
+/* --- FIN MEJORA VISUAL PARA ESCRITORIO --- */
+
 
 /* Ocultar elementos específicos en Desktop */
 #mobileMenuBtn { display: none; }
@@ -217,11 +254,16 @@ textarea{min-height:140px;resize:vertical}
         display: flex; /* Mostrar botón hamburguesa */
         position: absolute; 
         right: 15px; 
-        top: 12px; 
+        top: 10px; /* Ajuste por el nuevo alto de botón */
         z-index: 10; 
         width: 40px; 
         height: 40px;
         padding: 0;
+        background: var(--primary) !important; /* Fuerza el color sólido en móvil */
+        color: white !important;
+        border: none !important;
+        border-radius: 6px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }
     /* Ocultar los botones de escritorio cuando el menú móvil está inactivo */
     .controls { display: none; } 
@@ -252,17 +294,25 @@ textarea{min-height:140px;resize:vertical}
         align-items: center;
         justify-content: flex-start; /* Alineación a la izquierda */
         padding: 0 10px; 
-        /* Se remueve el override de color para que los estilos específicos se apliquen */
+        /* En móvil deben ser botones sólidos para mejor usabilidad */
+        background: var(--primary);
+        color: white;
+        border: none;
         border-radius: 4px; 
         gap: 10px;
         white-space: nowrap;
-        font-size: 1rem; /* Restaurar un tamaño de fuente legible para el menú */
-        box-shadow: none; /* Remover sombra para que se vea como menú */
+        font-size: 1rem;
+        box-shadow: none;
     }
-
+    /* Override de colores específicos en móvil (deben ser sólidos) */
+    #mobileMenuDropdown #saveBtn { background: var(--success); }
+    #mobileMenuDropdown #resetFormBtn { background: #576574; }
+    #mobileMenuDropdown .danger { background: var(--danger); }
+    
     /* Hover simple para mantener el color y dar feedback */
     #mobileMenuDropdown button:hover, #mobileMenuDropdown .import-label:hover {
         filter: brightness(1.2); /* Aclara el color base */
+        transform: none; /* Elimina la elevación en móvil */
     }
 
 
