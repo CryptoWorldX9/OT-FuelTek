@@ -1,7 +1,7 @@
 /* Fueltek v7.5 - script.js
-   Versión corregida: mantiene toda la lógica original,
-   restaura exportar/imprimir/acciones de fila y corrige menú móvil.
-   Además integra Firebase (guardar, leer, eliminar) sin tocar diseño.
+   Versión corregida: Solución de errores por bloqueo de ejecución 
+   al llamar a lucide.createIcons() antes de su inicialización.
+   Se ha envuelto cada llamada en una verificación de existencia.
 */
 
 /* -------------------------
@@ -129,7 +129,9 @@ const resetSaveButton = () => {
     // Usamos .innerHTML para que se renderice el ícono de lucide
     document.getElementById("saveBtn").innerHTML = '<i data-lucide="save"></i><span>Guardar</span>'; 
     // Re-renderizar los íconos de lucide si es necesario
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') { // 🔥 ARREGLO 1: Comprobar Lucide
+        lucide.createIcons();
+    }
 }
 
 /* ====================================================================
@@ -235,7 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
     otInput.value = String(getLastOt() + 1);
     resetSaveButton();
   }
-  updateOtDisplay();
+  updateOtDisplay(); // <-- Esta función llama a resetSaveButton, que ahora tiene la verificación de Lucide.
   
   // Agregar listeners para formato de miles Y ACTUALIZACIÓN DE SALDO EN TIEMPO REAL
   [valorTrabajoInput, montoAbonadoInput].forEach(input => {
@@ -263,14 +265,15 @@ document.addEventListener("DOMContentLoaded", () => {
         mobileMenuDropdown.classList.toggle("active");
         
         // Cambiar icono: menú o X
-        // Buscamos el ícono dentro del botón por su atributo data-lucide
         const iconContainer = mobileMenuBtn.querySelector('[data-lucide]');
         const newIconName = mobileMenuDropdown.classList.contains('active') ? 'x' : 'menu';
         
         if (iconContainer) {
             iconContainer.setAttribute('data-lucide', newIconName);
             // Re-renderizar el ícono solo en el botón
-            lucide.createIcons({ attrs: { width: 24, height: 24 }, parent: mobileMenuBtn });
+            if (typeof lucide !== 'undefined') { // 🔥 ARREGLO 2: Comprobar Lucide
+                lucide.createIcons({ attrs: { width: 24, height: 24 }, parent: mobileMenuBtn });
+            }
         }
     });
 
@@ -284,7 +287,9 @@ document.addEventListener("DOMContentLoaded", () => {
               const iconContainer = mobileMenuBtn.querySelector('[data-lucide]');
               if (iconContainer) {
                   iconContainer.setAttribute('data-lucide', 'menu');
-                  lucide.createIcons({ attrs: { width: 24, height: 24 }, parent: mobileMenuBtn });
+                  if (typeof lucide !== 'undefined') { // 🔥 ARREGLO 3: Comprobar Lucide
+                      lucide.createIcons({ attrs: { width: 24, height: 24 }, parent: mobileMenuBtn });
+                  }
               }
           }, 100);
       });
@@ -482,7 +487,9 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>`;
       fragment.appendChild(div);
       // Solo renderiza los íconos de la fila
-      lucide.createIcons({ parent: div }); 
+      if (typeof lucide !== 'undefined') { // 🔥 ARREGLO 4: Comprobar Lucide
+          lucide.createIcons({ parent: div }); 
+      }
     }
     
     ordersList.appendChild(fragment);
@@ -579,7 +586,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Actualiza el contenido de texto para el botón de escritorio
     document.getElementById("saveBtn").title = "Actualizar OT #" + o.ot;
     document.getElementById("saveBtn").innerHTML = '<i data-lucide="refresh-cw"></i><span>Actualizar</span>';
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') { // 🔥 ARREGLO 5: Comprobar Lucide
+        lucide.createIcons();
+    }
     
     alert("Orden OT #" + o.ot + " cargada. Si modificas algo y guardas, se actualizará esa misma OT.");
   }
@@ -590,7 +599,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fd = new FormData(form);
     const data = {};
     for (const [k, v] of fd.entries()) if (k !== "accesorios") data[k] = v;
-    data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked')).map(c => c.value);
+    data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
     
     // Usar el OT actual si está cargado, si no, el siguiente correlativo
     data.ot = currentLoadedOt || String(getLastOt() + 1);
@@ -750,6 +759,7 @@ document.addEventListener("DOMContentLoaded", () => {
       'Fecha Guardado': new Date(o.fechaGuardado).toLocaleString('es-CL'),
     }));
 
+    // El uso de XLSX.utils no necesita verificación de Lucide
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Órdenes de Trabajo");
@@ -841,4 +851,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Nota: Las funciones de Firebase fueron movidas a la parte superior para que DOMContentLoaded pueda usarlas.
+// Nota: El llamado a lucide.createIcons() al final del index.html también es importante, 
+// pero está en el HTML, no en este script. Con las verificaciones aquí, el script
+// debe ser mucho más robusto.
