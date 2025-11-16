@@ -83,10 +83,10 @@ main{padding:25px}
 .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center} 
 .controls button, .import-label {
   /* ESTILO BASE (OUTLINED/DELINEADO) - FINO Y SUTIL */
-  height: 38px; /* Ligeramente más alto */
+  height: 35px; /* MÁS PEQUEÑO */
   width: auto; 
-  padding: 0 12px; 
-  border-radius: 8px; /* Bordes más suaves */
+  padding: 0 10px; /* Menos padding */
+  border-radius: 6px; /* BORDES MÁS SUTILES */
   border: 1px solid var(--primary); 
   background: var(--card); /* Fondo blanco */
   color: var(--primary); /* Texto del color primario */
@@ -97,7 +97,7 @@ main{padding:25px}
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Sombra muy sutil */
-  gap: 6px; 
+  gap: 5px; /* Menos espacio */
   font-weight: 600;
   white-space: nowrap; 
 }
@@ -108,8 +108,8 @@ main{padding:25px}
     transform:translateY(-1px);
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15); /* Sombra de elevación sutil */
 }
-.controls button i, .import-label i { width: 18px; height: 18px; } /* Íconos un poco más grandes */
-.controls button span, .import-label span { font-size: 1rem; } /* Tamaño de texto normalizado */
+.controls button i, .import-label i { width: 16px; height: 16px; } /* Íconos MÁS PEQUEÑOS */
+.controls button span, .import-label span { font-size: 0.95rem; } /* Texto MÁS PEQUEÑO */
 
 /* Estilos de color específicos (override para mantener el look sólido o adaptado) */
 
@@ -333,6 +333,8 @@ textarea{min-height:140px;resize:vertical}
     /* Adaptar Firmas */
     .firmas { flex-direction: column; gap: 30px; margin: 20px 0; }
     .firma-box { width: 90%; max-width: none; margin: 0 auto; }
+    .firma-box label{font-weight:600;color:#555}
+    .firma-box input{width:100%;height:45px;text-align:center;border-radius:6px;border:1px solid var(--border);margin-top:5px;background:#f9f9f9;font-family: inherit;}
 }
 
 /* El resto de estilos (modal, notas, footer, print) se mantienen */
