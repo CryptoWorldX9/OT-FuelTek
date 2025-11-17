@@ -3,8 +3,10 @@
    restaura exportar/imprimir/acciones de fila y corrige menú móvil.
    Además integra Firebase (guardar, leer, eliminar) sin tocar diseño.
    
-   CORRECCIÓN: Se añade comprobación robusta para evitar que un elemento
-   nulo (ej. mobileMenuDropdown) detenga la ejecución del script.
+   CORRECCIÓN 1 (2025-11-17): Se añade comprobación robusta para evitar que un elemento
+   nulo detenga la ejecución del script (restaurando funcionalidad de botones y OT).
+   CORRECCIÓN 2 (2025-11-17): Se actualiza el correlativo a 10725.
+   CORRECCIÓN 3 (2025-11-17): Se aumenta opacidad del sello de impresión.
 */
 
 /* -------------------------
@@ -112,7 +114,8 @@ function dbDeleteAll() {
    CORRELATIVO / LOCALSTORAGE
    ==================================================================== */
 function getLastOt() {
-  return parseInt(localStorage.getItem(OT_LOCAL) || "726", 10);
+  // CORRECCIÓN: Usar 10724 como valor inicial para que el siguiente sea 10725.
+  return parseInt(localStorage.getItem(OT_LOCAL) || "10724", 10);
 }
 function setLastOt(n) { localStorage.setItem(OT_LOCAL, String(n)); }
 function nextOtAndSave() {
@@ -125,8 +128,10 @@ function nextOtAndSave() {
    BOTÓN GUARDAR - RESET
    ==================================================================== */
 const resetSaveButton = () => {
-    document.getElementById("saveBtn").title = "Guardar OT";
-    document.getElementById("saveBtn").innerHTML = '<i data-lucide="save"></i><span>Guardar</span>'; 
+    const saveBtn = document.getElementById("saveBtn");
+    if (!saveBtn) return;
+    saveBtn.title = "Guardar OT";
+    saveBtn.innerHTML = '<i data-lucide="save"></i><span>Guardar</span>'; 
     lucide.createIcons();
 }
 
@@ -139,6 +144,9 @@ function updateSaldo() {
     const estadoPago = document.getElementById("estadoPago");
     const labelAbono = document.getElementById("labelAbono");
     
+    // Comprobaciones de seguridad
+    if (!valorTrabajoInput || !montoAbonadoInput || !estadoPago || !labelAbono) return;
+
     const valor = unformatCLP(valorTrabajoInput.value);
     const estado = estadoPago.value;
 
@@ -172,6 +180,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // Elementos del menú móvil
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const mobileMenuDropdown = document.getElementById("mobileMenuDropdown");
+  const saveBtn = document.getElementById("saveBtn");
+  const newOtBtn = document.getElementById("newOtBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const resetFormBtn = document.getElementById("resetFormBtn");
+  const viewBtn = document.getElementById("viewBtn");
+  const printBtn = document.getElementById("printBtn");
+  const exportBtn = document.getElementById("exportBtn");
+  const exportDbBtn = document.getElementById("exportDbBtn");
+  const importFile = document.getElementById("importFile");
+
     
   const updateOtDisplay = () => {
     if (otInput) { // ⬅️ COMPROBACIÓN: Evita error si otInput es null (causa de fallo de script)
@@ -234,7 +252,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // Reservar nuevo OT
-  const newOtBtn = document.getElementById("newOtBtn");
   if (newOtBtn) newOtBtn.addEventListener("click", () => {
     const reserved = nextOtAndSave();
     updateOtDisplay();
@@ -242,17 +259,15 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   
   // Borrar base de datos completa
-  const clearBtn = document.getElementById("clearBtn");
   if (clearBtn) clearBtn.addEventListener("click", async () => {
-    if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ toda la base de datos de Órdenes de Trabajo y reiniciará el contador a 727. ¿Desea continuar?")) return;
+    if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ toda la base de datos de Órdenes de Trabajo y reiniciará el contador a 10725. ¿Desea continuar?")) return;
     await dbDeleteAll();
-    setLastOt(726);
+    setLastOt(10724); // Reiniciar a 10724
     updateOtDisplay();
-    alert("Base de datos eliminada. Contador reiniciado a 727.");
+    alert("Base de datos eliminada. Contador reiniciado a 10725.");
   });
   
   // Limpiar campos manualmente
-  const resetFormBtn = document.getElementById("resetFormBtn");
   if (resetFormBtn) resetFormBtn.addEventListener("click", () => {
     if (confirm("¿Seguro que deseas limpiar todos los campos del formulario?")) {
       form.reset();
@@ -266,9 +281,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // Guardar o actualizar
-  const saveBtn = document.getElementById("saveBtn");
   if (saveBtn) saveBtn.addEventListener("click", async (e) => {
     e.preventDefault();
+    
+    if (!form) return;
     
     const fd = new FormData(form);
     const order = {};
@@ -318,17 +334,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Limpiar form y mostrar siguiente correlativo
     form.reset();
-    labelAbono.classList.add("hidden");
+    if (labelAbono) labelAbono.classList.add("hidden");
     currentLoadedOt = null;
     updateOtDisplay(); // Restablece el número OT y el botón
     updateSaldo(); // Limpia el saldo
   });
 
   // Modal - Ver OT
-  const viewBtn = document.getElementById("viewBtn");
   if (viewBtn) viewBtn.addEventListener("click", async () => {
     await renderOrdersList();
-    modal.classList.remove("hidden");
+    if (modal) modal.classList.remove("hidden");
   });
   if (closeModal) closeModal.addEventListener("click", () => modal.classList.add("hidden"));
   if (searchOt) searchOt.addEventListener("input", () => renderOrdersList(searchOt.value.trim()));
@@ -380,6 +395,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ordersList.querySelectorAll("button").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const targetBtn = ev.target.closest('button');
+        if (!targetBtn) return; // Safety check
         // Aseguramos que el OT extraído del data-attribute sea string para la consulta
         const ot = String(targetBtn.dataset.ot);
         const action = targetBtn.dataset.action;
@@ -398,7 +414,7 @@ document.addEventListener("DOMContentLoaded", () => {
             try { dat = await firebaseGetOrder(ot); } catch (e) { console.warn("firebase get order failed:", e); }
           }
           if (!dat) dat = await dbGet(ot);
-          if (dat) { loadOrderToForm(dat); modal.classList.add("hidden"); }
+          if (dat) { loadOrderToForm(dat); if (modal) modal.classList.add("hidden"); }
           else alert("Orden no encontrada para cargar.");
         } else if (action === "delete") {
           if (confirm("¿Borrar definitivamente OT #" + ot + "?")) {
@@ -421,7 +437,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderOrdersList();
             if (currentLoadedOt === ot) {
                 currentLoadedOt = null;
-                form.reset();
+                if(form) form.reset();
                 updateOtDisplay();
                 updateSaldo();
             }
@@ -466,13 +482,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Imprimir actual o vista previa
-  const printBtn = document.getElementById("printBtn");
   if (printBtn) printBtn.addEventListener("click", e => {
     e.preventDefault();
+    if (!form || !otInput) return; // Safety check
+    
     const fd = new FormData(form);
     const data = {};
     for (const [k, v] of fd.entries()) if (k !== "accesorios") data[k] = v;
-    data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
+    data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked')).map(c => c.value);
     data.ot = otInput.value || String(getLastOt() + 1);
     
     // Para impresión, usa el valor DESFORMATEADO para el cálculo
@@ -564,7 +581,7 @@ document.addEventListener("DOMContentLoaded", () => {
         
         <div style="display:flex;gap:40px;margin-top:25px;padding-top:10px;border-top:1px solid #eee;">
           <div style="flex:1;text-align:center; position: relative;">
-            <img src="stamp-motosierra.png" style="width: 40px; height: 40px; opacity: 0.5; position: absolute; top: -35px; left: 50%; transform: translateX(-50%);" alt="Sello Taller" />
+            <img src="stamp-motosierra.png" style="width: 50px; height: 50px; opacity: 1.0; position: absolute; top: -45px; left: 50%; transform: translateX(-50%);" alt="Sello Taller" />
             <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;font-size:9.5pt;">${data.firmaTaller || ""}</div>
             <div style="margin-top:6px;font-weight:600;color:#2c3e50;font-size:9.5pt;">Firma Taller</div>
           </div>
@@ -590,7 +607,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   
   // Implementación de Exportar/Importar DB JSON y Exportar a Excel
-  const exportBtn = document.getElementById("exportBtn");
   if (exportBtn) exportBtn.addEventListener("click", async () => {
     const orders = await dbGetAll();
     if (orders.length === 0) return alert("No hay órdenes para exportar.");
@@ -615,14 +631,17 @@ document.addEventListener("DOMContentLoaded", () => {
       'Fecha Guardado': new Date(o.fechaGuardado).toLocaleString('es-CL'),
     }));
 
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Órdenes de Trabajo");
-    XLSX.writeFile(wb, `Ordenes_Trabajo_Fueltek_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    alert("Exportación a Excel completada.");
+    if (typeof XLSX !== 'undefined' && XLSX.utils) {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Órdenes de Trabajo");
+        XLSX.writeFile(wb, `Ordenes_Trabajo_Fueltek_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        alert("Exportación a Excel completada.");
+    } else {
+        alert("Error: La librería de exportación (xlsx.full.min.js) no está cargada correctamente.");
+    }
   });
 
-  const exportDbBtn = document.getElementById("exportDbBtn");
   if (exportDbBtn) exportDbBtn.addEventListener("click", async () => {
     const orders = await dbGetAll();
     const dataStr = JSON.stringify(orders, null, 2);
@@ -638,7 +657,6 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("Copia de seguridad de la base de datos (JSON) exportada.");
   });
 
-  const importFile = document.getElementById("importFile");
   if (importFile) importFile.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) return;
