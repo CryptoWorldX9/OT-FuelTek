@@ -1,4 +1,3 @@
-/* --- styles.css: Full Rebuild con FIX DE LAYOUT DEFINITIVO --- */
 :root{
   --primary: #004d99; /* Azul Corporativo */
   --accent: #f26522; /* Naranja Contraste */
@@ -10,17 +9,9 @@
   --danger: #c0392b; /* Rojo para Borrar */
 }
 
-/* FIX: Ocultar elementos de forma robusta, incluyendo el modal y el input file */
-.hidden {
-  display: none !important; 
-}
-.modal.hidden {
-  display: none !important;
-}
-
 *{box-sizing:border-box}
 body{
-  font-family: 'Inter', "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: 'Inter', "Segoe UI", Roboto, Arial, sans-serif; /* Fuente moderna */
   margin:0;
   background:var(--bg);
   color:var(--dark);
@@ -43,229 +34,320 @@ header{
   background:var(--dark);
   color:white;
   padding:18px;
-  border-bottom: 3px solid var(--primary);
+  border-bottom: 3px solid var(--primary); /* Nuevo separador */
 }
-.logo{width:80px;height:80px;object-fit:contain}
-.header-info h1{margin:0;font-size:1.8rem;color:var(--primary)}
-.header-info p{margin:0;font-size:1rem}
-.header-info small{font-size:0.75rem;opacity:0.8}
+.logo{width:80px;height:80px;object-fit:contain;background:white;padding:5px;border-radius:8px}
+.header-info h1{margin:0;font-size:2rem;color:var(--primary)}
+.header-info p{color:var(--accent);margin:4px 0;font-weight:600} 
+.header-info small{opacity:0.9;font-size:0.8rem}
 
 main{padding:25px}
 
-/* --- BARRA DE ACCIONES OT --- */
+/* top bar - controles */
 .ot-bar{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:20px;
-  padding:10px 0;
-  border-bottom:1px solid var(--border);
-}
-
-/* FIX Y MEJORA VISUAL OT NUMBER */
-.ot-bar .left {
-    display: flex;
-    align-items: center;
-    background: var(--accent);
-    color: white;
-    padding: 8px 15px;
-    border-radius: 6px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    margin-right: 20px;
-}
-.ot-label {
-    font-weight: 600;
-    margin-right: 10px;
-    font-size: 1.1rem;
-}
-#otNumber {
-    font-weight: 800;
-    font-size: 1.5rem;
-    color: white;
-    background: none;
-    border: none;
-    width: 100px;
-    padding: 0;
-    text-align: left;
-    cursor: default;
-}
-.ot-bar .right{
-    display: flex;
-    gap: 10px; /* Separación en escritorio */
-    position: relative; /* Necesario para el menú móvil */
-}
-
-/* --- BOTONES Y MENÚ MÓVIL --- */
-button, .import-label{
-  padding:10px 15px;
+  padding:12px 15px;
+  background:var(--card);
   border-radius:8px;
-  border:none;
-  background:var(--primary);
-  color:white;
-  cursor:pointer;
-  font-size:1rem;
-  font-weight:600;
-  transition:background 0.2s;
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  text-decoration: none;
+  margin-bottom:20px;
+  border:1px solid var(--border);
+  gap:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+  position: relative; 
 }
-button:hover, .import-label:hover{background:#003a7a}
+.ot-bar .left{display:flex;align-items:center;gap:12px}
 
-.mobile-only{display:none}
-@media (max-width:768px){
-  .desktop-only{display:none}
-  .mobile-only{display:inline-flex}
-  .ot-bar .right button{padding:8px 12px}
+/* --- REFINAMIENTO CAMPO OT --- */
+.ot-label{
+    font-weight:600; /* Menos énfasis */
+    color:var(--dark);
+    font-size:1rem; /* Más pequeño */
+}
+#otNumber{
+  width:120px; /* Más estrecho */
+  text-align:center;
+  font-weight:700; /* Menos grueso */
+  font-size:1.1rem; /* Más pequeño */
+  border:1px solid var(--border); /* Borde fino y profesional */
+  border-radius:6px; /* Más sutil */
+  padding:6px 8px; /* Menos padding */
+  background:#f0f7ff; /* Fondo ligeramente azul para destacar suavemente */
+  color:var(--primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05) inset; /* Sombra interior sutil */
+}
+/* --- FIN REFINAMIENTO CAMPO OT --- */
 
-  /* Menú desplegable */
-  .mobile-menu-dropdown{
-    position:absolute;
-    right:0;
-    top:calc(100% + 10px);
-    width:250px;
-    background:var(--dark);
-    border-radius:8px;
-    box-shadow:0 8px 16px rgba(0,0,0,0.3);
-    z-index:1000;
-    padding:10px;
-    display:none; /* Hidden by default, controlled by JS */
-  }
-  .mobile-menu-dropdown.active{display:flex;flex-direction:column;gap:10px;}
-  .mobile-menu-dropdown button, .mobile-menu-dropdown .import-label{
-      width:100%;
-      background:rgba(255,255,255,0.1);
-      justify-content:flex-start;
-      font-size:0.9rem;
-  }
-  .mobile-menu-dropdown hr{
-    border:none;
-    border-top:1px solid rgba(255,255,255,0.2);
-    margin:5px 0;
-  }
+/* --- CONTROLES: MEJORA VISUAL PARA ESCRITORIO (MÁS FINO Y ELEGANTE) --- */
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center} 
+.controls button, .import-label {
+  /* ESTILO BASE (OUTLINED/DELINEADO) - FINO Y SUTIL */
+  height: 35px; /* MÁS PEQUEÑO */
+  width: auto; 
+  padding: 0 10px; /* Menos padding */
+  border-radius: 6px; /* BORDES MÁS SUTILES */
+  border: 1px solid var(--primary); 
+  background: var(--card); /* Fondo blanco */
+  color: var(--primary); /* Texto del color primario */
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Sombra muy sutil */
+  gap: 5px; /* Menos espacio */
+  font-weight: 600;
+  white-space: nowrap; 
+}
+/* Estilo Hover para botones Outlined (se rellenan y elevan) */
+.controls button:hover, .import-label:hover{
+    background:var(--primary);
+    color: white; /* El texto se vuelve blanco en hover */
+    transform:translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15); /* Sombra de elevación sutil */
+}
+.controls button i, .import-label i { width: 16px; height: 16px; } /* Íconos MÁS PEQUEÑOS */
+.controls button span, .import-label span { font-size: 0.95rem; } /* Texto MÁS PEQUEÑO */
+
+/* Estilos de color específicos (override para mantener el look sólido o adaptado) */
+
+/* 1. GUARDAR/ACTUALIZAR: Fuerte énfasis, siempre sólido */
+#saveBtn { 
+    background: var(--success);
+    border-color: var(--success);
+    color: white; 
+}
+#saveBtn:hover { 
+    background: #1e8449; 
+    border-color: #1e8449;
 }
 
-/* --- FORMULARIO Y GRIDS --- */
-.ot-form{
+/* 2. LIMPIAR CAMPOS: Outlined pero con color Dark */
+#resetFormBtn {
+    background: var(--card);
+    color: var(--dark);
+    border-color: var(--dark);
+}
+#resetFormBtn:hover {
+    background: var(--dark);
+    color: white;
+    border-color: var(--dark);
+}
+
+/* 3. BORRAR BASE DE DATOS: Fuerte énfasis, siempre sólido */
+.controls .danger{
+    background:var(--danger);
+    border-color: var(--danger);
+    color: white;
+}
+.controls .danger:hover{
+    background:#a13023;
+    border-color: #a13023;
+}
+/* --- FIN MEJORA VISUAL PARA ESCRITORIO --- */
+
+
+/* Ocultar elementos específicos en Desktop */
+#mobileMenuBtn { display: none; }
+.mobile-only { display: none; }
+.import-label input{display:none}
+
+
+/* --- FORM FIELDS --- */
+fieldset{border:1px solid var(--border);border-radius:10px;padding:15px;margin-bottom:25px}
+legend{
+    color:var(--dark);
+    font-weight:700;
+    padding:0 8px;
+    font-size:1.2rem;
+    border-bottom: 2px solid var(--accent);
+    margin-bottom:15px;
     display: block;
 }
 
-.ot-form label, .ot-form textarea, .ot-form input, .ot-form select{
-  display:block;
-  width:100%;
-}
-.ot-form input, .ot-form select, .ot-form textarea{
-  padding:10px;
-  border:1px solid var(--border);
-  border-radius:6px;
-  font-size:1rem;
-  margin-top:5px;
-  margin-bottom:15px;
-  font-family:inherit;
-}
+.grid{display:grid;gap:20px}
+.grid-2col{grid-template-columns: 1fr 1fr}
 
-/* Nuevo Título Principal */
-.main-form-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--dark);
-    text-align: center;
-    margin: 20px 0 30px;
-}
-/* Nuevo Título de Sección con Separador */
-.section-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--primary);
-    border-bottom: 2px solid var(--primary);
-    padding-bottom: 5px;
-    margin-top: 30px;
-    margin-bottom: 15px;
-}
-
-/* GRID LAYOUTS */
-.form-group-triple, .form-group-double, .form-group-quad{
-  display:grid;
-  gap:20px;
-}
-
-.form-group-triple{
-  grid-template-columns:repeat(3, 1fr);
-}
-.form-group-double{
-  grid-template-columns:repeat(2, 1fr);
-}
-.form-group-quad{
-  grid-template-columns:repeat(4, 1fr);
-}
-
-@media (max-width:768px){
-    /* En móvil se apilan todos */
-    .form-group-triple, .form-group-double, .form-group-quad{
-        grid-template-columns:1fr; 
-    }
-}
-
-/* Checkboxes */
-.section-label{display:block;margin-top:15px;font-weight:600}
-.checkbox-group{
-  display:flex;
-  flex-wrap:wrap;
-  gap:15px;
-  padding:15px;
-  border:1px solid var(--border);
-  border-radius:6px;
-  margin-bottom:20px;
-  background:#f9f9f9;
-}
-.checkbox-group label{
-  display:flex;
-  align-items:center;
-  width:auto;
-  margin:0;
-}
-.checkbox-group input[type="checkbox"]{
-  width:auto;
-  margin-right:5px;
-  margin-bottom:0;
-}
-
-/* Ocultar/Mostrar campos de abono */
-#labelAbono.hidden, #montoAbonadoInput.hidden{display:none}
-
-/* Área de notas legales */
-.notes-legal{
-    padding:15px;
-    border:1px dashed var(--border);
-    background:#fff3e0;
+.stack{display:flex;flex-direction:column;gap:6px;font-size:0.9rem}
+.stack input, .stack select, textarea{
+    width: 100%; 
+    padding:12px;
     border-radius:8px;
-    margin-top:30px;
-    font-size:0.9rem;
-    color:#444;
+    border:1px solid #c9d0d6;
+    font-size:1rem;
+    transition:all 0.2s;
+    font-family: inherit;
+    background:var(--card);
 }
-.notes-legal strong{color:var(--accent)}
-.notes-legal ul{list-style-type:disc;padding-left:20px}
+.stack input:focus, .stack select:focus, textarea:focus{
+    border-color:var(--primary);
+    outline:none;
+    box-shadow: 0 0 0 3px rgba(0, 77, 153, 0.15);
+}
+textarea{min-height:140px;resize:vertical}
+.stack input[readonly] {background: var(--bg); color: var(--dark); font-weight: 700;}
 
-/* --- MODAL Y LISTA DE ÓRDENES --- */
-.modal{
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(0,0,0,0.6);z-index:2000;display:flex;justify-content:center;align-items:center;
+
+/* checkbox grid: 3 columnas en escritorio */
+.checkbox-grid.aligned{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr); 
+  gap:10px 15px;
 }
-.modal-content{
-  background:var(--card);padding:20px;border-radius:10px;max-width:800px;width:90%;max-height:90%;
-  display:flex;flex-direction:column;
+.checkbox-item{
+    display:flex;align-items:center;gap:10px;
+    background:#fcfcfc;padding:10px 12px;
+    border-radius:6px;
+    border:1px solid var(--border);
+    cursor:pointer;
+    transition: all 0.2s;
 }
-.modal-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:15px}
-.modal-header h3{margin:0;color:var(--primary)}
-.modal-body{flex-grow:1;overflow-y:auto}
-#searchOt{padding:10px;margin-bottom:15px}
-.orders-list{max-height:450px;overflow-y:auto;padding-right:10px}
-.order-row{
-    display:flex;justify-content:space-between;align-items:center;padding:12px;
-    border-bottom:1px solid #e5e5e5;background:var(--bg);border-radius:8px;
-    margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08)
+.checkbox-item:hover{background:#f0f7ff;border-color:var(--primary)}
+.checkbox-item input[type="checkbox"]{width:18px;height:18px;margin:0;flex:0 0 auto;accent-color:var(--primary)}
+
+/* payment grid: 3 columnas */
+.grid-pay{display:grid;grid-template-columns:repeat(3, 1fr);gap:20px} 
+.hidden{display:none !important}
+
+/* firmas centradas */
+.firmas{display:flex;justify-content:space-around;gap:50px;margin:40px 0}
+.firma-box{width:45%;max-width:300px;text-align:center}
+.firma-box label{font-weight:600;color:#555}
+.firma-box input{width:100%;height:45px;text-align:center;border-radius:6px;border:1px solid var(--border);margin-top:5px;background:#f9f9f9;font-family: inherit;}
+
+/* notas */
+.notas{background:#e8f0f8;border-left:5px solid var(--primary);padding:15px;border-radius:8px;margin-top:25px}
+.notas h4{margin-top:0;color:var(--primary)}
+.notas ul{padding-left:20px;margin:0;font-size:0.9rem}
+
+
+/* --- MEDIA QUERY PARA MÓVILES (Max-Width 768px) --- */
+@media (max-width: 768px) {
+    
+    .wrapper { margin: 0; border-radius: 0; }
+    main { padding: 15px; }
+    
+    /* Adaptar Header en Móvil */
+    header {
+        flex-direction: column;
+        text-align: center;
+        padding: 15px 15px 10px 15px;
+    }
+    .header-info h1 { font-size: 1.8rem; }
+    .logo { width: 60px; height: 60px; margin-bottom: 5px; }
+
+
+    /* BARRA DE CONTROLES EN MÓVIL */
+    .ot-bar {
+        padding: 10px 15px;
+        margin-bottom: 10px;
+    }
+    .ot-bar .left { gap: 10px; }
+    /* El campo OT conserva el estilo profesional aplicado, solo se ajusta el tamaño */
+    #otNumber { font-size: 1rem; width: 90px; } 
+    .ot-label { font-size: 0.95rem; }
+
+    /* Menú de hamburguesa y desplegable */
+    #mobileMenuBtn { 
+        display: flex; /* Mostrar botón hamburguesa */
+        position: absolute; 
+        right: 15px; 
+        top: 10px; /* Ajuste por el nuevo alto de botón */
+        z-index: 10; 
+        width: 40px; 
+        height: 40px;
+        padding: 0;
+        background: var(--primary) !important; /* Fuerza el color sólido en móvil */
+        color: white !important;
+        border: none !important;
+        border-radius: 6px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    }
+    /* Ocultar los botones de escritorio cuando el menú móvil está inactivo */
+    .controls { display: none; } 
+    #mobileMenuDropdown {
+        display: none; /* Oculto por defecto en móvil */
+        position: absolute;
+        top: 60px; 
+        right: 15px;
+        width: 200px; 
+        flex-direction: column;
+        background: var(--dark); /* Fondo del menú */
+        border-radius: 8px;
+        padding: 8px; 
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        z-index: 5;
+        gap: 5px; 
+    }
+    /* El selector es más específico que .controls { display: none; } */
+    #mobileMenuDropdown.active {
+        display: flex; /* Muestra el menú al activarse */
+    }
+    
+    /* FIX: Estilos para los botones dentro del menú móvil (conservando colores específicos) */
+    #mobileMenuDropdown button, #mobileMenuDropdown .import-label {
+        width: 100%;
+        height: 40px;
+        display: flex; 
+        align-items: center;
+        justify-content: flex-start; /* Alineación a la izquierda */
+        padding: 0 10px; 
+        /* En móvil deben ser botones sólidos para mejor usabilidad */
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 4px; 
+        gap: 10px;
+        white-space: nowrap;
+        font-size: 1rem;
+        box-shadow: none;
+    }
+    /* Override de colores específicos en móvil (deben ser sólidos) */
+    #mobileMenuDropdown #saveBtn { background: var(--success); }
+    #mobileMenuDropdown #resetFormBtn { background: #576574; }
+    #mobileMenuDropdown .danger { background: var(--danger); }
+    
+    /* Hover simple para mantener el color y dar feedback */
+    #mobileMenuDropdown button:hover, #mobileMenuDropdown .import-label:hover {
+        filter: brightness(1.2); /* Aclara el color base */
+        transform: none; /* Elimina la elevación en móvil */
+    }
+
+
+    /* Adaptar el Formulario */
+    .grid-2col { grid-template-columns: 1fr; } /* Columna única */
+    .grid-pay { grid-template-columns: 1fr; } /* Una columna para el pago en móvil */
+    .checkbox-grid.aligned { 
+        grid-template-columns: 1fr 1fr; /* Dos columnas para la lista de accesorios */
+    }
+
+    /* FIX: Campos de fecha (input[type="date"]) para evitar desbordamiento */
+    .stack input[type="date"] {
+        min-width: 0; /* Permite que el input se comprima */
+        /* Asegurarse de que el input ocupe el espacio sin desbordar */
+        width: 100%;
+    }
+
+    /* Adaptar Firmas */
+    .firmas { flex-direction: column; gap: 30px; margin: 20px 0; }
+    .firma-box { width: 90%; max-width: none; margin: 0 auto; }
+    .firma-box label{font-weight:600;color:#555}
+    .firma-box input{width:100%;height:45px;text-align:center;border-radius:6px;border:1px solid var(--border);margin-top:5px;background:#f9f9f9;font-family: inherit;}
 }
+
+/* El resto de estilos (modal, notas, footer, print) se mantienen */
+.modal{position:fixed;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);z-index:40}
+.modal.hidden{display:none}
+.modal-content{width:95%;max-width:900px;background:#fff;border-radius:12px;padding:25px;box-shadow:0 20px 50px rgba(0,0,0,0.4)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.modal-header h3{margin:0;color:var(--dark);font-size:1.5rem}
+.modal-header button{background:#777;padding:8px 12px;color:white;border:none;border-radius:6px;cursor:pointer;transition:background 0.2s}
+.modal-header button:hover{background:#555}
+.modal-body input{width:100%;padding:12px;border-radius:8px;border:1px solid #c9d0d6;margin-bottom:15px;font-size:1rem}
+.orders-list{max-height:550px;overflow-y:auto;border:1px solid #eee;padding:10px;border-radius:8px;background:#fff}
+.order-row{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #e5e5e5;background:var(--bg);border-radius:8px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
 .order-row:last-child{border-bottom:none}
 .order-row b{color:var(--primary)}
 .order-actions button{
@@ -278,7 +360,6 @@ button:hover, .import-label:hover{background:#003a7a}
 .order-actions button.small{padding:6px 10px}
 .order-actions button[data-action="delete"] {background: var(--danger);}
 .order-actions button[data-action="delete"]:hover {background: #a13023;}
-
 footer{background:var(--dark);color:white;padding:15px;text-align:center;font-size:0.85rem}
 
 /* --- ESTILOS DE IMPRESIÓN AJUSTADOS (6mm margen, 9.5pt fuente) --- */
@@ -286,16 +367,15 @@ footer{background:var(--dark);color:white;padding:15px;text-align:center;font-si
 
 @media print{
   body{background:white}
-  .wrapper{
-    max-width:none;
-    margin:0;
-    box-shadow:none;
-    border-radius:0;
-    overflow:visible;
+  .wrapper{box-shadow:none;margin:0;border-radius:0}
+  .controls, .ot-bar .controls, .import-label, .modal, footer, #mobileMenuBtn {display:none !important}
+  main {padding:0 !important;}
+  body *{visibility:hidden}
+  #printArea, #printArea *{visibility:visible}
+  #printArea{
+    position:absolute;left:0;top:0;width:100%;
+    padding:6mm; /* Ajustar padding interno para coincidir con margen */
+    box-sizing:border-box;
+    font-size:9.5pt; /* Reducir ligeramente la fuente base */
   }
-  /* Oculta los elementos de UI y solo muestra el área de impresión */
-  header, main, footer, .modal, .ot-bar, .ot-bar .right, .notes-legal, .mobile-menu-dropdown{
-    display:none !important;
-  }
-  .print-area{display:block !important;width:100%}
 }

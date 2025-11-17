@@ -1,5 +1,21 @@
 /* Fueltek v7.5 - script.js
-   Versión Corregida 9 (FIX BUGS): Arregla duplicación de botones y modal abierto.
+   Versión corregida: mantiene toda la lógica original,
+   restaura exportar/imprimir/acciones de fila y corrige menú móvil.
+   Además integra Firebase (guardar, leer, eliminar) sin tocar diseño.
+   
+   CORRECCIÓN 1 (2025-11-17): Se añade comprobación robusta para evitar que un elemento
+   nulo detenga la ejecución del script (restaurando funcionalidad de botones y OT).
+   CORRECCIÓN 2 (2025-11-17): Se actualiza el correlativo a 10725.
+   CORRECCIÓN 3 (2025-11-17): Se aumenta opacidad del sello de impresión.
+   CORRECCIÓN 4 (2025-11-17): Se aumenta el tamaño del sello y se ajusta el espaciado
+                              de las firmas/notas al final de la impresión.
+   CORRECCIÓN 5 (2025-11-17): Se aumenta el tamaño del sello de impresión a 100px.
+   CORRECCIÓN 6 (2025-11-17): Se aumenta el tamaño del sello a 130px y se ajusta la
+                              posición para que parezca un timbre sobre la firma.
+   CORRECCIÓN 7 (2025-11-17): Se arregla la funcionalidad de los botones restaurando
+                              la inicialización del correlativo a 10724.
+   CORRECCIÓN 8 (2025-11-17): Se aumenta el tamaño del sello a 150px y se sube la
+                              posición a -70px para un efecto de timbre más prominente.
 */
 
 /* -------------------------
@@ -37,7 +53,7 @@ function handleFormatOnInput(e) {
 }
 
 /* ====================================================================
-   INDEXEDDB
+   INDEXEDDB (mismo funcionamiento que tenías)
    ==================================================================== */
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -57,6 +73,7 @@ function dbPut(order) {
   return openDB().then(db => new Promise((res, rej) => {
     const tx = db.transaction(STORE, "readwrite");
     const store = tx.objectStore(STORE);
+    // order.ot DEBE ser string (ya manejado en el guardado)
     const r = store.put(order);
     r.onsuccess = () => { res(true); db.close(); };
     r.onerror = () => { rej(r.error); db.close(); };
@@ -77,6 +94,7 @@ function dbGet(key) {
   return openDB().then(db => new Promise((res, rej) => {
     const tx = db.transaction(STORE, "readonly");
     const store = tx.objectStore(STORE);
+    // Asegurar que la clave buscada sea siempre string para IndexedDB
     const r = store.get(String(key)); 
     r.onsuccess = () => { res(r.result); db.close(); };
     r.onerror = () => { rej(r.error); db.close(); };
@@ -143,14 +161,11 @@ function updateSaldo() {
 
     if (estado === "Abonado") {
         labelAbono.classList.remove("hidden");
-        montoAbonadoInput.classList.remove("hidden");
     } else if (estado === "Pagado") {
         labelAbono.classList.add("hidden");
-        montoAbonadoInput.classList.add("hidden");
         montoAbonadoInput.value = formatCLP(valor); 
     } else { // Pendiente
         labelAbono.classList.add("hidden");
-        montoAbonadoInput.classList.add("hidden");
         montoAbonadoInput.value = "";
     }
 }
@@ -171,22 +186,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const ordersList = document.getElementById("ordersList");
   const searchOt = document.getElementById("searchOt");
   
-  // Elementos del menú (solo aquellos con ID único o propósito específico)
+  // Elementos del menú móvil
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const mobileMenuDropdown = document.getElementById("mobileMenuDropdown");
-  const saveBtn = document.getElementById("saveBtn"); // Solo desktop tiene ID
+  const saveBtn = document.getElementById("saveBtn");
   const newOtBtn = document.getElementById("newOtBtn");
   const clearBtn = document.getElementById("clearBtn");
   const resetFormBtn = document.getElementById("resetFormBtn");
-  const viewBtn = document.getElementById("viewBtn"); // Solo desktop tiene ID
-  const printBtn = document.getElementById("printBtn"); // Solo desktop tiene ID
+  const viewBtn = document.getElementById("viewBtn");
+  const printBtn = document.getElementById("printBtn");
   const exportBtn = document.getElementById("exportBtn");
   const exportDbBtn = document.getElementById("exportDbBtn");
   const importFile = document.getElementById("importFile");
 
     
   const updateOtDisplay = () => {
-    if (otInput) {
+    if (otInput) { // ⬅️ COMPROBACIÓN: Evita error si otInput es null (causa de fallo de script)
         otInput.value = String(getLastOt() + 1);
     }
     resetSaveButton();
@@ -195,17 +210,18 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Agregar listeners para formato de miles Y ACTUALIZACIÓN DE SALDO EN TIEMPO REAL
   [valorTrabajoInput, montoAbonadoInput].forEach(input => {
-    if (input) {
+    if (input) { // ⬅️ COMPROBACIÓN
         input.addEventListener("input", e => {
             handleFormatOnInput(e);
             updateSaldo();
         });
+        // Aplicar formato y actualizar saldo al perder foco si se copia/pega
         input.addEventListener("blur", updateSaldo); 
     }
   });
 
   // Mostrar / ocultar campo Abonado y recalcular Saldo
-  if (estadoPago) {
+  if (estadoPago) { // ⬅️ COMPROBACIÓN
       estadoPago.addEventListener("change", updateSaldo);
   }
   
@@ -215,9 +231,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- LÓGICA DEL MENÚ MÓVIL ---
   
   // 1. Toggle mobile menu
-  if(mobileMenuBtn && mobileMenuDropdown) {
+  if(mobileMenuBtn && mobileMenuDropdown) { // ⬅️ COMPROBACIÓN ROBUSTA: Si uno falta, no se ejecuta
       mobileMenuBtn.addEventListener("click", () => {
           mobileMenuDropdown.classList.toggle("active");
+          // Cambiar icono: menú o X
           const iconContainer = mobileMenuBtn.querySelector('i');
           const newIconName = mobileMenuDropdown.classList.contains('active') ? 'x' : 'menu';
           if (iconContainer) iconContainer.innerHTML = `<i data-lucide="${newIconName}"></i>`;
@@ -225,49 +242,20 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  // 2. Event Delegation para los botones del menú móvil (ya no tienen IDs)
-  if(mobileMenuDropdown) mobileMenuDropdown.addEventListener("click", async (e) => {
-    const targetBtn = e.target.closest('button[data-action]');
-    if (!targetBtn) return;
-    
-    // Simular click en el botón de escritorio o el botón con ID
-    const action = targetBtn.dataset.action;
-    switch(action) {
-        case 'save':
-            saveBtn.click();
-            break;
-        case 'view':
-            viewBtn.click();
-            break;
-        case 'print':
-            printBtn.click();
-            break;
-        case 'exportExcel':
-            exportBtn.click();
-            break;
-        case 'exportJson':
-            exportDbBtn.click();
-            break;
-        case 'newOt':
-            newOtBtn.click();
-            break;
-        case 'resetForm':
-            resetFormBtn.click();
-            break;
-        case 'clearDb':
-            clearBtn.click();
-            break;
-    }
-    
-    // Cerrar el menú después de la acción
-    setTimeout(() => {
-        mobileMenuDropdown.classList.remove("active");
-        if(mobileMenuBtn) {
-            const iconContainer = mobileMenuBtn.querySelector('i');
-            if (iconContainer) iconContainer.innerHTML = `<i data-lucide="menu"></i>`;
-            lucide.createIcons({ parent: mobileMenuBtn });
-        }
-    }, 100);
+
+  // 2. Cerrar el menú después de hacer click en cualquier botón de acción
+  if(mobileMenuDropdown) mobileMenuDropdown.querySelectorAll("button, .import-label").forEach(btn => {
+    btn.addEventListener("click", () => {
+        // Usar setTimeout para que la acción del botón (ej. guardar) se ejecute primero
+        setTimeout(() => {
+            mobileMenuDropdown.classList.remove("active");
+            if(mobileMenuBtn) {
+                const iconContainer = mobileMenuBtn.querySelector('i');
+                if (iconContainer) iconContainer.innerHTML = `<i data-lucide="menu"></i>`;
+                lucide.createIcons({ parent: mobileMenuBtn });
+            }
+        }, 100);
+    });
   });
   // -------------------------------------
 
@@ -293,10 +281,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (confirm("¿Seguro que deseas limpiar todos los campos del formulario?")) {
       form.reset();
       if (labelAbono) labelAbono.classList.add("hidden");
-      if (montoAbonadoInput) montoAbonadoInput.classList.add("hidden");
       currentLoadedOt = null;
-      updateOtDisplay();
-      updateSaldo();
+      updateOtDisplay(); // Restablece el número OT al siguiente correlativo y el botón
+      updateSaldo(); // Limpia el saldo
       alert("Campos limpiados. Listo para una nueva OT.");
     }
   });
@@ -308,12 +295,6 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (!form) return;
     
-    // Solo validar si es un evento de formulario o si se activa desde el script.
-    if (!form.checkValidity()) {
-        form.reportValidity(); // Muestra los errores del navegador
-        return;
-    }
-
     const fd = new FormData(form);
     const order = {};
     for (const [k, v] of fd.entries()) {
@@ -338,20 +319,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Si se cargó una OT existente, mantener el mismo número
     if (currentLoadedOt) {
+      // Asegurar que el OT sea string para IndexedDB
       order.ot = String(currentLoadedOt);
       otToSave = currentLoadedOt;
       saveMessage = "actualizada";
     } else {
+      // Guardar una nueva OT y avanzar correlativo
       otToSave = String(getLastOt() + 1);
       order.ot = otToSave;
     }
 
     try {
       await dbPut(order);
+      // Guardar también en Firebase (si está disponible)
       if (typeof firestore !== 'undefined') {
         firebaseSaveOrder(order).catch(err => console.error("Firebase save error:", err));
       }
-      if (!currentLoadedOt) setLastOt(Number(otToSave));
+      if (!currentLoadedOt) setLastOt(Number(otToSave)); // Solo avanza si es OT nueva
       alert(`Orden ${saveMessage} correctamente ✅ (OT #${otToSave})`);
     } catch (err) {
       alert(`Error al ${saveMessage === "guardada" ? "guardar" : "actualizar"}: ${err}`);
@@ -360,10 +344,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Limpiar form y mostrar siguiente correlativo
     form.reset();
     if (labelAbono) labelAbono.classList.add("hidden");
-    if (montoAbonadoInput) montoAbonadoInput.classList.add("hidden");
     currentLoadedOt = null;
-    updateOtDisplay();
-    updateSaldo();
+    updateOtDisplay(); // Restablece el número OT y el botón
+    updateSaldo(); // Limpia el saldo
   });
 
   // Modal - Ver OT
@@ -375,14 +358,16 @@ document.addEventListener("DOMContentLoaded", () => {
   if (searchOt) searchOt.addEventListener("input", () => renderOrdersList(searchOt.value.trim()));
 
   async function renderOrdersList(filter = "") {
-    if (!ordersList) return;
+    if (!ordersList) return; // ⬅️ COMPROBACIÓN BÁSICA
     ordersList.innerHTML = "<div style='padding:10px;color:#666'>Cargando...</div>";
 
+    // Intentamos leer desde Firebase si está disponible, si no fallback a IndexedDB
     let all = [];
     if (typeof firestore !== 'undefined') {
       try {
         all = await firebaseGetAllOrders();
       } catch (e) {
+        console.warn("Firebase read failed, falling back to IndexedDB:", e);
         all = await dbGetAll();
       }
     } else {
@@ -412,19 +397,22 @@ document.addEventListener("DOMContentLoaded", () => {
           <button class="small" data-ot="${o.ot}" data-action="delete" style="background:#b51b1b" title="Borrar"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
         </div>`;
       ordersList.appendChild(div);
+      // Solo renderiza los íconos de la fila
       lucide.createIcons({ parent: div }); 
     }
 
     ordersList.querySelectorAll("button").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const targetBtn = ev.target.closest('button');
-        if (!targetBtn) return;
+        if (!targetBtn) return; // Safety check
+        // Aseguramos que el OT extraído del data-attribute sea string para la consulta
         const ot = String(targetBtn.dataset.ot);
         const action = targetBtn.dataset.action;
         if (action === "print") {
+          // Preferir Firebase, fallback a IndexedDB
           let dat = null;
           if (typeof firestore !== 'undefined') {
-            try { dat = await firebaseGetOrder(ot); } catch (e) {}
+            try { dat = await firebaseGetOrder(ot); } catch (e) { console.warn("firebase get order failed:", e); }
           }
           if (!dat) dat = await dbGet(ot);
           if (dat) buildPrintAndPrint(dat);
@@ -432,20 +420,26 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (action === "load") {
           let dat = null;
           if (typeof firestore !== 'undefined') {
-            try { dat = await firebaseGetOrder(ot); } catch (e) {}
+            try { dat = await firebaseGetOrder(ot); } catch (e) { console.warn("firebase get order failed:", e); }
           }
           if (!dat) dat = await dbGet(ot);
           if (dat) { loadOrderToForm(dat); if (modal) modal.classList.add("hidden"); }
           else alert("Orden no encontrada para cargar.");
         } else if (action === "delete") {
           if (confirm("¿Borrar definitivamente OT #" + ot + "?")) {
+            // Borrar en IndexedDB
             try {
               await dbDelete(ot);
-            } catch (e) {}
+            } catch (e) {
+              console.error("Error al borrar en IndexedDB:", e);
+            }
+            // Borrar en Firebase si existe
             if (typeof firestore !== 'undefined') {
               try {
                 await firebaseDeleteOrder(ot);
-              } catch (e) {}
+              } catch (e) {
+                console.error("Error al borrar en Firebase:", e);
+              }
             }
 
             alert("OT eliminada");
@@ -464,10 +458,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function loadOrderToForm(o) {
     if (!o) return alert("Orden no encontrada.");
-    const saveBtn = document.getElementById("saveBtn");
-    if (!form || !otInput || !saveBtn) return alert("Error interno: Elementos del formulario no cargados.");
+    const saveBtn = document.getElementById("saveBtn"); // ⬅️ Obtener saveBtn aquí para actualización
+    if (!form || !otInput || !saveBtn) return alert("Error interno: Elementos del formulario no cargados."); // ⬅️ COMPROBACIÓN ADICIONAL
     form.reset();
-    currentLoadedOt = String(o.ot);
+    currentLoadedOt = String(o.ot); // Aseguramos que el OT cargado sea string
     const fields = ["clienteNombre","clienteTelefono","clienteEmail","fechaRecibida","fechaEntrega",
       "marca","modelo","serie","anio","diagnostico","trabajo","firmaTaller","firmaCliente"];
     fields.forEach(k => { const el = form.querySelector(`[name="${k}"]`); if (el) el.value = o[k] || ""; });
@@ -478,7 +472,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Estado de pago
     estadoPago.value = o.estadoPago || "Pendiente";
-    updateSaldo();
+    updateSaldo(); // Llama a la función para mostrar/ocultar abono
     
     // Checkboxes
     form.querySelectorAll("input[name='accesorios']").forEach(ch => ch.checked = false);
@@ -488,6 +482,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     
     otInput.value = o.ot;
+    // Actualiza el contenido de texto para el botón de escritorio
     saveBtn.title = "Actualizar OT #" + o.ot;
     saveBtn.innerHTML = '<i data-lucide="refresh-cw"></i><span>Actualizar</span>';
     lucide.createIcons();
@@ -498,7 +493,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Imprimir actual o vista previa
   if (printBtn) printBtn.addEventListener("click", e => {
     e.preventDefault();
-    if (!form || !otInput) return;
+    if (!form || !otInput) return; // Safety check
     
     const fd = new FormData(form);
     const data = {};
@@ -506,16 +501,18 @@ document.addEventListener("DOMContentLoaded", () => {
     data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
     data.ot = otInput.value || String(getLastOt() + 1);
     
+    // Para impresión, usa el valor DESFORMATEADO para el cálculo
     data.valorTrabajoNum = unformatCLP(data.valorTrabajo);
     data.montoAbonadoNum = unformatCLP(data.montoAbonado);
-    data.estadoPago = data.estadoPago || "Pendiente";
+    data.estadoPago = data.estadoPago || "Pendiente"; // Asegurar que tenga estado
     
     buildPrintAndPrint(data);
   });
 
   function buildPrintAndPrint(data) {
-    if (!printArea) return;
+    if (!printArea) return; // ⬅️ COMPROBACIÓN BÁSICA
 
+    // Asegurarse de tener números
     const valorNum = (typeof data.valorTrabajoNum !== 'undefined') ? data.valorTrabajoNum : unformatCLP(data.valorTrabajo || 0);
     const abonoNum = (typeof data.montoAbonadoNum !== 'undefined') ? data.montoAbonadoNum : unformatCLP(data.montoAbonado || 0);
 
@@ -682,7 +679,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (!confirm(`Se encontraron ${orders.length} órdenes. ¿Desea importarlas? Las órdenes existentes con el mismo N° OT se SOBRESCRIBIRÁN.`)) {
-          e.target.value = null;
+          e.target.value = null; // Limpiar el input file
           return;
         }
 
@@ -692,11 +689,13 @@ document.addEventListener("DOMContentLoaded", () => {
         let importedCount = 0;
         
         orders.forEach(order => {
+            // Asegurar que el OT sea string para el keyPath
             order.ot = String(order.ot);
             const request = store.put(order);
             request.onsuccess = () => importedCount++;
             request.onerror = (e) => console.error("Error al importar OT:", order.ot, e.target.error);
 
+            // También intentar guardar en Firebase si está disponible
             if (typeof firestore !== 'undefined') {
               firebaseSaveOrder(order).catch(err => console.error("Error firebase import:", err));
             }
@@ -720,13 +719,16 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ====================================================================
-   FIREBASE - funciones auxiliares
+   FIREBASE - funciones auxiliares (siempre opcional)
+   - Requiere que en index.html hayas inicializado firebase y firestore
    ==================================================================== */
 
 async function firebaseSaveOrder(order) {
   if (typeof firestore === 'undefined') return Promise.reject("Firestore no inicializado");
   try {
+    // Convertir campos a tipos simples (ej. evitar Date objetos)
     const copy = Object.assign({}, order);
+    // Asegurarse que no haya funciones ni referencias
     await firestore.collection("orders").doc(String(order.ot)).set(copy);
     console.log("Firebase: OT guardada", order.ot);
     return true;
