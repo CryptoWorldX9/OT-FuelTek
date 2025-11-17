@@ -1,7 +1,5 @@
 /* Fueltek v7.5 - script.js
-   Versión Corregida 8 (Final): Estructura estable, incluye Firebase y todas las correcciones.
-   - Sello de impresión: 150px de ancho, posición superior: -70px (efecto de timbre).
-   - Contador OT: Se restaura la inicialización a 10724 (siguiente es 10725).
+   Versión Corregida 9 (FIX BUGS): Arregla duplicación de botones y modal abierto.
 */
 
 /* -------------------------
@@ -173,15 +171,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const ordersList = document.getElementById("ordersList");
   const searchOt = document.getElementById("searchOt");
   
-  // Elementos del menú móvil
+  // Elementos del menú (solo aquellos con ID único o propósito específico)
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const mobileMenuDropdown = document.getElementById("mobileMenuDropdown");
-  const saveBtn = document.getElementById("saveBtn");
+  const saveBtn = document.getElementById("saveBtn"); // Solo desktop tiene ID
   const newOtBtn = document.getElementById("newOtBtn");
   const clearBtn = document.getElementById("clearBtn");
   const resetFormBtn = document.getElementById("resetFormBtn");
-  const viewBtn = document.getElementById("viewBtn");
-  const printBtn = document.getElementById("printBtn");
+  const viewBtn = document.getElementById("viewBtn"); // Solo desktop tiene ID
+  const printBtn = document.getElementById("printBtn"); // Solo desktop tiene ID
   const exportBtn = document.getElementById("exportBtn");
   const exportDbBtn = document.getElementById("exportDbBtn");
   const importFile = document.getElementById("importFile");
@@ -227,19 +225,49 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-
-  // 2. Cerrar el menú después de hacer click en cualquier botón de acción
-  if(mobileMenuDropdown) mobileMenuDropdown.querySelectorAll("button, .import-label").forEach(btn => {
-    btn.addEventListener("click", () => {
-        setTimeout(() => {
-            mobileMenuDropdown.classList.remove("active");
-            if(mobileMenuBtn) {
-                const iconContainer = mobileMenuBtn.querySelector('i');
-                if (iconContainer) iconContainer.innerHTML = `<i data-lucide="menu"></i>`;
-                lucide.createIcons({ parent: mobileMenuBtn });
-            }
-        }, 100);
-    });
+  // 2. Event Delegation para los botones del menú móvil (ya no tienen IDs)
+  if(mobileMenuDropdown) mobileMenuDropdown.addEventListener("click", async (e) => {
+    const targetBtn = e.target.closest('button[data-action]');
+    if (!targetBtn) return;
+    
+    // Simular click en el botón de escritorio o el botón con ID
+    const action = targetBtn.dataset.action;
+    switch(action) {
+        case 'save':
+            saveBtn.click();
+            break;
+        case 'view':
+            viewBtn.click();
+            break;
+        case 'print':
+            printBtn.click();
+            break;
+        case 'exportExcel':
+            exportBtn.click();
+            break;
+        case 'exportJson':
+            exportDbBtn.click();
+            break;
+        case 'newOt':
+            newOtBtn.click();
+            break;
+        case 'resetForm':
+            resetFormBtn.click();
+            break;
+        case 'clearDb':
+            clearBtn.click();
+            break;
+    }
+    
+    // Cerrar el menú después de la acción
+    setTimeout(() => {
+        mobileMenuDropdown.classList.remove("active");
+        if(mobileMenuBtn) {
+            const iconContainer = mobileMenuBtn.querySelector('i');
+            if (iconContainer) iconContainer.innerHTML = `<i data-lucide="menu"></i>`;
+            lucide.createIcons({ parent: mobileMenuBtn });
+        }
+    }, 100);
   });
   // -------------------------------------
 
@@ -280,6 +308,12 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (!form) return;
     
+    // Solo validar si es un evento de formulario o si se activa desde el script.
+    if (!form.checkValidity()) {
+        form.reportValidity(); // Muestra los errores del navegador
+        return;
+    }
+
     const fd = new FormData(form);
     const order = {};
     for (const [k, v] of fd.entries()) {
