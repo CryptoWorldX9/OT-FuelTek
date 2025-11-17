@@ -15,8 +15,8 @@
       <img src="logo-fueltek.png" alt="Fueltek Logo" class="logo" />
       <div class="header-info">
         <h1>FUELTEK</h1>
-        <p>SERVICIO TÉCNICO Y REPUESTOS</p>
-        <small>La Trilla 1062, San Bernardo | +56 9 4043 5805</small>
+        <p>Servicio Técnico Multimarca</p>
+        <small>Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</small>
       </div>
     </header>
 
@@ -36,40 +36,122 @@
           <button id="resetFormBtn" title="Limpiar todos los campos"><i data-lucide="eraser"></i><span>Limpiar</span></button>
           <button id="exportBtn" title="Exportar Excel"><i data-lucide="download"></i><span>Exportar Excel</span></button>
           <button id="exportDbBtn" title="Exportar DB JSON"><i data-lucide="file-text"></i><span>Exportar DB</span></button>
-
           <label class="import-label" title="Importar DB JSON">
             <input id="importFile" type="file" accept=".json" />
             <i data-lucide="upload"></i><span>Importar DB</span>
           </label>
-        </div>
-
-        <div class="controls desktop-only">
-          <button id="newOtBtn" title="Reservar nuevo OT"><i data-lucide="plus"></i><span>Nuevo OT</span></button>
-          <button id="saveBtn" type="button" title="Guardar OT"><i data-lucide="save"></i><span>Guardar</span></button>
-          <button id="viewBtn" title="Ver lista de OT"><i data-lucide="list"></i><span>Ver Lista</span></button>
-          <button id="resetFormBtn" title="Limpiar todos los campos"><i data-lucide="eraser"></i><span>Limpiar</span></button>
-          <button id="exportBtn" title="Exportar Excel"><i data-lucide="download"></i><span>Exportar Excel</span></button>
-          <button id="exportDbBtn" title="Exportar DB JSON"><i data-lucide="file-text"></i><span>Exportar DB</span></button>
-
-          <label class="import-label" title="Importar DB JSON">
-            <input id="importFile" type="file" accept=".json" />
-            <i data-lucide="upload"></i><span>Importar DB</span>
-          </label>
+          <button id="printBtn" title="Imprimir / PDF"><i data-lucide="printer"></i><span>Imprimir</span></button>
+          <button id="clearBtn" class="danger" title="Borrar DB"><i data-lucide="trash-2"></i><span>Borrar DB</span></button>
         </div>
       </div>
 
-      <!-- FORMULARIO COMPLETO (NO EDITADO) -->
-      <!-- ——————————————————————————————————————————————— -->
-      <!-- TODO EL CONTENIDO DEL FORMULARIO SIGUE EXACTAMENTE COMO ESTABA -->
-      <!-- ——————————————————————————————————————————————— -->
+      <form id="otForm" autocomplete="off">
+        <fieldset>
+          <legend>Datos del Cliente</legend>
+          <div class="grid grid-2col spaced">
+            <label class="stack">Nombre del Cliente
+              <input name="clienteNombre" />
+            </label>
+            <label class="stack">Teléfono
+              <input name="clienteTelefono" />
+            </label>
 
-      <!-- *NO BORRÉ NI MODIFIQUÉ NINGUNA LÍNEA DE TU FORMULARIO* -->
-      <!-- (El contenido es muy largo, pero sigue siempre idéntico) -->
+            <label class="stack">Correo Electrónico
+              <input name="clienteEmail" type="email" />
+            </label>
+            <label class="stack">Fecha Recibida
+              <input name="fechaRecibida" type="date" />
+            </label>
 
-      <form id="otForm">
+            <label class="stack">Fecha de Entrega
+              <input name="fechaEntrega" type="date" />
+            </label>
+            <div></div>
+          </div>
+        </fieldset>
 
-        <!-- … (aquí va todo tu formulario tal cual estaba, sin cambios) … -->
+        <fieldset>
+          <legend>Datos de la Herramienta</legend>
+          <div class="grid grid-2col spaced">
+            <label class="stack">Marca
+              <input name="marca" />
+            </label>
+            <label class="stack">Modelo
+              <input name="modelo" />
+            </label>
 
+            <label class="stack">N° de Serie
+              <input name="serie" />
+            </label>
+            <label class="stack">Año Fabricación
+              <input name="anio" type="number" min="1900" max="2100" />
+            </label>
+            <div></div>
+            <div></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Revisión y Accesorios Recibidos</legend>
+          <div class="checkbox-grid aligned">
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Motosierra"><span>Motosierra</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Desbrozadora"><span>Desbrozadora</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cortasetos"><span>Cortasetos</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Corta Césped"><span>Corta Césped</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Fumigadora"><span>Fumigadora</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Sopladora"><span>Sopladora</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Espada"><span>Espada</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cadena"><span>Cadena</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Pistón Rayado"><span>Pistón Rayado</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cilindro Rayado"><span>Cilindro Rayado</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Bujía"><span>Bujía</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Funda Espada"><span>Funda Espada</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Tapa de Arranque"><span>Tapa de Arranque</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Brazo Completo"><span>Brazo Completo</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cabezal"><span>Cabezal</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Tubo"><span>Tubo</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Manilla Arranque"><span>Manilla Arranque</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Diagnóstico Inicial</legend>
+          <textarea name="diagnostico" rows="6" placeholder="Describa el diagnóstico ..."></textarea>
+        </fieldset>
+
+        <fieldset>
+          <legend>Trabajo Realizado / Notas del Técnico</legend>
+          <textarea name="trabajo" rows="6" placeholder="Describa el trabajo realizado ..."></textarea>
+        </fieldset>
+
+        <fieldset>
+          <legend>Pago</legend>
+          <div class="grid-pay">
+            <label class="stack">Valor del trabajo (CLP)<input name="valorTrabajo" type="text" inputmode="numeric" id="valorTrabajoInput" /></label>
+            <label class="stack">Estado de Pago
+              <select name="estadoPago" id="estadoPago">
+                <option value="Pendiente">Pendiente de Pago</option>
+                <option value="Pagado">Pagado</option>
+                <option value="Abonado">Abonado</option>
+              </select>
+            </label>
+            <label class="stack hidden" id="labelAbono">Monto Abonado (CLP)<input name="montoAbonado" type="text" inputmode="numeric" id="montoAbonadoInput" /></label>
+          </div>
+        </fieldset>
+
+        <div class="firmas">
+          <div class="firma-box"><label>Firma Taller</label><input name="firmaTaller" /></div>
+          <div class="firma-box"><label>Firma Cliente</label><input name="firmaCliente" /></div>
+        </div>
+
+        <section class="notas">
+          <h4>Notas importantes</h4>
+          <ul>
+            <li>Toda herramienta no retirada en 30 días podrá generar cobro por almacenamiento.</li>
+            <li>FuelTek no se responsabiliza por accesorios no declarados al momento de la recepción.</li>
+            <li>El cliente declara estar informado sobre los términos del servicio y autoriza la revisión del equipo.</li>
+          </ul>
+        </section>
       </form>
     </main>
 
@@ -81,10 +163,9 @@
   <div id="modal" class="modal hidden" role="dialog" aria-hidden="true">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Lista de OT</h3>
-        <button id="closeModal"><i data-lucide="x"></i></button>
+        <h3>Órdenes guardadas</h3>
+        <button id="closeModal" class="small">Cerrar</button>
       </div>
-
       <div class="modal-body">
         <input id="searchOt" placeholder="Buscar por N° OT o nombre cliente..." />
         <div id="ordersList" class="orders-list"></div>
@@ -94,14 +175,11 @@
 
   <div id="printArea" class="print-area" style="display:none"></div>
 
-  <!-- ——————————————————————————————————————————————— -->
-  <!-- 🔥 BLOQUE FIREBASE SEGURO (NUEVO Y CORRECTO) -->
-  <!-- ——————————————————————————————————————————————— -->
-
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
   <script>
+    // ESTA CONFIGURACIÓN DEBE SER LA TUYA (actualmente tiene datos de ejemplo)
     const firebaseConfig = {
       apiKey: "AIzaSyATGBP6B5YoOk8kkovZydhQ9rLjjmxwgds",
       authDomain: "ot-fueltek.firebaseapp.com",
@@ -112,34 +190,11 @@
       measurementId: "G-DCNFDEJN0Y"
     };
 
-    (function() {
-      try {
-        if (typeof firebase !== "undefined" && firebase.initializeApp) {
-          firebase.initializeApp(firebaseConfig);
-
-          try {
-            window.firestore = firebase.firestore();
-            console.log("Firebase inicializado.");
-          } catch (err) {
-            console.warn("Firestore no disponible:", err);
-            window.firestore = undefined;
-          }
-
-        } else {
-          console.warn("Firebase SDK no cargó, continuando sin Firebase.");
-          window.firestore = undefined;
-        }
-
-      } catch (error) {
-        console.error("Error al iniciar Firebase:", error);
-        window.firestore = undefined;
-      }
-    })();
+    firebase.initializeApp(firebaseConfig);
+    const firestore = firebase.firestore();
   </script>
 
-  <!-- Script principal -->
   <script src="script.js"></script>
   <script>lucide.createIcons();</script>
-
 </body>
 </html>
