@@ -10,6 +10,14 @@
   --danger: #c0392b; /* Rojo para Borrar */
 }
 
+/* FIX: Ocultar elementos de forma robusta, incluyendo el modal y el input file */
+.hidden {
+  display: none !important; 
+}
+.modal.hidden {
+  display: none !important;
+}
+
 *{box-sizing:border-box}
 body{
   font-family: 'Inter', "Segoe UI", Roboto, Arial, sans-serif;
@@ -101,7 +109,7 @@ button, .import-label{
   display:inline-flex;
   align-items:center;
   gap:8px;
-  text-decoration: none; /* Asegura que el import-label se vea como botón */
+  text-decoration: none;
 }
 button:hover, .import-label:hover{background:#003a7a}
 
@@ -138,9 +146,9 @@ button:hover, .import-label:hover{background:#003a7a}
   }
 }
 
-/* --- FORMULARIO Y GRIDS (CRUCIAL FIX) --- */
+/* --- FORMULARIO Y GRIDS --- */
 .ot-form{
-    display: block; /* Asegura que no es un flex/grid container y respeta el flujo */
+    display: block;
 }
 
 .ot-form label, .ot-form textarea, .ot-form input, .ot-form select{
@@ -152,8 +160,8 @@ button:hover, .import-label:hover{background:#003a7a}
   border:1px solid var(--border);
   border-radius:6px;
   font-size:1rem;
-  margin-top:5px; /* Separación pequeña entre label y campo */
-  margin-bottom:15px; /* Separación grande entre campos */
+  margin-top:5px;
+  margin-bottom:15px;
   font-family:inherit;
 }
 
@@ -173,14 +181,13 @@ button:hover, .import-label:hover{background:#003a7a}
     border-bottom: 2px solid var(--primary);
     padding-bottom: 5px;
     margin-top: 30px;
-    margin-bottom: 15px; /* Reduce el margen después del título para que la grilla esté cerca */
+    margin-bottom: 15px;
 }
 
-/* GRID LAYOUTS (EL FIX MÁS IMPORTANTE) */
+/* GRID LAYOUTS */
 .form-group-triple, .form-group-double, .form-group-quad{
   display:grid;
   gap:20px;
-  /* El margen inferior se maneja por el margen-bottom de los inputs dentro de los campos */
 }
 
 .form-group-triple{
@@ -221,7 +228,7 @@ button:hover, .import-label:hover{background:#003a7a}
 .checkbox-group input[type="checkbox"]{
   width:auto;
   margin-right:5px;
-  margin-bottom:0; /* No queremos margen inferior en los checkboxes */
+  margin-bottom:0;
 }
 
 /* Ocultar/Mostrar campos de abono */
@@ -286,6 +293,7 @@ footer{background:var(--dark);color:white;padding:15px;text-align:center;font-si
     border-radius:0;
     overflow:visible;
   }
+  /* Oculta los elementos de UI y solo muestra el área de impresión */
   header, main, footer, .modal, .ot-bar, .ot-bar .right, .notes-legal, .mobile-menu-dropdown{
     display:none !important;
   }
