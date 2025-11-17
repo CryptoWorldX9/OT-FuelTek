@@ -10,6 +10,8 @@
    CORRECCIÓN 4 (2025-11-17): Se aumenta el tamaño del sello y se ajusta el espaciado
                               de las firmas/notas al final de la impresión.
    CORRECCIÓN 5 (2025-11-17): Se aumenta el tamaño del sello de impresión a 100px.
+   CORRECCIÓN 6 (2025-11-17): Se aumenta el tamaño del sello a 130px y se ajusta la
+                              posición para que parezca un timbre sobre la firma.
 */
 
 /* -------------------------
@@ -117,8 +119,8 @@ function dbDeleteAll() {
    CORRELATIVO / LOCALSTORAGE
    ==================================================================== */
 function getLastOt() {
-  // CORRECCIÓN: Usar 10724 como valor inicial para que el siguiente sea 10725.
-  return parseInt(localStorage.getItem(OT_LOCAL) || "10724", 10);
+  // CORRECCIÓN: Usar 726 como valor inicial para que el siguiente sea 727.
+  return parseInt(localStorage.getItem(OT_LOCAL) || "726", 10);
 }
 function setLastOt(n) { localStorage.setItem(OT_LOCAL, String(n)); }
 function nextOtAndSave() {
@@ -263,18 +265,18 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Borrar base de datos completa
   if (clearBtn) clearBtn.addEventListener("click", async () => {
-    if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ toda la base de datos de Órdenes de Trabajo y reiniciará el contador a 10725. ¿Desea continuar?")) return;
+    if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ toda la base de datos de Órdenes de Trabajo y reiniciará el contador a 727. ¿Desea continuar?")) return;
     await dbDeleteAll();
-    setLastOt(10724); // Reiniciar a 10724
+    setLastOt(726); // Reiniciar a 726
     updateOtDisplay();
-    alert("Base de datos eliminada. Contador reiniciado a 10725.");
+    alert("Base de datos eliminada. Contador reiniciado a 727.");
   });
   
   // Limpiar campos manualmente
   if (resetFormBtn) resetFormBtn.addEventListener("click", () => {
     if (confirm("¿Seguro que deseas limpiar todos los campos del formulario?")) {
       form.reset();
-      labelAbono.classList.add("hidden");
+      if (labelAbono) labelAbono.classList.add("hidden");
       currentLoadedOt = null;
       updateOtDisplay(); // Restablece el número OT al siguiente correlativo y el botón
       updateSaldo(); // Limpia el saldo
@@ -492,7 +494,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fd = new FormData(form);
     const data = {};
     for (const [k, v] of fd.entries()) if (k !== "accesorios") data[k] = v;
-    data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
+    data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked')).map(c => c.value);
     data.ot = otInput.value || String(getLastOt() + 1);
     
     // Para impresión, usa el valor DESFORMATEADO para el cálculo
@@ -584,7 +586,7 @@ document.addEventListener("DOMContentLoaded", () => {
         
         <div style="display:flex;gap:40px;margin-top:40px;padding-top:10px;border-top:1px solid #eee;">
           <div style="flex:1;text-align:center; position: relative;">
-            <img src="stamp-motosierra.png" style="width: 100px; height: 100px; opacity: 1.0; position: absolute; top: -95px; left: 50%; transform: translateX(-50%);" alt="Sello Taller" />
+            <img src="stamp-motosierra.png" style="width: 130px; height: 130px; opacity: 1.0; position: absolute; top: -40px; left: 50%; transform: translateX(-50%);" alt="Sello Taller" />
             <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;font-size:9.5pt;">${data.firmaTaller || ""}</div>
             <div style="margin-top:6px;font-weight:600;color:#2c3e50;font-size:9.5pt;">Firma Taller</div>
           </div>
