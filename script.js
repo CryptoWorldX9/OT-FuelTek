@@ -2,6 +2,9 @@
    Versión corregida: mantiene toda la lógica original,
    restaura exportar/imprimir/acciones de fila y corrige menú móvil.
    Además integra Firebase (guardar, leer, eliminar) sin tocar diseño.
+   
+   CORRECCIÓN: Se añade comprobación robusta para evitar que un elemento
+   nulo (ej. mobileMenuDropdown) detenga la ejecución del script.
 */
 
 /* -------------------------
@@ -171,23 +174,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const mobileMenuDropdown = document.getElementById("mobileMenuDropdown");
     
   const updateOtDisplay = () => {
-    otInput.value = String(getLastOt() + 1);
+    if (otInput) { // ⬅️ COMPROBACIÓN: Evita error si otInput es null (causa de fallo de script)
+        otInput.value = String(getLastOt() + 1);
+    }
     resetSaveButton();
   }
   updateOtDisplay();
   
   // Agregar listeners para formato de miles Y ACTUALIZACIÓN DE SALDO EN TIEMPO REAL
   [valorTrabajoInput, montoAbonadoInput].forEach(input => {
-    input.addEventListener("input", e => {
-        handleFormatOnInput(e);
-        updateSaldo();
-    });
-    // Aplicar formato y actualizar saldo al perder foco si se copia/pega
-    input.addEventListener("blur", updateSaldo); 
+    if (input) { // ⬅️ COMPROBACIÓN
+        input.addEventListener("input", e => {
+            handleFormatOnInput(e);
+            updateSaldo();
+        });
+        // Aplicar formato y actualizar saldo al perder foco si se copia/pega
+        input.addEventListener("blur", updateSaldo); 
+    }
   });
 
   // Mostrar / ocultar campo Abonado y recalcular Saldo
-  estadoPago.addEventListener("change", updateSaldo);
+  if (estadoPago) { // ⬅️ COMPROBACIÓN
+      estadoPago.addEventListener("change", updateSaldo);
+  }
   
   // Inicializar estado de pago
   updateSaldo();
@@ -195,14 +204,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- LÓGICA DEL MENÚ MÓVIL ---
   
   // 1. Toggle mobile menu
-  if(mobileMenuBtn) mobileMenuBtn.addEventListener("click", () => {
-    mobileMenuDropdown.classList.toggle("active");
-    // Cambiar icono: menú o X
-    const iconContainer = mobileMenuBtn.querySelector('i');
-    const newIconName = mobileMenuDropdown.classList.contains('active') ? 'x' : 'menu';
-    if (iconContainer) iconContainer.innerHTML = `<i data-lucide="${newIconName}"></i>`;
-    lucide.createIcons({ parent: mobileMenuBtn });
-  });
+  if(mobileMenuBtn && mobileMenuDropdown) { // ⬅️ COMPROBACIÓN ROBUSTA: Si uno falta, no se ejecuta
+      mobileMenuBtn.addEventListener("click", () => {
+          mobileMenuDropdown.classList.toggle("active");
+          // Cambiar icono: menú o X
+          const iconContainer = mobileMenuBtn.querySelector('i');
+          const newIconName = mobileMenuDropdown.classList.contains('active') ? 'x' : 'menu';
+          if (iconContainer) iconContainer.innerHTML = `<i data-lucide="${newIconName}"></i>`;
+          lucide.createIcons({ parent: mobileMenuBtn });
+      });
+  }
+
 
   // 2. Cerrar el menú después de hacer click en cualquier botón de acción
   if(mobileMenuDropdown) mobileMenuDropdown.querySelectorAll("button, .import-label").forEach(btn => {
@@ -222,14 +234,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // Reservar nuevo OT
-  document.getElementById("newOtBtn").addEventListener("click", () => {
+  const newOtBtn = document.getElementById("newOtBtn");
+  if (newOtBtn) newOtBtn.addEventListener("click", () => {
     const reserved = nextOtAndSave();
     updateOtDisplay();
     alert("Reservado N° OT: " + reserved + ". En pantalla verás el siguiente disponible.");
   });
   
   // Borrar base de datos completa
-  document.getElementById("clearBtn").addEventListener("click", async () => {
+  const clearBtn = document.getElementById("clearBtn");
+  if (clearBtn) clearBtn.addEventListener("click", async () => {
     if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ toda la base de datos de Órdenes de Trabajo y reiniciará el contador a 727. ¿Desea continuar?")) return;
     await dbDeleteAll();
     setLastOt(726);
@@ -238,7 +252,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   
   // Limpiar campos manualmente
-  document.getElementById("resetFormBtn").addEventListener("click", () => {
+  const resetFormBtn = document.getElementById("resetFormBtn");
+  if (resetFormBtn) resetFormBtn.addEventListener("click", () => {
     if (confirm("¿Seguro que deseas limpiar todos los campos del formulario?")) {
       form.reset();
       labelAbono.classList.add("hidden");
@@ -251,7 +266,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // Guardar o actualizar
-  document.getElementById("saveBtn").addEventListener("click", async (e) => {
+  const saveBtn = document.getElementById("saveBtn");
+  if (saveBtn) saveBtn.addEventListener("click", async (e) => {
     e.preventDefault();
     
     const fd = new FormData(form);
@@ -309,14 +325,16 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Modal - Ver OT
-  document.getElementById("viewBtn").addEventListener("click", async () => {
+  const viewBtn = document.getElementById("viewBtn");
+  if (viewBtn) viewBtn.addEventListener("click", async () => {
     await renderOrdersList();
     modal.classList.remove("hidden");
   });
-  closeModal.addEventListener("click", () => modal.classList.add("hidden"));
-  searchOt.addEventListener("input", () => renderOrdersList(searchOt.value.trim()));
+  if (closeModal) closeModal.addEventListener("click", () => modal.classList.add("hidden"));
+  if (searchOt) searchOt.addEventListener("input", () => renderOrdersList(searchOt.value.trim()));
 
   async function renderOrdersList(filter = "") {
+    if (!ordersList) return; // ⬅️ COMPROBACIÓN BÁSICA
     ordersList.innerHTML = "<div style='padding:10px;color:#666'>Cargando...</div>";
 
     // Intentamos leer desde Firebase si está disponible, si no fallback a IndexedDB
@@ -415,6 +433,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function loadOrderToForm(o) {
     if (!o) return alert("Orden no encontrada.");
+    const saveBtn = document.getElementById("saveBtn"); // ⬅️ Obtener saveBtn aquí para actualización
+    if (!form || !otInput || !saveBtn) return alert("Error interno: Elementos del formulario no cargados."); // ⬅️ COMPROBACIÓN ADICIONAL
     form.reset();
     currentLoadedOt = String(o.ot); // Aseguramos que el OT cargado sea string
     const fields = ["clienteNombre","clienteTelefono","clienteEmail","fechaRecibida","fechaEntrega",
@@ -438,20 +458,21 @@ document.addEventListener("DOMContentLoaded", () => {
     
     otInput.value = o.ot;
     // Actualiza el contenido de texto para el botón de escritorio
-    document.getElementById("saveBtn").title = "Actualizar OT #" + o.ot;
-    document.getElementById("saveBtn").innerHTML = '<i data-lucide="refresh-cw"></i><span>Actualizar</span>';
+    saveBtn.title = "Actualizar OT #" + o.ot;
+    saveBtn.innerHTML = '<i data-lucide="refresh-cw"></i><span>Actualizar</span>';
     lucide.createIcons();
     
     alert("Orden OT #" + o.ot + " cargada. Si modificas algo y guardas, se actualizará esa misma OT.");
   }
 
   // Imprimir actual o vista previa
-  document.getElementById("printBtn").addEventListener("click", e => {
+  const printBtn = document.getElementById("printBtn");
+  if (printBtn) printBtn.addEventListener("click", e => {
     e.preventDefault();
     const fd = new FormData(form);
     const data = {};
     for (const [k, v] of fd.entries()) if (k !== "accesorios") data[k] = v;
-    data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked')).map(c => c.value);
+    data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
     data.ot = otInput.value || String(getLastOt() + 1);
     
     // Para impresión, usa el valor DESFORMATEADO para el cálculo
@@ -463,6 +484,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function buildPrintAndPrint(data) {
+    if (!printArea) return; // ⬅️ COMPROBACIÓN BÁSICA
+
     // Asegurarse de tener números
     const valorNum = (typeof data.valorTrabajoNum !== 'undefined') ? data.valorTrabajoNum : unformatCLP(data.valorTrabajo || 0);
     const abonoNum = (typeof data.montoAbonadoNum !== 'undefined') ? data.montoAbonadoNum : unformatCLP(data.montoAbonado || 0);
@@ -567,7 +590,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   
   // Implementación de Exportar/Importar DB JSON y Exportar a Excel
-  document.getElementById("exportBtn").addEventListener("click", async () => {
+  const exportBtn = document.getElementById("exportBtn");
+  if (exportBtn) exportBtn.addEventListener("click", async () => {
     const orders = await dbGetAll();
     if (orders.length === 0) return alert("No hay órdenes para exportar.");
     
@@ -598,7 +622,8 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("Exportación a Excel completada.");
   });
 
-  document.getElementById("exportDbBtn").addEventListener("click", async () => {
+  const exportDbBtn = document.getElementById("exportDbBtn");
+  if (exportDbBtn) exportDbBtn.addEventListener("click", async () => {
     const orders = await dbGetAll();
     const dataStr = JSON.stringify(orders, null, 2);
     const blob = new Blob([dataStr], { type: "application/json" });
@@ -613,7 +638,8 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("Copia de seguridad de la base de datos (JSON) exportada.");
   });
 
-  document.getElementById("importFile").addEventListener("change", (e) => {
+  const importFile = document.getElementById("importFile");
+  if (importFile) importFile.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
