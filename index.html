@@ -22,26 +22,26 @@
 
     <main>
       <div class="ot-bar">
-        <div class="left">
-          <label class="ot-label">N° OT:</label>
-          <input id="otNumber" readonly />
+        <div class="ot-box">
+            <label class="ot-label">N° OT:</label>
+            <input id="otNumber" readonly />
         </div>
 
         <button id="mobileMenuBtn" class="mobile-only" title="Menú"><i data-lucide="menu"></i></button>
 
         <div id="mobileMenuDropdown" class="controls">
-          <button id="newOtBtn" title="Reservar nuevo OT"><i data-lucide="plus"></i><span>Nuevo OT</span></button>
+          <button id="newOtBtn" type="button" title="Reservar nuevo OT"><i data-lucide="plus"></i><span>Nuevo OT</span></button>
           <button id="saveBtn" type="button" title="Guardar OT"><i data-lucide="save"></i><span>Guardar</span></button>
-          <button id="viewBtn" title="Ver lista de OT"><i data-lucide="list"></i><span>Ver Lista</span></button>
-          <button id="resetFormBtn" title="Limpiar todos los campos"><i data-lucide="eraser"></i><span>Limpiar</span></button>
-          <button id="exportBtn" title="Exportar Excel"><i data-lucide="download"></i><span>Exportar Excel</span></button>
-          <button id="exportDbBtn" title="Exportar DB JSON"><i data-lucide="file-text"></i><span>Exportar DB</span></button>
+          <button id="viewBtn" type="button" title="Ver lista de OT"><i data-lucide="list"></i><span>Ver Lista</span></button>
+          <button id="resetFormBtn" type="button" title="Limpiar todos los campos"><i data-lucide="eraser"></i><span>Limpiar</span></button>
+          <button id="exportBtn" type="button" title="Exportar Excel"><i data-lucide="download"></i><span>Exportar Excel</span></button>
+          <button id="exportDbBtn" type="button" title="Exportar DB JSON"><i data-lucide="file-text"></i><span>Exportar DB</span></button>
           <label class="import-label" title="Importar DB JSON">
             <input id="importFile" type="file" accept=".json" />
             <i data-lucide="upload"></i><span>Importar DB</span>
           </label>
-          <button id="printBtn" title="Imprimir / PDF"><i data-lucide="printer"></i><span>Imprimir</span></button>
-          <button id="clearBtn" class="danger" title="Borrar DB"><i data-lucide="trash-2"></i><span>Borrar DB</span></button>
+          <button id="printBtn" type="button" title="Imprimir / PDF"><i data-lucide="printer"></i><span>Imprimir</span></button>
+          <button id="clearBtn" type="button" class="danger" title="Borrar DB"><i data-lucide="trash-2"></i><span>Borrar DB</span></button>
         </div>
       </div>
 
