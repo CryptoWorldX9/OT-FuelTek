@@ -1,119 +1,191 @@
-<main>
-    <div class="ot-bar">
-      <div class="left">
-        <label class="ot-label">N° OT:</label>
-        <input id="otNumber" readonly />
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Orden de Trabajo - Fueltek</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <img src="logo-fueltek.png" alt="Fueltek Logo" class="logo" />
+      <div class="header-info">
+        <h1>FUELTEK</h1>
+        <p>Servicio Técnico Multimarca</p>
+        <small>Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</small>
       </div>
+    </header>
 
-      <div class="right">
-          <button id="mobileMenuBtn" class="mobile-only" title="Menú"><i data-lucide="menu"></i></button>
-
-          <div id="mobileMenuDropdown" class="mobile-menu-dropdown">
-              <button id="saveBtn" class="big"><i data-lucide="save"></i><span>Guardar</span></button>
-              <button id="newOtBtn" class="big"><i data-lucide="plus-square"></i><span>Reservar OT</span></button>
-              <hr />
-              <button id="viewBtn" class="big"><i data-lucide="database"></i><span>Ver Órdenes</span></button>
-              <button id="printBtn" class="big"><i data-lucide="printer"></i><span>Vista Previa / Imprimir</span></button>
-              <button id="exportBtn" class="big"><i data-lucide="table"></i><span>Exportar a Excel</span></button>
-              <button id="exportDbBtn" class="big"><i data-lucide="download"></i><span>Exportar DB (JSON)</span></button>
-              <label for="importFile" class="import-label big"><i data-lucide="upload"></i><span>Importar DB (JSON)</span></label>
-              <input type="file" id="importFile" accept="application/json" class="hidden" />
-              <hr />
-              <button id="resetFormBtn" class="big" style="background:var(--danger)"><i data-lucide="refresh-cw"></i><span>Limpiar Formulario</span></button>
-              <button id="clearBtn" class="big" style="background:#555"><i data-lucide="trash-2"></i><span>Borrar DB Completa</span></button>
+    <main>
+        <div class="ot-bar">
+          <div class="left">
+            <label class="ot-label">N° OT:</label>
+            <input id="otNumber" readonly />
           </div>
 
-          <button id="viewBtn" class="desktop-only"><i data-lucide="database"></i></button>
-          <button id="printBtn" class="desktop-only"><i data-lucide="printer"></i></button>
-          <button id="saveBtn" class="desktop-only"><i data-lucide="save"></i><span>Guardar</span></button>
+          <div class="right">
+              <button id="mobileMenuBtn" class="mobile-only" title="Menú"><i data-lucide="menu"></i></button>
+
+              <div id="mobileMenuDropdown" class="mobile-menu-dropdown">
+                  <button id="saveBtn" class="big"><i data-lucide="save"></i><span>Guardar</span></button>
+                  <button id="newOtBtn" class="big"><i data-lucide="plus-square"></i><span>Reservar OT</span></button>
+                  <hr />
+                  <button id="viewBtn" class="big"><i data-lucide="database"></i><span>Ver Órdenes</span></button>
+                  <button id="printBtn" class="big"><i data-lucide="printer"></i><span>Vista Previa / Imprimir</span></button>
+                  <button id="exportBtn" class="big"><i data-lucide="table"></i><span>Exportar a Excel</span></button>
+                  <button id="exportDbBtn" class="big"><i data-lucide="download"></i><span>Exportar DB (JSON)</span></button>
+                  <label for="importFile" class="import-label big"><i data-lucide="upload"></i><span>Importar DB (JSON)</span></label>
+                  <input type="file" id="importFile" accept="application/json" class="hidden" />
+                  <hr />
+                  <button id="resetFormBtn" class="big" style="background:var(--danger)"><i data-lucide="refresh-cw"></i><span>Limpiar Formulario</span></button>
+                  <button id="clearBtn" class="big" style="background:#555"><i data-lucide="trash-2"></i><span>Borrar DB Completa</span></button>
+              </div>
+
+              <button id="viewBtn" class="desktop-only"><i data-lucide="database"></i></button>
+              <button id="printBtn" class="desktop-only"><i data-lucide="printer"></i></button>
+              <button id="saveBtn" class="desktop-only"><i data-lucide="save"></i><span>Guardar</span></button>
+          </div>
+        </div>
+        
+        <h2 class="main-form-title">Formulario de Orden de Trabajo</h2>
+
+        <form id="otForm" class="ot-form">
+          
+          <h3 class="section-title">Datos del Cliente y Herramienta</h3>
+          
+          <div class="form-group-triple">
+            <label for="clienteNombre">Nombre Cliente (*)</label>
+            <input id="clienteNombre" name="clienteNombre" required />
+            <label for="clienteTelefono">Teléfono (*)</label>
+            <input id="clienteTelefono" name="clienteTelefono" required />
+            <label for="clienteEmail">Email</label>
+            <input id="clienteEmail" name="clienteEmail" type="email" />
+          </div>
+
+          <div class="form-group-double">
+            <label for="fechaRecibida">Fecha Recibida (*)</label>
+            <input id="fechaRecibida" name="fechaRecibida" type="date" required />
+            <label for="fechaEntrega">Fecha de Entrega Estimada</label>
+            <input id="fechaEntrega" name="fechaEntrega" type="date" />
+          </div>
+
+          <div class="form-group-quad">
+            <label for="marca">Marca (*)</label>
+            <input id="marca" name="marca" required />
+            <label for="modelo">Modelo (*)</label>
+            <input id="modelo" name="modelo" required />
+            <label for="serie">N° Serie</label>
+            <input id="serie" name="serie" />
+            <label for="anio">Año</label>
+            <input id="anio" name="anio" />
+          </div>
+          
+          <label class="section-label">Accesorios / Revisión:</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="accesorios" value="Espada"> Espada</label>
+            <label><input type="checkbox" name="accesorios" value="Cadena"> Cadena</label>
+            <label><input type="checkbox" name="accesorios" value="Tapa"> Tapa</label>
+            <label><input type="checkbox" name="accesorios" value="Aceite"> Aceite</label>
+            <label><input type="checkbox" name="accesorios" value="Grasa"> Grasa</label>
+            <label><input type="checkbox" name="accesorios" value="Bateria"> Batería</label>
+            <label><input type="checkbox" name="accesorios" value="Cargador"> Cargador</label>
+            <label><input type="checkbox" name="accesorios" value="Manilla"> Manilla</label>
+            <label><input type="checkbox" name="accesorios" value="Motor"> Se revisa Motor</label>
+          </div>
+
+          <h3 class="section-title">Diagnóstico y Trabajo Realizado</h3>
+
+          <label for="diagnostico">Diagnóstico / Problema Reportado (*)</label>
+          <textarea id="diagnostico" name="diagnostico" rows="4" required></textarea>
+
+          <label for="trabajo">Trabajo Realizado / Notas del Técnico</label>
+          <textarea id="trabajo" name="trabajo" rows="4"></textarea>
+
+          <div class="form-group-triple">
+            <label for="valorTrabajoInput">Valor del Trabajo (CLP) (*)</label>
+            <input id="valorTrabajoInput" name="valorTrabajo" required />
+            
+            <label for="estadoPago">Estado de Pago (*)</label>
+            <select id="estadoPago" name="estadoPago" required>
+                <option value="Pendiente">Pendiente</option>
+                <option value="Abonado">Abonado</option>
+                <option value="Pagado">Pagado</option>
+            </select>
+            
+            <label id="labelAbono" for="montoAbonadoInput" class="hidden">Monto Abonado (CLP) (*)</label>
+            <input id="montoAbonadoInput" name="montoAbonado" class="hidden" />
+          </div>
+
+          <h3 class="section-title">Autorización y Firmas</h3>
+
+          <div class="form-group-double"> 
+            <label for="firmaTaller">Firma Taller</label>
+            <input id="firmaTaller" name="firmaTaller" />
+            <label for="firmaCliente">Firma Cliente</label>
+            <input id="firmaCliente" name="firmaCliente" />
+          </div>
+          
+          <section class="notes-legal">
+            <p><strong>Autorización:</strong> El cliente autoriza la revisión y/o reparación del equipo según el diagnóstico.</p>
+            <ul style="margin-top: 5px;">
+                <li>Toda herramienta no retirada en 30 días podrá generar cobro por almacenamiento.</li>
+                <li>FuelTek no se responsabiliza por accesorios no declarados al momento de la recepción.</li>
+                <li>El cliente declara estar informado sobre los términos del servicio y autoriza la revisión del equipo.</li>
+            </ul>
+          </section>
+        </form>
+    </main>
+
+    <footer>
+        <p>© 2025 FUELTEK</p>
+    </footer>
+  </div>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Órdenes guardadas</h3>
+        <button id="closeModal" class="small">Cerrar</button>
+      </div>
+      <div class="modal-body">
+        <input id="searchOt" placeholder="Buscar por N° OT o nombre cliente..." />
+        <div id="ordersList" class="orders-list"></div>
       </div>
     </div>
-    
-    <h2 class="main-form-title">Formulario de Orden de Trabajo</h2>
+  </div>
 
-    <form id="otForm" class="ot-form">
-      
-      <h3 class="section-title">Datos del Cliente y Herramienta</h3>
-      
-      <div class="form-group-triple">
-        <label for="clienteNombre">Nombre Cliente (*)</label>
-        <input id="clienteNombre" name="clienteNombre" required />
-        <label for="clienteTelefono">Teléfono (*)</label>
-        <input id="clienteTelefono" name="clienteTelefono" required />
-        <label for="clienteEmail">Email</label>
-        <input id="clienteEmail" name="clienteEmail" type="email" />
-      </div>
+  <div id="printArea" class="print-area" style="display:none"></div>
 
-      <div class="form-group-double">
-        <label for="fechaRecibida">Fecha Recibida (*)</label>
-        <input id="fechaRecibida" name="fechaRecibida" type="date" required />
-        <label for="fechaEntrega">Fecha de Entrega Estimada</label>
-        <input id="fechaEntrega" name="fechaEntrega" type="date" />
-      </div>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-      <div class="form-group-quad">
-        <label for="marca">Marca (*)</label>
-        <input id="marca" name="marca" required />
-        <label for="modelo">Modelo (*)</label>
-        <input id="modelo" name="modelo" required />
-        <label for="serie">N° Serie</label>
-        <input id="serie" name="serie" />
-        <label for="anio">Año</label>
-        <input id="anio" name="anio" />
-      </div>
-      
-      <label class="section-label">Accesorios / Revisión:</label>
-      <div class="checkbox-group">
-        <label><input type="checkbox" name="accesorios" value="Espada"> Espada</label>
-        <label><input type="checkbox" name="accesorios" value="Cadena"> Cadena</label>
-        <label><input type="checkbox" name="accesorios" value="Tapa"> Tapa</label>
-        <label><input type="checkbox" name="accesorios" value="Aceite"> Aceite</label>
-        <label><input type="checkbox" name="accesorios" value="Grasa"> Grasa</label>
-        <label><input type="checkbox" name="accesorios" value="Bateria"> Batería</label>
-        <label><input type="checkbox" name="accesorios" value="Cargador"> Cargador</label>
-        <label><input type="checkbox" name="accesorios" value="Manilla"> Manilla</label>
-        <label><input type="checkbox" name="accesorios" value="Motor"> Se revisa Motor</label>
-      </div>
-
-      <h3 class="section-title">Diagnóstico y Trabajo Realizado</h3>
-
-      <label for="diagnostico">Diagnóstico / Problema Reportado (*)</label>
-      <textarea id="diagnostico" name="diagnostico" rows="4" required></textarea>
-
-      <label for="trabajo">Trabajo Realizado / Notas del Técnico</label>
-      <textarea id="trabajo" name="trabajo" rows="4"></textarea>
-
-      <div class="form-group-triple">
-        <label for="valorTrabajoInput">Valor del Trabajo (CLP) (*)</label>
-        <input id="valorTrabajoInput" name="valorTrabajo" required />
-        
-        <label for="estadoPago">Estado de Pago (*)</label>
-        <select id="estadoPago" name="estadoPago" required>
-            <option value="Pendiente">Pendiente</option>
-            <option value="Abonado">Abonado</option>
-            <option value="Pagado">Pagado</option>
-        </select>
-        
-        <label id="labelAbono" for="montoAbonadoInput" class="hidden">Monto Abonado (CLP) (*)</label>
-        <input id="montoAbonadoInput" name="montoAbonado" class="hidden" />
-      </div>
-
-      <h3 class="section-title">Autorización y Firmas</h3>
-
-      <div class="form-group-double"> 
-        <label for="firmaTaller">Firma Taller</label>
-        <input id="firmaTaller" name="firmaTaller" />
-        <label for="firmaCliente">Firma Cliente</label>
-        <input id="firmaCliente" name="firmaCliente" />
-      </div>
-      
-      <section class="notes-legal">
-        <p><strong>Autorización:</strong> El cliente autoriza la revisión y/o reparación del equipo según el diagnóstico.</p>
-        <ul style="margin-top: 5px;">
-            <li>Toda herramienta no retirada en 30 días podrá generar cobro por almacenamiento.</li>
-            <li>FuelTek no se responsabiliza por accesorios no declarados al momento de la recepción.</li>
-            <li>El cliente declara estar informado sobre los términos del servicio y autoriza la revisión del equipo.</li>
-        </ul>
-      </section>
-    </form>
-</main>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyATGBP6B5YoOk8kkovZydhQ9rLjjmxwgds",
+      authDomain: "ot-fueltek.firebaseapp.com",
+      projectId: "ot-fueltek",
+      storageBucket: "ot-fueltek.firebasestorage.app",
+      messagingSenderId: "...",
+      appId: "..." // Puedes dejarlo en blanco si no lo tienes o copiarlo de tu consola
+    };
+    try {
+      firebase.initializeApp(firebaseConfig);
+      const firestore = firebase.firestore();
+    } catch (e) {
+      console.warn("Error al inicializar Firebase. Las funciones de la nube no estarán disponibles.", e);
+    }
+  </script> 
+  
+  <script src="script.js"></script>
+  <script>
+    // Inicializar iconos de Lucide al cargar la página (para escritorio y barra OT)
+    document.addEventListener("DOMContentLoaded", () => {
+        lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
