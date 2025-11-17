@@ -1,5 +1,5 @@
 :root{
-  --primary: #004d99; /* Azul Corporativo */
+  --primary: #0066cc; /* Azul Corporativo - Ligeramente más claro que el anterior */
   --accent: #f26522; /* Naranja Contraste */
   --dark: #2c3e50; /* Gris Oscuro/Negro Sobrio */
   --border: #e0e0e0;
@@ -31,14 +31,15 @@ header{
   display:flex;
   gap:16px;
   align-items:center;
-  background:var(--dark);
+  background:var(--primary); /* Cambiado a Azul Corporativo más claro */
   color:white;
   padding:18px;
-  border-bottom: 3px solid var(--primary); /* Nuevo separador */
+  border-bottom: 3px solid var(--accent); /* Nuevo separador Naranja */
 }
 .logo{width:80px;height:80px;object-fit:contain;background:white;padding:5px;border-radius:8px}
-.header-info h1{margin:0;font-size:2rem;color:var(--primary)}
-.header-info p{color:var(--accent);margin:4px 0;font-weight:600} 
+/* CAMBIO: Título H1 a color Naranja */
+.header-info h1{margin:0;font-size:2rem;color:var(--accent)} 
+.header-info p{color:white;margin:4px 0;font-weight:600} 
 .header-info small{opacity:0.9;font-size:0.8rem}
 
 main{padding:25px}
@@ -59,57 +60,80 @@ main{padding:25px}
 }
 .ot-bar .left{display:flex;align-items:center;gap:12px}
 
-/* --- REFINAMIENTO CAMPO OT --- */
+/* --- CAJA OT DESTACADA EN NARANJA --- */
+.ot-box{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:var(--accent); /* Fondo Naranja */
+    color:white;
+    padding:8px 12px;
+    border-radius:8px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
 .ot-label{
-    font-weight:600; /* Menos énfasis */
-    color:var(--dark);
-    font-size:1rem; /* Más pequeño */
+    font-weight:600; 
+    color:white; /* Texto Blanco sobre naranja */
+    font-size:0.85rem; 
+    margin-bottom:3px;
 }
 #otNumber{
-  width:120px; /* Más estrecho */
+  width:auto; /* Ajuste automático */
   text-align:center;
-  font-weight:700; /* Menos grueso */
-  font-size:1.1rem; /* Más pequeño */
-  border:1px solid var(--border); /* Borde fino y profesional */
-  border-radius:6px; /* Más sutil */
-  padding:6px 8px; /* Menos padding */
-  background:#f0f7ff; /* Fondo ligeramente azul para destacar suavemente */
-  color:var(--primary);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05) inset; /* Sombra interior sutil */
+  font-weight:800; /* Más grueso */
+  font-size:1.3rem; /* Más grande */
+  border:none; /* Sin borde */
+  border-radius:0; /* Sin borde */
+  padding:0; /* Sin padding */
+  background:transparent; /* Transparente */
+  color:white; /* Texto Blanco */
+  box-shadow: none; /* Sin sombra */
 }
-/* --- FIN REFINAMIENTO CAMPO OT --- */
+/* --- FIN CAJA OT DESTACADA --- */
 
-/* --- CONTROLES: MEJORA VISUAL PARA ESCRITORIO (MÁS FINO Y ELEGANTE) --- */
-.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center} 
+/* --- CONTROLES: MEJORA VISUAL PARA ESCRITORIO (ICONO Y TEXTO EN COLUMNA) --- */
+.controls{
+    display:flex;
+    gap:10px; /* Más espacio entre botones */
+    flex-wrap:wrap;
+    align-items:center;
+    margin-left: auto; /* Empuja los botones a la derecha si es necesario */
+} 
 .controls button, .import-label {
   /* ESTILO BASE (OUTLINED/DELINEADO) - FINO Y SUTIL */
-  height: 35px; /* MÁS PEQUEÑO */
-  width: auto; 
-  padding: 0 10px; /* Menos padding */
-  border-radius: 6px; /* BORDES MÁS SUTILES */
+  height: 65px; /* Altura mayor para contener icono y texto en columna */
+  width: 90px; /* Ancho fijo para uniformidad */
+  padding: 8px 5px; 
+  border-radius: 6px; 
   border: 1px solid var(--primary); 
   background: var(--card); /* Fondo blanco */
   color: var(--primary); /* Texto del color primario */
   
-  display: inline-flex;
+  /* CAMBIO CLAVE: Icono y texto en columna */
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Sombra muy sutil */
-  gap: 5px; /* Menos espacio */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); 
+  gap: 2px; /* Menos espacio entre icono y texto */
   font-weight: 600;
   white-space: nowrap; 
 }
 /* Estilo Hover para botones Outlined (se rellenan y elevan) */
 .controls button:hover, .import-label:hover{
     background:var(--primary);
-    color: white; /* El texto se vuelve blanco en hover */
+    color: white; 
     transform:translateY(-1px);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15); /* Sombra de elevación sutil */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15); 
 }
-.controls button i, .import-label i { width: 16px; height: 16px; } /* Íconos MÁS PEQUEÑOS */
-.controls button span, .import-label span { font-size: 0.95rem; } /* Texto MÁS PEQUEÑO */
+.controls button i, .import-label i { width: 22px; height: 22px; } /* Íconos MÁS GRANDES */
+.controls button span, .import-label span { 
+    font-size: 0.75rem; /* Texto MÁS PEQUEÑO para caber en columna */
+    font-weight: 700;
+} 
 
 /* Estilos de color específicos (override para mantener el look sólido o adaptado) */
 
@@ -155,7 +179,7 @@ main{padding:25px}
 .import-label input{display:none}
 
 
-/* --- FORM FIELDS --- */
+/* --- FORM FIELDS (sin cambios significativos) --- */
 fieldset{border:1px solid var(--border);border-radius:10px;padding:15px;margin-bottom:25px}
 legend{
     color:var(--dark);
@@ -184,7 +208,7 @@ legend{
 .stack input:focus, .stack select:focus, textarea:focus{
     border-color:var(--primary);
     outline:none;
-    box-shadow: 0 0 0 3px rgba(0, 77, 153, 0.15);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15); /* Ajustado a nuevo --primary */
 }
 textarea{min-height:140px;resize:vertical}
 .stack input[readonly] {background: var(--bg); color: var(--dark); font-weight: 700;}
@@ -244,22 +268,31 @@ textarea{min-height:140px;resize:vertical}
         padding: 10px 15px;
         margin-bottom: 10px;
     }
-    .ot-bar .left { gap: 10px; }
+    .ot-bar .left { 
+        gap: 10px; 
+        /* Para que el ot-box naranja destaque solo en móvil */
+        background: var(--accent); 
+        border-radius: 6px;
+        padding: 4px 8px;
+    }
     /* El campo OT conserva el estilo profesional aplicado, solo se ajusta el tamaño */
-    #otNumber { font-size: 1rem; width: 90px; } 
-    .ot-label { font-size: 0.95rem; }
+    #otNumber { font-size: 1rem; width: auto; color:white;} 
+    .ot-label { font-size: 0.8rem; color:white; margin-bottom:0;}
+    /* En móvil, los elementos del .ot-box deben ser horizontales */
+    .ot-box{flex-direction: row; gap:5px; padding:0; background: transparent; box-shadow: none;}
+
 
     /* Menú de hamburguesa y desplegable */
     #mobileMenuBtn { 
         display: flex; /* Mostrar botón hamburguesa */
         position: absolute; 
         right: 15px; 
-        top: 10px; /* Ajuste por el nuevo alto de botón */
+        top: 10px; 
         z-index: 10; 
         width: 40px; 
         height: 40px;
         padding: 0;
-        background: var(--primary) !important; /* Fuerza el color sólido en móvil */
+        background: var(--primary) !important; 
         color: white !important;
         border: none !important;
         border-radius: 6px !important;
@@ -291,6 +324,7 @@ textarea{min-height:140px;resize:vertical}
         width: 100%;
         height: 40px;
         display: flex; 
+        flex-direction: row; /* Vuelve a ser horizontal en móvil */
         align-items: center;
         justify-content: flex-start; /* Alineación a la izquierda */
         padding: 0 10px; 
@@ -304,9 +338,16 @@ textarea{min-height:140px;resize:vertical}
         font-size: 1rem;
         box-shadow: none;
     }
+    /* Iconos y span en móvil vuelven a tamaño normal */
+    #mobileMenuDropdown button i, #mobileMenuDropdown .import-label i { width: 16px; height: 16px; }
+    #mobileMenuDropdown button span, #mobileMenuDropdown .import-label span { font-size: 1rem; font-weight: 600; }
+    
     /* Override de colores específicos en móvil (deben ser sólidos) */
     #mobileMenuDropdown #saveBtn { background: var(--success); }
-    #mobileMenuDropdown #resetFormBtn { background: #576574; }
+    #mobileMenuDropdown #resetFormBtn { 
+        background: #576574; /* Gris oscuro para limpiar */
+        border-color: #576574;
+    }
     #mobileMenuDropdown .danger { background: var(--danger); }
     
     /* Hover simple para mantener el color y dar feedback */
