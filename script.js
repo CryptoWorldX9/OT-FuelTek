@@ -14,6 +14,8 @@
                               posición para que parezca un timbre sobre la firma.
    CORRECCIÓN 7 (2025-11-17): Se arregla la funcionalidad de los botones restaurando
                               la inicialización del correlativo a 10724.
+   CORRECCIÓN 8 (2025-11-17): Se aumenta el tamaño del sello a 150px y se sube la
+                              posición a -70px para un efecto de timbre más prominente.
 */
 
 /* -------------------------
@@ -121,7 +123,7 @@ function dbDeleteAll() {
    CORRELATIVO / LOCALSTORAGE
    ==================================================================== */
 function getLastOt() {
-  // CORRECCIÓN 7: Se restaura el valor inicial a 10724 para que el siguiente sea 10725.
+  // CORRECCIÓN: Se usa 10724 para que el siguiente correlativo sea 10725
   return parseInt(localStorage.getItem(OT_LOCAL) || "10724", 10);
 }
 function setLastOt(n) { localStorage.setItem(OT_LOCAL, String(n)); }
@@ -588,7 +590,7 @@ document.addEventListener("DOMContentLoaded", () => {
         
         <div style="display:flex;gap:40px;margin-top:40px;padding-top:10px;border-top:1px solid #eee;">
           <div style="flex:1;text-align:center; position: relative;">
-            <img src="stamp-motosierra.png" style="width: 130px; height: 130px; opacity: 1.0; position: absolute; top: -40px; left: 50%; transform: translateX(-50%);" alt="Sello Taller" />
+            <img src="stamp-motosierra.png" style="width: 150px; height: 150px; opacity: 1.0; position: absolute; top: -70px; left: 50%; transform: translateX(-50%);" alt="Sello Taller" />
             <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;font-size:9.5pt;">${data.firmaTaller || ""}</div>
             <div style="margin-top:6px;font-weight:600;color:#2c3e50;font-size:9.5pt;">Firma Taller</div>
           </div>
