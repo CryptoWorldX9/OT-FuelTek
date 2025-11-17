@@ -1,7 +1,10 @@
-/* Fueltek v8.0 - script.js
+/* Fueltek v8.1 - script.js
    Mejora: Lógica de correlativo actualizada para usar transacciones de Firebase,
    evitando que el número salte si solo se pulsa "Nuevo OT" sin guardar.
    El correlativo solo se incrementa al GUARDAR exitosamente.
+   
+   CORRECCIÓN: Se modifica getFormData() para leer el N° OT directamente del input field
+   al imprimir, resolviendo el error "El número de OT no es válido" al cargar OT antiguas.
 */
 
 // --- VARIABLES GLOBALES ---
@@ -43,8 +46,8 @@ function resetForm() {
 
 function loadOrderToForm(order) {
     resetForm();
-    currentCorrelative = order.ot; 
-    otNumberInput.value = order.ot;
+    currentCorrelative = order.ot; // Se establece la variable global (Número)
+    otNumberInput.value = order.ot; // Se establece el valor visible en el input (String)
 
     // Cargar campos básicos
     Object.keys(order).forEach(key => {
@@ -75,8 +78,14 @@ function getFormData() {
     const data = {};
     const elements = form.elements;
     
-    // Incluye el número de OT actual (requerido)
-    data.ot = currentCorrelative ? parseInt(currentCorrelative) : null; 
+    // CORRECCIÓN: Leer el N° OT directamente del input field para máxima fiabilidad
+    const otValue = otNumberInput.value.trim();
+    const parsedOt = parseInt(otValue);
+    // Incluye el número de OT actual (requerido), asegurando que sea un número válido
+    data.ot = !isNaN(parsedOt) ? parsedOt : null; 
+    
+    // Asegura que la variable global de estado se actualice con el valor actual del formulario
+    currentCorrelative = data.ot; 
     
     for (let i = 0; i < elements.length; i++) {
         const item = elements[i];
@@ -108,6 +117,7 @@ function getFormData() {
 
 function validateData(data) {
     if (!data.ot || data.ot < 1000) {
+        // Este error era el que se disparaba si data.ot era null.
         alert("Error: El número de OT no es válido.");
         return false;
     }
@@ -143,7 +153,7 @@ function toggleAbonoField() {
 }
 
 
-// --- LÓGICA DE FIREBASE (MODIFICADA) ---
+// --- LÓGICA DE FIREBASE ---
 
 /**
  * Obtiene el último correlativo guardado en Firebase (sin incrementarlo).
@@ -167,7 +177,6 @@ async function firebaseGetCurrentCorrelative() {
 
 /**
  * Sincroniza el correlativo: lo ajusta al máximo OT de la colección 'orders' + 1.
- * Función para el botón "Sincronizar".
  */
 async function firebaseSyncCorrelative() {
     if (typeof firestore === 'undefined') {
