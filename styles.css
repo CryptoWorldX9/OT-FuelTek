@@ -1,5 +1,5 @@
 :root{
-  --primary: #0066cc; /* Azul Corporativo - Ligeramente más claro que el anterior */
+  --primary: #0066cc; /* Azul Corporativo - Ligeramente más claro */
   --accent: #f26522; /* Naranja Contraste */
   --dark: #2c3e50; /* Gris Oscuro/Negro Sobrio */
   --border: #e0e0e0;
@@ -268,18 +268,18 @@ textarea{min-height:140px;resize:vertical}
         padding: 10px 15px;
         margin-bottom: 10px;
     }
-    .ot-bar .left { 
-        gap: 10px; 
+    .ot-box { 
         /* Para que el ot-box naranja destaque solo en móvil */
         background: var(--accent); 
         border-radius: 6px;
         padding: 4px 8px;
+        flex-direction: row; 
+        gap:5px; 
     }
+    .ot-label { font-size: 0.8rem; color:white; margin-bottom:0;}
     /* El campo OT conserva el estilo profesional aplicado, solo se ajusta el tamaño */
     #otNumber { font-size: 1rem; width: auto; color:white;} 
-    .ot-label { font-size: 0.8rem; color:white; margin-bottom:0;}
-    /* En móvil, los elementos del .ot-box deben ser horizontales */
-    .ot-box{flex-direction: row; gap:5px; padding:0; background: transparent; box-shadow: none;}
+    
 
 
     /* Menú de hamburguesa y desplegable */
