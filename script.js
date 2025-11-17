@@ -7,6 +7,8 @@
    nulo detenga la ejecución del script (restaurando funcionalidad de botones y OT).
    CORRECCIÓN 2 (2025-11-17): Se actualiza el correlativo a 10725.
    CORRECCIÓN 3 (2025-11-17): Se aumenta opacidad del sello de impresión.
+   CORRECCIÓN 4 (2025-11-17): Se aumenta el tamaño del sello y se ajusta el espaciado
+                              de las firmas/notas al final de la impresión.
 */
 
 /* -------------------------
@@ -489,7 +491,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fd = new FormData(form);
     const data = {};
     for (const [k, v] of fd.entries()) if (k !== "accesorios") data[k] = v;
-    data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked')).map(c => c.value);
+    data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
     data.ot = otInput.value || String(getLastOt() + 1);
     
     // Para impresión, usa el valor DESFORMATEADO para el cálculo
@@ -579,9 +581,9 @@ document.addEventListener("DOMContentLoaded", () => {
             <div style="border:1px solid #ddd;padding:8px;border-radius:6px;min-height:70px;background:#fcfcfc;font-size:9.5pt;">${data.trabajo || "Trabajo Pendiente de Realizar / Sin notas."}</div>
         </div>
         
-        <div style="display:flex;gap:40px;margin-top:25px;padding-top:10px;border-top:1px solid #eee;">
+        <div style="display:flex;gap:40px;margin-top:40px;padding-top:10px;border-top:1px solid #eee;">
           <div style="flex:1;text-align:center; position: relative;">
-            <img src="stamp-motosierra.png" style="width: 50px; height: 50px; opacity: 1.0; position: absolute; top: -45px; left: 50%; transform: translateX(-50%);" alt="Sello Taller" />
+            <img src="stamp-motosierra.png" style="width: 70px; height: 70px; opacity: 1.0; position: absolute; top: -65px; left: 50%; transform: translateX(-50%);" alt="Sello Taller" />
             <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;font-size:9.5pt;">${data.firmaTaller || ""}</div>
             <div style="margin-top:6px;font-weight:600;color:#2c3e50;font-size:9.5pt;">Firma Taller</div>
           </div>
@@ -591,7 +593,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
         
-        <div style="margin-top:20px;padding:8px;background:#f0f7ff;border:1px solid #d0e0f0;border-radius:6px;font-size:9pt;color:#444;">
+        <div style="margin-top:40px;padding:8px;background:#f0f7ff;border:1px solid #d0e0f0;border-radius:6px;font-size:9pt;color:#444;">
             <strong style="color:#004d99;">Notas importantes:</strong>
             <ul style="margin:5px 0 0 15px;padding:0;">
                 <li>Toda herramienta no retirada en 30 días podrá generar cobro por almacenamiento.</li>
