@@ -12,6 +12,8 @@
    CORRECCIÓN 5 (2025-11-17): Se aumenta el tamaño del sello de impresión a 100px.
    CORRECCIÓN 6 (2025-11-17): Se aumenta el tamaño del sello a 130px y se ajusta la
                               posición para que parezca un timbre sobre la firma.
+   CORRECCIÓN 7 (2025-11-17): Se arregla la funcionalidad de los botones restaurando
+                              la inicialización del correlativo a 10724.
 */
 
 /* -------------------------
@@ -119,8 +121,8 @@ function dbDeleteAll() {
    CORRELATIVO / LOCALSTORAGE
    ==================================================================== */
 function getLastOt() {
-  // CORRECCIÓN: Usar 726 como valor inicial para que el siguiente sea 727.
-  return parseInt(localStorage.getItem(OT_LOCAL) || "726", 10);
+  // CORRECCIÓN 7: Se restaura el valor inicial a 10724 para que el siguiente sea 10725.
+  return parseInt(localStorage.getItem(OT_LOCAL) || "10724", 10);
 }
 function setLastOt(n) { localStorage.setItem(OT_LOCAL, String(n)); }
 function nextOtAndSave() {
@@ -265,11 +267,11 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Borrar base de datos completa
   if (clearBtn) clearBtn.addEventListener("click", async () => {
-    if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ toda la base de datos de Órdenes de Trabajo y reiniciará el contador a 727. ¿Desea continuar?")) return;
+    if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ toda la base de datos de Órdenes de Trabajo y reiniciará el contador a 10725. ¿Desea continuar?")) return;
     await dbDeleteAll();
-    setLastOt(726); // Reiniciar a 726
+    setLastOt(10724); // Restaurar a 10724
     updateOtDisplay();
-    alert("Base de datos eliminada. Contador reiniciado a 727.");
+    alert("Base de datos eliminada. Contador reiniciado a 10725.");
   });
   
   // Limpiar campos manualmente
@@ -494,7 +496,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fd = new FormData(form);
     const data = {};
     for (const [k, v] of fd.entries()) if (k !== "accesorios") data[k] = v;
-    data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked')).map(c => c.value);
+    data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
     data.ot = otInput.value || String(getLastOt() + 1);
     
     // Para impresión, usa el valor DESFORMATEADO para el cálculo
