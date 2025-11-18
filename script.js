@@ -19,6 +19,9 @@
    CORRECCIÓN 9 (2025-11-18): ARREGLO CRÍTICO: Se utiliza 'await' en firebaseSaveOrder 
                               y se aísla el manejo de errores para solucionar el conflicto 
                               de transacciones de Firestore (reads before writes).
+   CORRECCIÓN 10 (2025-11-18): ARREGLO DE SINCRONIZACIÓN: Sincroniza el correlativo 
+                               (OT_LOCAL) con un documento maestro en Firebase para 
+                               asegurar que todos los dispositivos vean el mismo N° OT.
 */
 
 /* -------------------------
@@ -28,8 +31,10 @@ const DB_NAME = "fueltek_db_v7";
 const DB_VERSION = 1;
 const STORE = "orders";
 const OT_LOCAL = "fueltek_last_ot_v7";
+const OT_FIREBASE_DOC = "lastOt"; // Nombre del documento en Firebase para el correlativo
 
 let currentLoadedOt = null;
+let lastKnownOt = 10724; // Valor inicial por defecto local
 
 /* ====================================================================
    UTILIDADES DE FORMATO CLP
@@ -123,18 +128,59 @@ function dbDeleteAll() {
 }
 
 /* ====================================================================
-   CORRELATIVO / LOCALSTORAGE
+   CORRELATIVO / LOCALSTORAGE / FIREBASE
    ==================================================================== */
+
+// Obtiene el último OT desde la variable global (inicializada desde Firebase/Local)
 function getLastOt() {
-  // CORRECCIÓN: Se usa 10724 para que el siguiente correlativo sea 10725
-  return parseInt(localStorage.getItem(OT_LOCAL) || "10724", 10);
+  return lastKnownOt;
 }
-function setLastOt(n) { localStorage.setItem(OT_LOCAL, String(n)); }
-function nextOtAndSave() {
-  const n = getLastOt() + 1;
-  setLastOt(n);
-  return n;
+
+// Guarda el correlativo localmente y, si es mayor, lo guarda en Firebase
+function setLastOt(n) { 
+  lastKnownOt = n;
+  localStorage.setItem(OT_LOCAL, String(n));
+  
+  // Intenta actualizar Firebase también, pero no bloquea la ejecución (uso de .catch)
+  if (typeof firestore !== 'undefined') {
+    firestore.collection("config").doc(OT_FIREBASE_DOC).set({
+      value: n,
+      updatedAt: new Date().toISOString()
+    }).catch(err => {
+      console.error("Error al guardar correlativo en Firebase:", err);
+    });
+  }
 }
+
+// 💥 NUEVA FUNCIÓN: Obtiene el correlativo maestro desde Firebase
+async function getFirebaseCorrelative() {
+  if (typeof firestore === 'undefined') {
+    // Si Firebase no está cargado, usa el valor local/default
+    return parseInt(localStorage.getItem(OT_LOCAL) || "10724", 10);
+  }
+  
+  try {
+    const doc = await firestore.collection("config").doc(OT_FIREBASE_DOC).get();
+    
+    // El valor por defecto es el de localStorage o 10724
+    const localValue = parseInt(localStorage.getItem(OT_LOCAL) || "10724", 10);
+    
+    if (doc.exists) {
+      const firebaseValue = doc.data().value;
+      // Usar el valor MÁS ALTO entre local y Firebase para evitar regresiones
+      return Math.max(localValue, firebaseValue);
+    } else {
+      // Si el documento maestro no existe, lo creamos con el valor local
+      setLastOt(localValue);
+      return localValue;
+    }
+  } catch (error) {
+    console.error("Fallo al leer correlativo de Firebase, usando valor local.", error);
+    // En caso de fallo (ej. sin conexión), usamos el valor local
+    return localValue;
+  }
+}
+
 
 /* ====================================================================
    BOTÓN GUARDAR - RESET
@@ -203,13 +249,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const importFile = document.getElementById("importFile");
 
     
-  const updateOtDisplay = () => {
-    if (otInput) { // ⬅️ COMPROBACIÓN: Evita error si otInput es null (causa de fallo de script)
-        otInput.value = String(getLastOt() + 1);
+  // 💥 FUNCIÓN CORREGIDA: Asíncrona para obtener el correlativo de Firebase
+  const updateOtDisplay = async () => {
+    // 1. Obtiene el último correlativo Sincronizado (Firebase o Local)
+    const latestOt = await getFirebaseCorrelative(); 
+    lastKnownOt = latestOt; // Actualiza la variable global
+
+    if (otInput) { 
+        // Muestra el siguiente OT disponible
+        otInput.value = String(latestOt + 1); 
     }
     resetSaveButton();
   }
-  updateOtDisplay();
+  
+  // 💥 Llamada inicial asíncrona
+  updateOtDisplay(); 
   
   // Agregar listeners para formato de miles Y ACTUALIZACIÓN DE SALDO EN TIEMPO REAL
   [valorTrabajoInput, montoAbonadoInput].forEach(input => {
@@ -264,28 +318,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // Reservar nuevo OT
-  if (newOtBtn) newOtBtn.addEventListener("click", () => {
-    const reserved = nextOtAndSave();
-    updateOtDisplay();
-    alert("Reservado N° OT: " + reserved + ". En pantalla verás el siguiente disponible.");
+  if (newOtBtn) newOtBtn.addEventListener("click", async () => {
+    // 💥 Al reservar, usa el último OT conocido (sincronizado)
+    const nextOt = getLastOt() + 1;
+    setLastOt(nextOt); // Incrementa el local y Firebase
+
+    // Llama a updateOtDisplay para mostrar el nuevo correlativo (nextOt + 1)
+    await updateOtDisplay(); 
+    alert("Reservado N° OT: " + nextOt + ". En pantalla verás el siguiente disponible.");
   });
   
   // Borrar base de datos completa
   if (clearBtn) clearBtn.addEventListener("click", async () => {
     if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ toda la base de datos de Órdenes de Trabajo y reiniciará el contador a 10725. ¿Desea continuar?")) return;
     await dbDeleteAll();
-    setLastOt(10724); // Restaurar a 10724
-    updateOtDisplay();
+    setLastOt(10724); // Restaurar a 10724 (que hace que el siguiente sea 10725)
+    await updateOtDisplay();
     alert("Base de datos eliminada. Contador reiniciado a 10725.");
   });
   
   // Limpiar campos manualmente
-  if (resetFormBtn) resetFormBtn.addEventListener("click", () => {
+  if (resetFormBtn) resetFormBtn.addEventListener("click", async () => {
     if (confirm("¿Seguro que deseas limpiar todos los campos del formulario?")) {
       form.reset();
       if (labelAbono) labelAbono.classList.add("hidden");
       currentLoadedOt = null;
-      updateOtDisplay(); // Restablece el número OT al siguiente correlativo y el botón
+      await updateOtDisplay(); // Restablece el número OT al siguiente correlativo y el botón
       updateSaldo(); // Limpia el saldo
       alert("Campos limpiados. Listo para una nueva OT.");
     }
@@ -328,8 +386,9 @@ document.addEventListener("DOMContentLoaded", () => {
       otToSave = currentLoadedOt;
       saveMessage = "actualizada";
     } else {
-      // Guardar una nueva OT y avanzar correlativo
-      otToSave = String(getLastOt() + 1);
+      // 💥 Si es OT nueva, usa el último OT conocido (sincronizado)
+      const latestOt = getLastOt(); // Obtiene el correlativo MÁS alto conocido
+      otToSave = String(latestOt + 1);
       order.ot = otToSave;
       isNewOt = true; // Marcar como nueva
     }
@@ -338,20 +397,17 @@ document.addEventListener("DOMContentLoaded", () => {
       // 1. Guardar en IndexedDB
       await dbPut(order);
       
-      // 2. Si es OT nueva, avanzar el correlativo local SÓLO después de guardar en IndexedDB
-      if (isNewOt) setLastOt(Number(otToSave));
+      // 2. Si es OT nueva, avanzar el correlativo local Y FIREBASE después de guardar en IndexedDB
+      if (isNewOt) {
+          setLastOt(Number(otToSave)); // Incrementa el local y Firebase
+      }
       
       // 3. Guardar también en Firebase (si está disponible) - SOLUCIÓN AL ERROR DE TRANSACCIÓN
       if (typeof firestore !== 'undefined') {
         try {
-            // Utilizamos 'await' para que la operación de escritura en Firebase se complete
-            // y no cause un conflicto de concurrencia con posibles lecturas internas.
             await firebaseSaveOrder(order); 
             console.log(`Éxito al guardar en Firebase OT: ${otToSave}`);
         } catch(err) {
-            // Manejamos el error de Firebase de forma aislada.
-            // La OT ya está guardada localmente (en IndexedDB), por lo que solo notificamos
-            // del fallo en la nube, sin detener la ejecución.
             console.error("Firebase save error (transaction issue detected):", err);
             alert(`ATENCIÓN: La OT #${otToSave} se guardó localmente, pero falló al guardar en la nube (Firebase). El error fue: Firestore transaction issue. Verifique la consola para detalles.`);
         }
@@ -368,7 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
     form.reset();
     if (labelAbono) labelAbono.classList.add("hidden");
     currentLoadedOt = null;
-    updateOtDisplay(); // Restablece el número OT y el botón
+    await updateOtDisplay(); // 💥 Sincroniza y muestra el siguiente correlativo (otToSave + 1)
     updateSaldo(); // Limpia el saldo
   });
 
@@ -514,7 +570,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Imprimir actual o vista previa
-  if (printBtn) printBtn.addEventListener("click", e => {
+  if (printBtn) printBtn.addEventListener("click", async e => {
     e.preventDefault();
     if (!form || !otInput) return; // Safety check
     
@@ -522,8 +578,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = {};
     for (const [k, v] of fd.entries()) if (k !== "accesorios") data[k] = v;
     data.accesorios = Array.from(form.querySelectorAll("input[name='accesorios']:checked")).map(c => c.value);
-    data.ot = otInput.value || String(getLastOt() + 1);
     
+    // 💥 Al imprimir, usa el OT actual o el siguiente si es un formulario nuevo
+    let otValue = otInput.value;
+    if (!currentLoadedOt) {
+        // Si no está cargada (es nueva), muestra el OT siguiente (que ya está calculado y mostrado)
+        const latestOt = await getFirebaseCorrelative();
+        otValue = String(latestOt + 1);
+    }
+    data.ot = otValue;
+
     // Para impresión, usa el valor DESFORMATEADO para el cálculo
     data.valorTrabajoNum = unformatCLP(data.valorTrabajo);
     data.montoAbonadoNum = unformatCLP(data.montoAbonado);
@@ -710,10 +774,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const tx = db.transaction(STORE, "readwrite");
         const store = tx.objectStore(STORE);
         let importedCount = 0;
+        let maxOt = getLastOt(); // Obtener el OT actual
         
         orders.forEach(order => {
             // Asegurar que el OT sea string para el keyPath
             order.ot = String(order.ot);
+            
+            // Actualizar el máximo OT si esta orden es mayor
+            maxOt = Math.max(maxOt, Number(order.ot));
+            
             const request = store.put(order);
             request.onsuccess = () => importedCount++;
             request.onerror = (e) => console.error("Error al importar OT:", order.ot, e.target.error);
@@ -724,11 +793,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        tx.oncomplete = () => {
+        tx.oncomplete = async () => {
             alert(`Importación finalizada. ${importedCount} órdenes procesadas.`);
-            const maxOt = Math.max(...orders.map(o => Number(o.ot)), getLastOt());
-            setLastOt(maxOt);
-            updateOtDisplay();
+            setLastOt(maxOt); // Sincroniza el correlativo con el más alto
+            await updateOtDisplay(); // Actualiza la pantalla
             e.target.value = null;
         };
         tx.onerror = (e) => alert("Error en la transacción de importación: " + e.target.error);
@@ -743,15 +811,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* ====================================================================
    FIREBASE - funciones auxiliares (siempre opcional)
-   - Requiere que en index.html hayas inicializado firebase y firestore
    ==================================================================== */
 
 async function firebaseSaveOrder(order) {
   if (typeof firestore === 'undefined') return Promise.reject("Firestore no inicializado");
   try {
-    // Convertir campos a tipos simples (ej. evitar Date objetos)
     const copy = Object.assign({}, order);
-    // Asegurarse que no haya funciones ni referencias
     await firestore.collection("orders").doc(String(order.ot)).set(copy);
     console.log("Firebase: OT guardada", order.ot);
     return true;
