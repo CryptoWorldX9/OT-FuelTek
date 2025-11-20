@@ -22,6 +22,10 @@
    CORRECCIÓN 10 (2025-11-18): ARREGLO DE SINCRONIZACIÓN: Sincroniza el correlativo 
                                (OT_LOCAL) con un documento maestro en Firebase para 
                                asegurar que todos los dispositivos vean el mismo N° OT.
+   CORRECCIÓN 11 (2025-11-20): ARREGLO PIXELACIÓN DE TEXTO EN ENCABEZADO: Se elimina
+                               la propiedad 'opacity' del número de teléfono y dirección
+                               dentro del HTML de impresión para forzar el renderizado 
+                               vectorial en el PDF (evitando pixelación).
 */
 
 /* -------------------------
@@ -614,11 +618,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const html = `
       <div style="font-family:'Inter', sans-serif;color:#111;padding-bottom:10px;border-bottom:1px solid #ddd;">
         <div style="display:flex;align-items:center;gap:15px">
-          <img src="logo-fueltek.png" style="width:80px;height:80px;object-fit:contain;border:1px solid #eee;padding:5px;border-radius:8px;" alt="logo" />
+          <img src="logo-fueltek.png" style="width:100px;height:100px;object-fit:contain;border-radius:8px;" alt="logo" />
           <div style="flex-grow:1">
             <h2 style="margin:0;color:#004d99;font-size:20px;">ORDEN DE TRABAJO - FUELTEK</h2>
             <div style="color:#f26522;font-weight:600;font-size:14px;">Servicio Técnico Multimarca</div>
-            <div style="font-size:10px;margin-top:3px;opacity:0.8;">Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</div>
+            <div style="font-size:11px;margin-top:3px;color:#555;">Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</div>
           </div>
           <div style="text-align:right;background:#004d99;color:white;padding:8px 12px;border-radius:6px;">
             <div style="font-weight:800;font-size:20px;">N° OT: ${data.ot}</div>
