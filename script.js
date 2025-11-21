@@ -26,6 +26,9 @@
                                la propiedad 'opacity' del número de teléfono y dirección
                                dentro del HTML de impresión para forzar el renderizado 
                                vectorial en el PDF (evitando pixelación).
+   CORRECCIÓN 12 (2025-11-21): ARREGLO IMAGEN DE SELLO EN PDF: Se cambia el 'src' de la
+                               imagen del sello a un Data URL (Base64) para asegurar su 
+                               visualización en la impresión.
 */
 
 /* -------------------------
@@ -681,7 +684,7 @@ document.addEventListener("DOMContentLoaded", () => {
         
         <div style="display:flex;gap:40px;margin-top:40px;padding-top:10px;border-top:1px solid #eee;">
           <div style="flex:1;text-align:center; position: relative;">
-            <img src="stamp-motosierra.png" style="width: 150px; height: 150px; opacity: 1.0; position: absolute; top: -70px; left: 50%; transform: translateX(-50%);" alt="Sello Taller" />
+            <img src="data:image/png;base64,[AQUÍ_VA_TU_CÓDIGO_BASE64_DE_LA_IMAGEN]" style="width: 150px; height: 150px; opacity: 1.0; position: absolute; top: -70px; left: 50%; transform: translateX(-50%);" alt="Sello Taller" />
             <div style="height:1px;border-bottom:1px solid #2c3e50;margin:0 auto;width:80%;font-size:9.5pt;">${data.firmaTaller || ""}</div>
             <div style="margin-top:6px;font-weight:600;color:#2c3e50;font-size:9.5pt;">Firma Taller</div>
           </div>
