@@ -1,13 +1,12 @@
 /* Fueltek v7.5 - script.js
-   Versión corregida: mantiene toda la lógica original,
-   restaura exportar/imprimir/acciones de fila y corrige menú móvil.
-   Además integra Firebase (guardar, leer, eliminar) sin tocar diseño.
    
-   CORRECCIÓN 11 (2025-11-22): ARREGLO CRÍTICO DE INICIALIZACIÓN.
-                               Se movió la búsqueda de todos los elementos del DOM (botones y campos)
-                               desde el ámbito global a dentro de la función initialize(), 
-                               garantizando que se encuentren después de que la página haya cargado.
-                               Esto resuelve los problemas de botones no funcionales y el correlativo OT invisible.
+   CORRECCIÓN FINAL Y DEFINITIVA (2025-11-22):
+   Se asegura la inicialización de TODOS los elementos del DOM (botones y campos) 
+   dentro de la función initialize(), garantizando que se encuentren después de que
+   la página haya cargado. Esto resuelve los problemas de botones no funcionales
+   y el correlativo OT invisible.
+
+   Se incluyen también las correcciones previas (ruta de imagen y chequeo de Lucide).
 */
 
 // =========================================================================================
@@ -24,7 +23,6 @@ let currentOtNumber = INITIAL_OT_NUMBER;
 let firestore;
 if (typeof firebase !== 'undefined') {
   try {
-    // Asegúrate de que firebaseConfig está definida en index.html
     if (typeof firebaseConfig !== 'undefined') {
       firebase.initializeApp(firebaseConfig);
       firestore = firebase.firestore();
@@ -36,7 +34,7 @@ if (typeof firebase !== 'undefined') {
   }
 }
 
-// Variables para elementos del DOM (Ahora declaradas con 'let' y sin inicializar aquí)
+// Variables para elementos del DOM (Declaradas globalmente con 'let' y asignadas en initialize())
 let otNumberInput;
 let form;
 let saveBtn;
@@ -64,7 +62,6 @@ function generateNewOtNumber() {
   } else {
     currentOtNumber = lastOt + 1;
   }
-  // Se usa otNumberInput aquí, por eso debe ser inicializado primero en initialize()
   if (otNumberInput) {
     otNumberInput.value = currentOtNumber;
   }
@@ -92,9 +89,11 @@ function clearForm() {
 }
 
 function getFormData() {
-  // Se asume que los elementos del DOM ya están inicializados en initialize()
+  // Aseguramos que el OT se lea correctamente, ya que es el único campo readonly.
+  const otValue = otNumberInput ? parseInt(otNumberInput.value, 10) : currentOtNumber;
+
   const data = {
-    ot: parseInt(otNumberInput.value, 10),
+    ot: otValue,
     fecha: document.getElementById('fecha').value,
     cliente: document.getElementById('cliente').value.toUpperCase(),
     rut: document.getElementById('rut').value.toUpperCase(),
@@ -134,7 +133,7 @@ function loadFormData(data) {
   }
 
   // Cargar datos en los campos
-  otNumberInput.value = data.ot;
+  if (otNumberInput) otNumberInput.value = data.ot;
   document.getElementById('fecha').value = data.fecha;
   document.getElementById('cliente').value = data.cliente;
   document.getElementById('rut').value = data.rut;
@@ -155,12 +154,11 @@ function loadFormData(data) {
   document.getElementById('fechaTermino').value = data.fechaTermino;
   document.getElementById('entrega').value = data.entrega;
 
-  // Limpiar checkboxes
+  // Limpiar y cargar checkboxes
   document.querySelectorAll('input[name="condicion"]').forEach(checkbox => {
     checkbox.checked = false;
   });
 
-  // Cargar checkboxes
   if (data.condiciones && Array.isArray(data.condiciones)) {
     data.condiciones.forEach(condicion => {
       const checkbox = document.querySelector(`input[value="${condicion}"]`);
@@ -323,7 +321,7 @@ if (document.readyState !== 'loading') {
 }
 
 function initialize() {
-  // === PASO CLAVE: INICIALIZAR VARIABLES DE DOM AQUÍ ===
+  // === PASO CRÍTICO: INICIALIZAR TODAS LAS VARIABLES DE DOM AQUÍ ===
   otNumberInput = document.getElementById('otNumber');
   form = document.getElementById('otForm');
   saveBtn = document.getElementById('saveOrder');
@@ -340,12 +338,12 @@ function initialize() {
   exportBtn = document.getElementById('exportOrders');
   // === FIN DE INICIALIZACIÓN DE VARIABLES DE DOM ===
   
-  // Llama a lucide SOLO si está definida
+  // Llama a lucide SOLO si está definida (previene fallos en la inicialización)
   if (typeof lucide !== 'undefined' && lucide.createIcons) {
       lucide.createIcons();
   }
   
-  // Esto ahora sí puede acceder a otNumberInput
+  // Esto ahora sí puede acceder a otNumberInput, solucionando el problema del correlativo
   generateNewOtNumber();
 
   // ---------------------------------------------------------------------------------
@@ -537,7 +535,6 @@ function initialize() {
             }));
 
             // Generar el archivo Excel
-            // Se asume que la librería XLSX.js está cargada en index.html
             if (typeof XLSX === 'undefined') {
                 throw new Error("La librería XLSX no está cargada. Revise index.html.");
             }
