@@ -22,135 +22,135 @@
 
     <main>
       <div class="ot-bar">
-        <div class="left">
-          <label class="ot-label">N° OT:</label>
-          <input id="otNumber" readonly />
+        <div class="ot-box">
+            <label class="ot-label">N° OT:</label>
+            <input id="otNumber" readonly />
         </div>
 
         <button id="mobileMenuBtn" class="mobile-only" title="Menú"><i data-lucide="menu"></i></button>
 
-        <div class="right" id="desktopMenu">
-          <button id="newOrderBtn" class="primary"><i data-lucide="file-plus"></i> Nueva OT</button>
-          <button id="saveOrderBtn" class="success"><i data-lucide="save"></i> Guardar OT</button>
-          <button id="openModalBtn" class="secondary"><i data-lucide="folder-open"></i> Órdenes Guardadas</button>
-          <button id="printBtn" class="accent"><i data-lucide="printer"></i> Imprimir</button>
-          <button id="exportBtn"><i data-lucide="table"></i> Exportar a Excel</button>
+        <div id="mobileMenuDropdown" class="controls">
+          <button id="newOtBtn" type="button" title="Reservar nuevo OT"><i data-lucide="plus"></i><span>Nuevo OT</span></button>
+          <button id="saveBtn" type="button" title="Guardar OT"><i data-lucide="save"></i><span>Guardar</span></button>
+          <button id="viewBtn" type="button" title="Ver lista de OT"><i data-lucide="list"></i><span>Ver Lista</span></button>
+          <button id="resetFormBtn" type="button" title="Limpiar todos los campos"><i data-lucide="eraser"></i><span>Limpiar</span></button>
+          <button id="exportBtn" type="button" title="Exportar Excel"><i data-lucide="download"></i><span>Exportar Excel</span></button>
+          <button id="exportDbBtn" type="button" title="Exportar DB JSON"><i data-lucide="file-text"></i><span>Exportar DB</span></button>
+          <label class="import-label" title="Importar DB JSON">
+            <input id="importFile" type="file" accept=".json" />
+            <i data-lucide="upload"></i><span>Importar DB</span>
+          </label>
+          <button id="syncCorrelativeBtn" type="button" title="Sincronizar Correlativo"><i data-lucide="refresh-ccw"></i><span>Sincronizar</span></button>
+          <button id="printBtn" type="button" title="Imprimir / PDF"><i data-lucide="printer"></i><span>Imprimir</span></button>
+          <button id="clearBtn" type="button" class="danger" title="Borrar DB"><i data-lucide="trash-2"></i><span>Borrar DB</span></button>
         </div>
       </div>
 
-      <section class="section-container">
-        <h2>1. Información del Cliente/Vehículo</h2>
-        <div class="row two-col">
-          <div class="form-group">
-            <label for="clientName">Nombre/Empresa Cliente:</label>
-            <input id="clientName" type="text" />
-          </div>
-          <div class="form-group">
-            <label for="clientRut">RUT/ID:</label>
-            <input id="clientRut" type="text" />
-          </div>
-        </div>
-        <div class="row two-col">
-          <div class="form-group">
-            <label for="clientPhone">Teléfono:</label>
-            <input id="clientPhone" type="tel" />
-          </div>
-          <div class="form-group">
-            <label for="clientEmail">Email:</label>
-            <input id="clientEmail" type="email" />
-          </div>
-        </div>
-        <div class="row three-col">
-          <div class="form-group">
-            <label for="vehicleBrand">Marca Vehículo:</label>
-            <input id="vehicleBrand" type="text" />
-          </div>
-          <div class="form-group">
-            <label for="vehicleModel">Modelo:</label>
-            <input id="vehicleModel" type="text" />
-          </div>
-          <div class="form-group">
-            <label for="vehiclePlate">Patente:</label>
-            <input id="vehiclePlate" type="text" />
-          </div>
-        </div>
-        <div class="row two-col">
-          <div class="form-group">
-            <label for="vehicleKm">Kilometraje:</label>
-            <input id="vehicleKm" type="number" />
-          </div>
-          <div class="form-group">
-            <label for="entryDate">Fecha de Ingreso:</label>
-            <input id="entryDate" type="date" />
-          </div>
-        </div>
-      </section>
+      <form id="otForm" autocomplete="off">
+        <fieldset>
+          <legend>Datos del Cliente</legend>
+          <div class="grid grid-2col spaced">
+            <label class="stack">Nombre del Cliente
+              <input name="clienteNombre" />
+            </label>
+            <label class="stack">Teléfono
+              <input name="clienteTelefono" />
+            </label>
 
-      <section class="section-container">
-        <h2>2. Trabajos Solicitados y Diagnóstico</h2>
-        <div class="form-group">
-          <label for="requestedWork">Descripción del Trabajo Solicitado por el Cliente:</label>
-          <textarea id="requestedWork" rows="4" placeholder="Ej: Mantención de 10.000 km, revisión de frenos, problema de encendido..."></textarea>
-        </div>
-        <div class="form-group">
-          <label for="diagnosis">Diagnóstico Inicial (por el técnico):</label>
-          <textarea id="diagnosis" rows="4" placeholder="Ej: Se detecta desgaste en pastillas delanteras, falla en inyector #3, etc."></textarea>
-        </div>
-      </section>
+            <label class="stack">Correo Electrónico
+              <input name="clienteEmail" type="email" />
+            </label>
+            <label class="stack">Fecha Recibida
+              <input name="fechaRecibida" type="date" />
+            </label>
 
-      <section class="section-container">
-        <h2>3. Repuestos y Materiales Utilizados</h2>
-        <div class="parts-list-container">
-          <div id="partsList" class="parts-list">
-            </div>
-          <button id="addPartBtn" class="small"><i data-lucide="plus-circle"></i> Agregar Repuesto/Material</button>
-        </div>
-      </section>
+            <label class="stack">Fecha de Entrega
+              <input name="fechaEntrega" type="date" />
+            </label>
+            <div></div>
+          </div>
+        </fieldset>
 
-      <section class="section-container">
-        <h2>4. Trabajo Realizado y Notas Adicionales</h2>
-        <div class="form-group">
-          <label for="workDone">Detalle del Trabajo Realizado:</label>
-          <textarea id="workDone" rows="5" placeholder="Descripción detallada de las acciones tomadas, ajustes, pruebas, etc."></textarea>
-        </div>
-        <div class="form-group">
-          <label for="finalNotes">Observaciones/Notas Finales:</label>
-          <textarea id="finalNotes" rows="3" placeholder="Información importante para el cliente, recomendaciones, garantía."></textarea>
-        </div>
-      </section>
+        <fieldset>
+          <legend>Datos de la Herramienta</legend>
+          <div class="grid grid-2col spaced">
+            <label class="stack">Marca
+              <input name="marca" />
+            </label>
+            <label class="stack">Modelo
+              <input name="modelo" />
+            </label>
 
-      <section class="section-container signatures-section">
-        <h2>5. Costos y Aceptación</h2>
-        <div class="row two-col">
-          <div class="form-group">
-            <label for="costLabor">Costo Mano de Obra (Neto):</label>
-            <input id="costLabor" type="number" value="0" />
+            <label class="stack">N° de Serie
+              <input name="serie" />
+            </label>
+            <label class="stack">Año Fabricación
+              <input name="anio" type="number" min="1900" max="2100" />
+            </label>
+            <div></div>
+            <div></div>
           </div>
-          <div class="form-group">
-            <label for="costParts">Costo Repuestos/Materiales (Neto):</label>
-            <input id="costParts" type="number" value="0" readonly />
+        </fieldset>
+
+        <fieldset>
+          <legend>Revisión y Accesorios Recibidos</legend>
+          <div class="checkbox-grid aligned">
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Motosierra"><span>Motosierra</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Desbrozadora"><span>Desbrozadora</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cortasetos"><span>Cortasetos</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Corta Césped"><span>Corta Césped</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Fumigadora"><span>Fumigadora</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Sopladora"><span>Sopladora</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Espada"><span>Espada</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cadena"><span>Cadena</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Pistón Rayado"><span>Pistón Rayado</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cilindro Rayado"><span>Cilindro Rayado</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Bujía"><span>Bujía</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Funda Espada"><span>Funda Espada</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Tapa de Arranque"><span>Tapa de Arranque</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Brazo Completo"><span>Brazo Completo</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Cabezal"><span>Cabezal</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Tubo"><span>Tubo</span></label>
+            <label class="checkbox-item"><input type="checkbox" name="accesorios" value="Manilla Arranque"><span>Manilla Arranque</span></label>
           </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Diagnóstico Inicial</legend>
+          <textarea name="diagnostico" rows="6" placeholder="Describa el diagnóstico ..."></textarea>
+        </fieldset>
+
+        <fieldset>
+          <legend>Trabajo Realizado / Notas del Técnico</legend>
+          <textarea name="trabajo" rows="6" placeholder="Describa el trabajo realizado ..."></textarea>
+        </fieldset>
+
+        <fieldset>
+          <legend>Pago</legend>
+          <div class="grid-pay">
+            <label class="stack">Valor del trabajo (CLP)<input name="valorTrabajo" type="text" inputmode="numeric" id="valorTrabajoInput" /></label>
+            <label class="stack">Estado de Pago
+              <select name="estadoPago" id="estadoPago">
+                <option value="Pendiente">Pendiente de Pago</option>
+                <option value="Pagado">Pagado</option>
+                <option value="Abonado">Abonado</option>
+              </select>
+            </label>
+            <label class="stack hidden" id="labelAbono">Monto Abonado (CLP)<input name="montoAbonado" type="text" inputmode="numeric" id="montoAbonadoInput" /></label>
+          </div>
+        </fieldset>
+
+        <div class="firmas">
+          <div class="firma-box"><label>Firma Taller</label><input name="firmaTaller" /></div>
+          <div class="firma-box"><label>Firma Cliente</label><input name="firmaCliente" /></div>
         </div>
-        <div class="total-cost-box">
-          <h3>Costo Total Estimado (IVA Incluido):</h3>
-          <span id="totalCost">$0</span>
-        </div>
-        
-        <div class="signatures">
-          <div class="signature-box">
-            <p>Firma y Rut Cliente</p>
-          </div>
-          <div class="signature-box">
-            <p>Firma y Rut Técnico</p>
-          </div>
-        </div>
-        
-        <section class="disclaimer">
-          <h3>Condiciones de Servicio</h3>
+
+        <section class="notas">
+          <h4>Notas importantes</h4>
           <ul>
-            <li>El cliente declara recibir el vehículo a su plena satisfacción.</li>
-            <li>La garantía cubre solo los trabajos y repuestos detallados en esta OT.</li>
-            <li>No nos hacemos responsables por objetos de valor olvidados dentro del vehículo.</li>
+            <li>Toda herramienta no retirada en 30 días podrá generar cobro por almacenamiento.</li>
+            <li>FuelTek no se responsabiliza por accesorios no declarados al momento de la recepción.</li>
+            <li>El cliente declara estar informado sobre los términos del servicio y autoriza la revisión del equipo.</li>
           </ul>
         </section>
       </form>
@@ -174,5 +174,28 @@
     </div>
   </div>
 
-  <div id="printArea" class="print-area" style="display:none">
-    <img id="printSeal" class="print-seal" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAAADL1t+KAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAE5WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI1LTExLTExPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0
+  <div id="printArea" class="print-area" style="display:none"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ESTA CONFIGURACIÓN DEBE SER LA TUYA (actualmente tiene datos de ejemplo)
+    const firebaseConfig = {
+      apiKey: "AIzaSyATGBP6B5YoOk8kkovZydhQ9rLjjmxwgds",
+      authDomain: "ot-fueltek.firebaseapp.com",
+      projectId: "ot-fueltek",
+      storageBucket: "ot-fueltek.firebasestorage.app",
+      messagingSenderId: "884528621368",
+      appId: "1:884528621368:web:d82923bef09c48ad3b83cd",
+      measurementId: "G-DCNFDEJN0Y"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const firestore = firebase.firestore();
+  </script>
+
+  <script src="script.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>
