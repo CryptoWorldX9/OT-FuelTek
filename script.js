@@ -3,11 +3,11 @@
    restaura exportar/imprimir/acciones de fila y corrige menú móvil.
    Además integra Firebase (guardar, leer, eliminar) sin tocar diseño.
    
-   CORRECCIÓN 9 (2025-11-22): Se elimina el slash inicial ('/') en la ruta de la imagen
-                              del timbre para que se muestre correctamente al generar PDF.
-   CORRECCIÓN 10 (2025-11-22): Se añade una comprobación a la función initialize() para
-                               evitar que el script se detenga si la librería de iconos
-                               'lucide' no carga, restaurando la funcionalidad de todos los botones.
+   CORRECCIÓN 11 (2025-11-22): ARREGLO CRÍTICO DE INICIALIZACIÓN.
+                               Se movió la búsqueda de todos los elementos del DOM (botones y campos)
+                               desde el ámbito global a dentro de la función initialize(), 
+                               garantizando que se encuentren después de que la página haya cargado.
+                               Esto resuelve los problemas de botones no funcionales y el correlativo OT invisible.
 */
 
 // =========================================================================================
@@ -36,22 +36,22 @@ if (typeof firebase !== 'undefined') {
   }
 }
 
-// Variables para elementos del DOM
-const otNumberInput = document.getElementById('otNumber');
-const form = document.getElementById('otForm');
-const saveBtn = document.getElementById('saveOrder');
-const printBtn = document.getElementById('printOrder');
-const loadBtn = document.getElementById('loadOrders');
-const clearBtn = document.getElementById('clearForm');
-const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-const mobileMenu = document.getElementById('mobileMenu');
-const printArea = document.getElementById('printArea');
-const modal = document.getElementById('modal');
-const closeModalBtn = document.getElementById('closeModal');
-const ordersListContainer = document.getElementById('ordersList');
-const searchOtInput = document.getElementById('searchOt');
-const exportBtn = document.getElementById('exportOrders');
-const formElements = form ? Array.from(form.elements) : [];
+// Variables para elementos del DOM (Ahora declaradas con 'let' y sin inicializar aquí)
+let otNumberInput;
+let form;
+let saveBtn;
+let printBtn;
+let loadBtn;
+let clearBtn;
+let mobileMenuBtn;
+let mobileMenu;
+let printArea;
+let modal;
+let closeModalBtn;
+let ordersListContainer;
+let searchOtInput;
+let exportBtn;
+let formElements; 
 
 // =========================================================================================
 // FUNCIONES PRINCIPALES
@@ -64,6 +64,7 @@ function generateNewOtNumber() {
   } else {
     currentOtNumber = lastOt + 1;
   }
+  // Se usa otNumberInput aquí, por eso debe ser inicializado primero en initialize()
   if (otNumberInput) {
     otNumberInput.value = currentOtNumber;
   }
@@ -91,6 +92,7 @@ function clearForm() {
 }
 
 function getFormData() {
+  // Se asume que los elementos del DOM ya están inicializados en initialize()
   const data = {
     ot: parseInt(otNumberInput.value, 10),
     fecha: document.getElementById('fecha').value,
@@ -321,12 +323,29 @@ if (document.readyState !== 'loading') {
 }
 
 function initialize() {
-  // === CORRECCIÓN APLICADA AQUÍ: Se añade una comprobación de existencia ===
+  // === PASO CLAVE: INICIALIZAR VARIABLES DE DOM AQUÍ ===
+  otNumberInput = document.getElementById('otNumber');
+  form = document.getElementById('otForm');
+  saveBtn = document.getElementById('saveOrder');
+  printBtn = document.getElementById('printOrder');
+  loadBtn = document.getElementById('loadOrders');
+  clearBtn = document.getElementById('clearForm');
+  mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  mobileMenu = document.getElementById('mobileMenu');
+  printArea = document.getElementById('printArea');
+  modal = document.getElementById('modal');
+  closeModalBtn = document.getElementById('closeModal');
+  ordersListContainer = document.getElementById('ordersList');
+  searchOtInput = document.getElementById('searchOt');
+  exportBtn = document.getElementById('exportOrders');
+  // === FIN DE INICIALIZACIÓN DE VARIABLES DE DOM ===
+  
+  // Llama a lucide SOLO si está definida
   if (typeof lucide !== 'undefined' && lucide.createIcons) {
       lucide.createIcons();
   }
-  // ========================================================================
   
+  // Esto ahora sí puede acceder a otNumberInput
   generateNewOtNumber();
 
   // ---------------------------------------------------------------------------------
