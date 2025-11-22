@@ -1,12 +1,10 @@
 /* Fueltek v7.5 - script.js
    
    CORRECCIÓN FINAL Y DEFINITIVA (2025-11-22):
-   Se asegura la inicialización de TODOS los elementos del DOM (botones y campos) 
-   dentro de la función initialize(), garantizando que se encuentren después de que
-   la página haya cargado. Esto resuelve los problemas de botones no funcionales
-   y el correlativo OT invisible.
-
-   Se incluyen también las correcciones previas (ruta de imagen y chequeo de Lucide).
+   1. Se soluciona el problema de los botones y el correlativo OT invisible garantizando 
+      que la asignación de TODAS las variables del DOM se ejecute solo dentro de la 
+      función initialize(), que espera la carga completa del documento.
+   2. Se mantiene la corrección del timbre PDF (`stamp-motosierra.png`).
 */
 
 // =========================================================================================
@@ -34,7 +32,7 @@ if (typeof firebase !== 'undefined') {
   }
 }
 
-// Variables para elementos del DOM (Declaradas globalmente con 'let' y asignadas en initialize())
+// Variables para elementos del DOM (Declaradas globalmente con 'let', asignadas en initialize())
 let otNumberInput;
 let form;
 let saveBtn;
@@ -49,7 +47,6 @@ let closeModalBtn;
 let ordersListContainer;
 let searchOtInput;
 let exportBtn;
-let formElements; 
 
 // =========================================================================================
 // FUNCIONES PRINCIPALES
@@ -62,6 +59,7 @@ function generateNewOtNumber() {
   } else {
     currentOtNumber = lastOt + 1;
   }
+  // El correlativo se asigna solo si el elemento ya fue encontrado
   if (otNumberInput) {
     otNumberInput.value = currentOtNumber;
   }
@@ -89,7 +87,6 @@ function clearForm() {
 }
 
 function getFormData() {
-  // Aseguramos que el OT se lea correctamente, ya que es el único campo readonly.
   const otValue = otNumberInput ? parseInt(otNumberInput.value, 10) : currentOtNumber;
 
   const data = {
@@ -184,6 +181,7 @@ function buildPrintAndPrint(data) {
     ? data.condiciones.map(c => `<li>${c}</li>`).join('')
     : '<li>No se registraron condiciones al momento de la recepción.</li>';
 
+  // === INICIO CORRECCIÓN TIMBRE (Ruta sin / inicial) ===
   const htmlContent = `
     <div class="ot-document">
       <header class="print-header">
@@ -194,7 +192,6 @@ function buildPrintAndPrint(data) {
           <small>Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</small>
         </div>
       </header>
-
       <section class="section-box print-client-info">
         <div class="column-group">
           <p><strong>Fecha Ingreso:</strong> ${data.fecha}</p>
@@ -262,6 +259,7 @@ function buildPrintAndPrint(data) {
 
     </div>
   `;
+  // === FIN CORRECCIÓN TIMBRE ===
 
   printArea.innerHTML = htmlContent;
   window.print();
@@ -314,6 +312,7 @@ async function loadAndDisplayOrders() {
 // GESTIÓN DE EVENTOS
 // =========================================================================================
 
+// Usamos DOMContentLoaded para garantizar que initialize() se ejecute después de cargar el HTML
 if (document.readyState !== 'loading') {
   initialize();
 } else {
@@ -321,7 +320,7 @@ if (document.readyState !== 'loading') {
 }
 
 function initialize() {
-  // === PASO CRÍTICO: INICIALIZAR TODAS LAS VARIABLES DE DOM AQUÍ ===
+  // === PASO CRÍTICO: INICIALIZAR TODAS LAS VARIABLES DE DOM AQUÍ PARA GARANTIZAR QUE EXISTEN ===
   otNumberInput = document.getElementById('otNumber');
   form = document.getElementById('otForm');
   saveBtn = document.getElementById('saveOrder');
@@ -343,7 +342,7 @@ function initialize() {
       lucide.createIcons();
   }
   
-  // Esto ahora sí puede acceder a otNumberInput, solucionando el problema del correlativo
+  // Generar el número de OT (esto ahora funciona porque otNumberInput ya fue asignado)
   generateNewOtNumber();
 
   // ---------------------------------------------------------------------------------
