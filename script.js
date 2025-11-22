@@ -3,21 +3,11 @@
    restaura exportar/imprimir/acciones de fila y corrige menú móvil.
    Además integra Firebase (guardar, leer, eliminar) sin tocar diseño.
    
-   CORRECCIÓN 1 (2025-11-17): Se añade comprobación robusta para evitar que un elemento
-   nulo detenga la ejecución del script (restaurando funcionalidad de botones y OT).
-   CORRECCIÓN 2 (2025-11-17): Se actualiza el correlativo a 10725.
-   CORRECCIÓN 3 (2025-11-17): Se aumenta opacidad del sello de impresión.
-   CORRECCIÓN 4 (2025-11-17): Se aumenta el tamaño del sello y se ajusta el espaciado
-                              de las firmas/notas al final de la impresión.
-   CORRECCIÓN 5 (2025-11-17): Se aumenta el tamaño del sello de impresión a 100px.
-   CORRECCIÓN 6 (2025-11-17): Se aumenta el tamaño del sello a 130px y se ajusta la
-                              posición para que parezca un timbre sobre la firma.
-   CORRECCIÓN 7 (2025-11-17): Se arregla la funcionalidad de los botones restaurando
-                              la inicialización del correlativo a 10724.
-   CORRECCIÓN 8 (2025-11-17): Se aumenta el tamaño del sello a 150px y se sube la
-                              posición para mejor estética.
    CORRECCIÓN 9 (2025-11-22): Se elimina el slash inicial ('/') en la ruta de la imagen
                               del timbre para que se muestre correctamente al generar PDF.
+   CORRECCIÓN 10 (2025-11-22): Se añade una comprobación a la función initialize() para
+                               evitar que el script se detenga si la librería de iconos
+                               'lucide' no carga, restaurando la funcionalidad de todos los botones.
 */
 
 // =========================================================================================
@@ -34,8 +24,13 @@ let currentOtNumber = INITIAL_OT_NUMBER;
 let firestore;
 if (typeof firebase !== 'undefined') {
   try {
-    firebase.initializeApp(firebaseConfig);
-    firestore = firebase.firestore();
+    // Asegúrate de que firebaseConfig está definida en index.html
+    if (typeof firebaseConfig !== 'undefined') {
+      firebase.initializeApp(firebaseConfig);
+      firestore = firebase.firestore();
+    } else {
+      console.warn("Firebase: La configuración 'firebaseConfig' no está definida.");
+    }
   } catch (error) {
     console.warn("Firebase no se inicializó. Verifique firebaseConfig en index.html.", error);
   }
@@ -89,8 +84,10 @@ function clearForm() {
     form.reset();
   }
   generateNewOtNumber();
-  document.getElementById('otForm').dataset.editing = 'false';
-  document.getElementById('otForm').dataset.ot = currentOtNumber;
+  if (form) {
+    form.dataset.editing = 'false';
+    form.dataset.ot = currentOtNumber;
+  }
 }
 
 function getFormData() {
@@ -129,8 +126,10 @@ function getFormData() {
 }
 
 function loadFormData(data) {
-  document.getElementById('otForm').dataset.editing = 'true';
-  document.getElementById('otForm').dataset.ot = data.ot;
+  if (form) {
+    form.dataset.editing = 'true';
+    form.dataset.ot = data.ot;
+  }
 
   // Cargar datos en los campos
   otNumberInput.value = data.ot;
@@ -306,7 +305,6 @@ async function loadAndDisplayOrders() {
     return orders;
   } catch (e) {
     console.error("No se pudo cargar las órdenes de Firebase. Usando datos locales si aplica.", e);
-    // En un entorno de producción sin Firebase, aquí se usaría el almacenamiento local o una API.
     displayOrders([]);
     return [];
   }
@@ -323,7 +321,12 @@ if (document.readyState !== 'loading') {
 }
 
 function initialize() {
-  lucide.createIcons();
+  // === CORRECCIÓN APLICADA AQUÍ: Se añade una comprobación de existencia ===
+  if (typeof lucide !== 'undefined' && lucide.createIcons) {
+      lucide.createIcons();
+  }
+  // ========================================================================
+  
   generateNewOtNumber();
 
   // ---------------------------------------------------------------------------------
@@ -381,7 +384,9 @@ function initialize() {
   if (closeModalBtn && modal) {
     closeModalBtn.addEventListener('click', () => {
       modal.classList.add('hidden');
-      searchOtInput.value = ''; // Limpiar búsqueda al cerrar
+      if (searchOtInput) {
+        searchOtInput.value = ''; // Limpiar búsqueda al cerrar
+      }
     });
   }
 
@@ -431,7 +436,7 @@ function initialize() {
               // Actualizar la lista en el modal y el cache
               allOrdersCache = await loadAndDisplayOrders();
               // Si la OT eliminada era la que estaba en el formulario, limpiar el formulario
-              if (parseInt(document.getElementById('otForm').dataset.ot, 10) === ot) {
+              if (form && parseInt(form.dataset.ot, 10) === ot) {
                   clearForm();
               }
             } catch (error) {
@@ -513,6 +518,10 @@ function initialize() {
             }));
 
             // Generar el archivo Excel
+            // Se asume que la librería XLSX.js está cargada en index.html
+            if (typeof XLSX === 'undefined') {
+                throw new Error("La librería XLSX no está cargada. Revise index.html.");
+            }
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Ordenes de Trabajo");
@@ -523,10 +532,10 @@ function initialize() {
 
         } catch (e) {
             console.error("Error al exportar a Excel:", e);
-            alert("Error al exportar los datos. Verifique que la librería XLSX esté cargada y que Firebase funcione.");
+            alert("Error al exportar los datos. Verifique la consola.");
         }
     });
-}
+  }
 
 
   // ---------------------------------------------------------------------------------
@@ -548,7 +557,6 @@ function initialize() {
 async function firebaseSaveOrder(order) {
   if (typeof firestore === 'undefined') return Promise.reject("Firestore no inicializado");
   try {
-    // Usar Object.assign para asegurar una copia simple y evitar problemas de prototipos/referencias
     const copy = Object.assign({}, order);
     await firestore.collection("orders").doc(String(order.ot)).set(copy);
     console.log("Firebase: OT guardada", order.ot);
