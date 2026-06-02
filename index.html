@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orden de Trabajo - FuelTek Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #004d99;
+            --primary-light: #0066cc;
+            --accent: #f26522;
+            --dark: #2c3e50;
+            --success: #27ae60;
+            --danger: #c0392b;
+            --warning: #f39c12;
+            --bg: #f4f7f9;
+            --card: #ffffff;
+            --border: #e0e0e0;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* HEADER MODERNO */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 20px;
+            border-bottom: 4px solid var(--accent);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            background: white;
+            padding: 5px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .header-info h1 {
+            margin: 0;
+            font-size: 2rem;
+            color: var(--accent);
+            font-weight: 800;
+        }
+
+        .header-info p {
+            margin: 5px 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .header-info small {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .wrapper {
+            max-width: 1200px;
+            margin: 30px auto;
+            background: var(--card);
+            border-radius: 15px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        main { padding: 30px; }
+
+        /* BARRA DE CONTROLES SUPERIOR */
+        .ot-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: var(--card);
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 2px solid var(--border);
+            gap: 15px;
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
+        }
+
+        .ot-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--accent);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            min-width: 150px;
+        }
+
+        .ot-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #otNumber {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: transparent;
+            border: none;
+            color: white;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* BOTONES DE CONTROL */
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+
+        .btn {
+            height: 50px;
+            padding: 0 20px;
+            border-radius: 8px;
+            border: 2px solid var(--primary);
+            background: var(--card);
+            color: var(--primary);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            box-shadow: var(--shadow);
+        }
+
+        .btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn i { width: 20px; height: 20px; }
+
+        .btn-success {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #1e8449;
+            border-color: #1e8449;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #a13023;
+            border-color: #a13023;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            border-color: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d68910;
+            border-color: #d68910;
+        }
+
+        .btn-secondary {
+            background: var(--dark);
+            border-color: var(--dark);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #1a252f;
+            border-color: #1a252f;
+        }
+
+        /* FORMULARIOS */
+        fieldset {
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            background: #fafbfc;
+        }
+
+        legend {
+            color: var(--primary);
+            font-weight: 700;
+            padding: 0 10px;
+            font-size: 1.2rem;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .grid-2col { grid-template-columns: 1fr 1fr; }
+        .grid-3col { grid-template-columns: repeat(3, 1fr); }
+        .grid-4col { grid-template-columns: repeat(4, 1fr); }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(0, 77, 153, 0.1);
+        }
+
+        .form-group input[readonly] {
+            background: var(--bg);
+            color: var(--dark);
+            font-weight: 700;
+            cursor: not-allowed;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* ACCESORIOS POR CATEGORÍAS */
+        .accessories-container {
+            display: grid;
+            gap: 15px;
+        }
+
+        .accessory-category {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .accessory-category-header {
+            background: var(--primary);
+            color: white;
+            padding: 12px 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .accessory-category-header:hover {
+            background: var(--primary-light);
+        }
+
+        .accessory-category-content {
+            padding: 15px;
+            display: none;
+        }
+
+        .accessory-category-content.active {
+            display: block;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--bg);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .checkbox-item:hover {
+            background: #e8f0f8;
+            border-color: var(--primary);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            accent-color: var(--primary);
+        }
+
+        /* PAGO */
+        .payment-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .payment-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .payment-card.highlight {
+            border-color: var(--accent);
+            background: #fff5f0;
+        }
+
+        .saldo-box {
+            background: var(--danger);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+
+        /* FIRMAS */
+        .firmas {
+            display: flex;
+            gap: 40px;
+            margin-top: 30px;
+            justify-content: space-around;
+        }
+
+        .firma-box {
+            width: 45%;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        .firma-box input {
+            width: 100%;
+            height: 50px;
+            text-align: center;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            margin-top: 10px;
+            background: #f9f9f9;
+            font-family: 'Dancing Script', cursive, inherit;
+            font-size: 1.2rem;
+        }
+
+        /* NOTAS */
+        .notas {
+            background: #e8f0f8;
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 25px;
+        }
+
+        .notas h4 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .notas ul {
+            padding-left: 20px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+
+        /* MODAL CONFIGURACIÓN */
+        .modal {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.hidden { display: none; }
+
+        .modal-content {
+            width: 95%;
+            max-width: 900px;
+            max-height: 90vh;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .modal-header button {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 25px;
+            overflow-y: auto;
+            max-height: calc(90vh - 80px);
+        }
+
+        /* CONFIGURACIÓN - TABS */
+        .config-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--dark);
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .config-section {
+            background: var(--bg);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .config-section h4 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .config-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .config-item input,
+        .config-item select {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-add {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-remove {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-save {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* LISTA DE ÓRDENES */
+        .orders-list {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .order-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .order-row:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .order-actions button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .order-actions button:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-print { background: var(--primary); color: white; }
+        .btn-edit { background: var(--warning); color: white; }
+        .btn-delete { background: var(--danger); color: white; }
+
+        /* ÁREA DE IMPRESIÓN */
+        #printArea { display: none; }
+
+        /* FOOTER */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        /* MOBILE MENU */
+        #mobileMenuBtn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #mobileMenuDropdown {
+            display: none;
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow-lg);
+            padding: 10px;
+            z-index: 99;
+            min-width: 200px;
+        }
+
+        #mobileMenuDropdown.active { display: flex; flex-direction: column; gap: 8px; }
+
+        #mobileMenuDropdown .btn {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .header-content { flex-direction: column; text-align: center; }
+            .grid-2col, .grid-3col, .grid-4col { grid-template-columns: 1fr; }
+            .payment-grid { grid-template-columns: 1fr; }
+            .firmas { flex-direction: column; }
+            .firma-box { width: 100%; }
+            .ot-bar { flex-direction: column; }
+            .controls { width: 100%; justify-content: center; }
+            #mobileMenuBtn { display: block; }
+            main { padding: 15px; }
+        }
+
+        /* PRINT STYLES */
+        @media print {
+            @page { size: letter; margin: 6mm; }
+            body { background: white; }
+            header, .ot-bar, .controls, footer, #mobileMenuBtn, .modal { display: none !important; }
+            .wrapper { box-shadow: none; margin: 0; }
+            main { padding: 0; }
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 6mm;
+                display: block !important;
+            }
+        }
+
+        /* UTILIDADES */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .mt-20 { margin-top: 20px; }
+        .mb-20 { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <div class="header-content">
+            <img src="logo-fueltek.png" alt="FuelTek Logo" class="logo">
+            <div class="header-info">
+                <h1>FUELTEK</h1>
+                <p>Servicio Técnico Multimarca</p>
+                <small id="workshopInfo">Tel: +56 9 4043 5805 | La Trilla 1062, San Bernardo</small>
+            </div>
+        </div>
+    </header>
+
+    <!-- BOTÓN MÓVIL -->
+    <button id="mobileMenuBtn" onclick="toggleMobileMenu()">
+        <i data-lucide="menu"></i>
+    </button>
+
+    <div id="mobileMenuDropdown" class="hidden">
+        <!-- Se llena dinámicamente -->
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="wrapper">
+        <main>
+            <!-- BARRA SUPERIOR -->
+            <div class="ot-bar">
+                <div class="ot-box">
+                    <span class="ot-label">N° Orden de Trabajo</span>
+                    <input type="text" id="otNumber" readonly value="10725">
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-success" id="saveBtn" onclick="saveOrder()">
+                        <i data-lucide="save"></i>
+                        <span>Guardar</span>
+                    </button>
+                    <button class="btn" id="viewBtn" onclick="viewOrders()">
+                        <i data-lucide="list"></i>
+                        <span>Ver Lista</span>
+                    </button>
+                    <button class="btn btn-secondary" id="configBtn" onclick="openConfig()">
+                        <i data-lucide="settings"></i>
+                        <span>Configurar</span>
+                    </button>
+                    <button class="btn" id="resetFormBtn" onclick="resetForm()">
+                        <i data-lucide="refresh-cw"></i>
+                        <span>Limpiar</span>
+                    </button>
+                    <button class="btn" id="printBtn" onclick="printCurrent()">
+                        <i data-lucide="printer"></i>
+                        <span>Imprimir</span>
+                    </button>
+                    <button class="btn" id="exportBtn" onclick="exportToExcel()">
+                        <i data-lucide="download"></i>
+                        <span>Excel</span>
+                    </button>
+                    <button class="btn btn-danger" id="clearBtn" onclick="clearDatabase()">
+                        <i data-lucide="trash-2"></i>
+                        <span>Borrar DB</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- FORMULARIO -->
+            <form id="otForm">
+                <!-- DATOS DEL CLIENTE -->
+                <fieldset>
+                    <legend>Datos del Cliente</legend>
+                    <div class="grid grid-3col">
+                        <div class="form-group">
+                            <label>Nombre del Cliente *</label>
+                            <input type="text" name="clienteNombre" required placeholder="Nombre completo">
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono *</label>
+                            <input type="tel" name="clienteTelefono" required placeholder="+56 9 1234 5678">
+                        </div>
+                        <div class="form-group">
+                            <label>Correo Electrónico</label>
+                            <input type="email" name="clienteEmail" placeholder="cliente@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha Recibida *</label>
+                            <input type="date" name="fechaRecibida" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha de Entrega</label>
+                            <input type="date" name="fechaEntrega">
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- DATOS DE LA HERRAMIENTA -->
+                <fieldset>
+                    <legend>Datos de la Herramienta</legend>
+                    <div class="grid grid-4col">
+                        <div class="form-group">
+                            <label>Marca *</label>
+                            <select name="marca" id="marcaSelect" required>
+                                <option value="">Seleccione marca...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Modelo *</label>
+                            <select name="modelo" id="modeloSelect" required>
+                                <option value="">Seleccione modelo...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>N° de Serie</label>
+                            <input type="text" name="serie" placeholder="Número de serie">
+                        </div>
+                        <div class="form-group">
+                            <label>Año Fabricación</label>
+                            <select name="anio" id="anioSelect">
+                                <option value="">Seleccione año...</option>
+                            </select>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- ACCESORIOS POR CATEGORÍAS -->
+                <fieldset>
+                    <legend>Revisión y Accesorios Recibidos</legend>
+                    <div class="accessories-container" id="accessoriesContainer">
+                        <!-- Se genera dinámicamente -->
+                    </div>
+                </fieldset>
+
+                <!-- DIAGNÓSTICO Y TRABAJO -->
+                <fieldset>
+                    <legend>Diagnóstico y Trabajo</legend>
+                    <div class="grid grid-2col">
+                        <div class="form-group">
+                            <label>Diagnóstico Inicial</label>
+                            <textarea name="diagnostico" placeholder="Describa el problema reportado por el cliente..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Trabajo Realizado / Notas del Técnico</label>
+                            <textarea name="trabajo" placeholder="Describa el trabajo realizado..."></textarea>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- PAGO -->
+                <fieldset>
+                    <legend>Pago</legend>
+                    <div class="payment-grid">
+                        <div class="form-group">
+                            <label>Valor del Trabajo (CLP) *</label>
+                            <input type="text" id="valorTrabajoInput" name="valorTrabajo" required placeholder="$ 0">
+                        </div>
+                        <div class="form-group">
+                            <label>Estado de Pago *</label>
+                            <select name="estadoPago" id="estadoPago" required onchange="updateSaldo()">
+                                <option value="Pendiente">Pendiente de Pago</option>
+                                <option value="Abonado">Abonado</option>
+                                <option value="Pagado">Pagado</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="labelAbono">
+                            <label>Monto Abonado (CLP)</label>
+                            <input type="text" id="montoAbonadoInput" name="montoAbonado" placeholder="$ 0">
+                        </div>
+                    </div>
+                    <div id="saldoDisplay" class="saldo-box hidden">
+                        SALDO PENDIENTE: $<span id="saldoValue">0</span>
+                    </div>
+                </fieldset>
+
+                <!-- FIRMAS -->
+                <fieldset>
+                    <legend>Firmas</legend>
+                    <div class="firmas">
+                        <div class="firma-box">
+                            <label>Firma Taller</label>
+                            <input type="text" name="firmaTaller" placeholder="Nombre técnico">
+                        </div>
+                        <div class="firma-box">
+                            <label>Firma Cliente</label>
+                            <input type="text" name="firmaCliente" placeholder="Nombre cliente">
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- NOTAS -->
+                <div class="notas">
+                    <h4>Notas importantes</h4>
+                    <ul>
+                        <li>Toda herramienta no retirada en 30 días podrá generar cobro por almacenamiento.</li>
+                        <li>FuelTek no se responsabiliza por accesorios no declarados al momento de la recepción.</li>
+                        <li>El cliente declara estar informado sobre los términos del servicio y autoriza la revisión del equipo.</li>
+                    </ul>
+                </div>
+            </form>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 FUELTEK - Sistema de Órdenes de Trabajo v2.0</p>
+        </footer>
+    </div>
+
+    <!-- MODAL CONFIGURACIÓN -->
+    <div id="configModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i data-lucide="settings"></i> Configuración del Sistema</h3>
+                <button onclick="closeConfig()">Cerrar</button>
+            </div>
+            <div class="modal-body">
+                <div class="config-tabs">
+                    <button class="tab-btn active" onclick="switchTab('marcas')">Marcas</button>
+                    <button class="tab-btn" onclick="switchTab('modelos')">Modelos</button>
+                    <button class="tab-btn" onclick="switchTab('accesorios')">Accesorios</button>
+                    <button class="tab-btn" onclick="switchTab('taller')">Datos Taller</button>
+                    <button class="tab-btn" onclick="switchTab('años')">Años</button>
+                </div>
+
+                <!-- TAB MARCAS -->
+                <div id="tab-marcas" class="tab-content active">
+                    <div class="config-section">
+                        <h4>Gestionar Marcas</h4>
+                        <div id="marcasList"></div>
+                        <div class="config-item mt-20">
+                            <input type="text" id="newMarca" placeholder="Nueva marca">
+                            <button class="btn-small btn-add" onclick="addMarca()">
+                                <i data-lucide="plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB MODELOS -->
+                <div id="tab-modelos" class="tab-content">
+                    <div class="config-section">
+                        <h4>Gestionar Modelos por Marca</h4>
+                        <div class="config-item">
+                            <select id="selectMarcaModelo">
+                                <option value="">Seleccione marca...</option>
+                            </select>
+                        </div>
+                        <div id="modelosList"></div>
+                        <div class="config-item mt-20">
+                            <input type="text" id="newModelo" placeholder="Nuevo modelo">
+                            <button class="btn-small btn-add" onclick="addModelo()">
+                                <i data-lucide="plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB ACCESORIOS -->
+                <div id="tab-accesorios" class="tab-content">
+                    <div class="config-section">
+                        <h4>Gestionar Categorías y Accesorios</h4>
+                        <div id="categoriasAccesoriosList"></div>
+                        <div class="config-item mt-20">
+                            <input type="text" id="newCategoria" placeholder="Nueva categoría">
+                            <button class="btn-small btn-add" onclick="addCategoria()">
+                                <i data-lucide="plus"></i> Agregar Categoría
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB TALLER -->
+                <div id="tab-taller" class="tab-content">
+                    <div class="config-section">
+                        <h4>Datos del Taller</h4>
+                        <div class="config-item">
+                            <input type="text" id="tallerTelefono" placeholder="Teléfono">
+                        </div>
+                        <div class="config-item">
+                            <input type="text" id="tallerDireccion" placeholder="Dirección">
+                        </div>
+                        <div class="config-item">
+                            <input type="text" id="tallerEmail" placeholder="Email">
+                        </div>
+                        <button class="btn btn-save mt-20" onclick="saveTallerConfig()">
+                            <i data-lucide="save"></i> Guardar Datos
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB AÑOS -->
+                <div id="tab-anios" class="tab-content">
+                    <div class="config-section">
+                        <h4>Rango de Años</h4>
+                        <div class="grid grid-2col">
+                            <div class="form-group">
+                                <label>Año Inicial</label>
+                                <input type="number" id="anioInicio" value="1980">
+                            </div>
+                            <div class="form-group">
+                                <label>Año Final</label>
+                                <input type="number" id="anioFin" value="2030">
+                            </div>
+                        </div>
+                        <button class="btn btn-save mt-20" onclick="saveAniosConfig()">
+                            <i data-lucide="save"></i> Actualizar Rango
+                        </button>
+                    </div>
+                </div>
+
+                <div class="text-center mt-20">
+                    <button class="btn btn-success" onclick="saveAllConfig()">
+                        <i data-lucide="check"></i> Guardar Toda la Configuración
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL LISTA DE ÓRDENES -->
+    <div id="listModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i data-lucide="list"></i> Órdenes Guardadas</h3>
+                <button onclick="closeListModal()">Cerrar</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group mb-20">
+                    <input type="text" id="searchOt" placeholder="Buscar por N° OT o nombre del cliente..." oninput="renderOrdersList()">
+                </div>
+                <div class="orders-list" id="ordersList">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ÁREA DE IMPRESIÓN -->
+    <div id="printArea"></div>
+
+    <script>
+        // ==========================================
+        // CONFIGURACIÓN Y CONSTANTES
+        // ==========================================
+        const DB_NAME = "fueltek_db_pro";
+        const DB_VERSION = 2;
+        const STORE = "orders";
+        const CONFIG_KEY = "fueltek_config_pro";
+        const OT_KEY = "fueltek_last_ot_pro";
+        
+        let currentLoadedOt = null;
+        let lastKnownOt = 10724;
+        
+        // Configuración por defecto
+        const defaultConfig = {
+            marcas: ['STIHL', 'HUSQVARNA', 'MAKITA', 'ECHO', 'CHAMPION'],
+            modelos: {
+                'STIHL': ['MS 180', 'MS 211', 'MS 250', 'MS 261', 'MS 362', 'MS 462', '026', '036', '046'],
+                'HUSQVARNA': ['137', '142', '236', '240', '353', '359', '365', '372', '562', '572'],
+                'MAKITA': ['EA3200', 'EA4300', 'EA5000', 'EA6100', 'EA7300'],
+                'ECHO': ['CS-2511', 'CS-310', 'CS-352', 'CS-400', 'CS-490', 'CS-620'],
+                'CHAMPION': ['38cc', '42cc', '45cc', '52cc', '58cc', '62cc']
+            },
+            accesorios: {
+                'Herramientas': ['Motosierra', 'Desbrozadora', 'Cortasetos', 'Corta Césped', 'Fumigadora', 'Sopladora'],
+                'Partes Motosierra': ['Espada', 'Cadena', 'Piñón', 'Filtro de Aire', 'Filtro de Combustible', 'Bujía'],
+                'Motor': ['Pistón', 'Cilindro', 'Cárter', 'Cigüeñal', 'Retenes', 'Carburador'],
+                'Sistema de Arranque': ['Cuerda de Arranque', 'Polea de Arranque', 'Resorte', 'Tapa de Arranque', 'Manilla'],
+                'Accesorios Adicionales': ['Funda Espada', 'Aceite de Cadena', 'Mezcla 2T', 'Lima', 'Destornillador']
+            },
+            anioInicio: 1980,
+            anioFin: 2030,
+            taller: {
+                telefono: '+56 9 4043 5805',
+                direccion: 'La Trilla 1062, San Bernardo',
+                email: ''
+            }
+        };
+
+        // ==========================================
+        // INICIALIZACIÓN
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initDB();
+            await loadConfig();
+            await updateOtDisplay();
+            setupEventListeners();
+            lucide.createIcons();
+        });
+
+        async function initDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, DB_VERSION);
+                req.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE)) {
+                        db.createObjectStore(STORE, { keyPath: "ot" });
+                    }
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function loadConfig() {
+            const saved = localStorage.getItem(CONFIG_KEY);
+            const config = saved ? JSON.parse(saved) : defaultConfig;
+            
+            // Guardar config si no existe
+            if (!saved) {
+                localStorage.setItem(CONFIG_KEY, JSON.stringify(defaultConfig));
+            }
+            
+            // Cargar años
+            loadAniosSelect(config.anioInicio, config.anioFin);
+            
+            // Cargar marcas
+            loadMarcasSelect(config.marcas);
+            
+            // Cargar accesorios
+            renderAccessories(config.accesorios);
+            
+            // Cargar datos del taller
+            if (config.taller) {
+                document.getElementById('workshopInfo').textContent = 
+                    `Tel: ${config.taller.telefono} | ${config.taller.direccion}`;
+            }
+        }
+
+        function loadAniosSelect(inicio, fin) {
+            const select = document.getElementById('anioSelect');
+            select.innerHTML = '<option value="">Seleccione año...</option>';
+            for (let year = inicio; year <= fin; year++) {
+                select.innerHTML += `<option value="${year}">${year}</option>`;
+            }
+        }
+
+        function loadMarcasSelect(marcas) {
+            const marcaSelect = document.getElementById('marcaSelect');
+            const modeloMarcaSelect = document.getElementById('selectMarcaModelo');
+            
+            marcaSelect.innerHTML = '<option value="">Seleccione marca...</option>';
+            modeloMarcaSelect.innerHTML = '<option value="">Seleccione marca...</option>';
+            
+            marcas.forEach(marca => {
+                marcaSelect.innerHTML += `<option value="${marca}">${marca}</option>`;
+                modeloMarcaSelect.innerHTML += `<option value="${marca}">${marca}</option>`;
+            });
+            
+            // Event listener para cambiar modelos según marca
+            marcaSelect.addEventListener('change', function() {
+                loadModelosSelect(this.value);
+            });
+        }
+
+        function loadModelosSelect(marca) {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            const modeloSelect = document.getElementById('modeloSelect');
+            const modelos = config.modelos[marca] || [];
+            
+            modeloSelect.innerHTML = '<option value="">Seleccione modelo...</option>';
+            modelos.forEach(modelo => {
+                modeloSelect.innerHTML += `<option value="${modelo}">${modelo}</option>`;
+            });
+        }
+
+        function renderAccessories(accesorios) {
+            const container = document.getElementById('accessoriesContainer');
+            container.innerHTML = '';
+            
+            Object.keys(accesorios).forEach(categoria => {
+                const items = accesorios[categoria];
+                const div = document.createElement('div');
+                div.className = 'accessory-category';
+                div.innerHTML = `
+                    <div class="accessory-category-header" onclick="toggleCategory(this)">
+                        <span>${categoria}</span>
+                        <i data-lucide="chevron-down"></i>
+                    </div>
+                    <div class="accessory-category-content">
+                        <div class="checkbox-grid">
+                            ${items.map(item => `
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="accesorios" value="${item}">
+                                    <span>${item}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            
+            lucide.createIcons();
+        }
+
+        function toggleCategory(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('i');
+            content.classList.toggle('active');
+            icon.setAttribute('data-lucide', content.classList.contains('active') ? 'chevron-up' : 'chevron-down');
+            lucide.createIcons();
+        }
+
+        // ==========================================
+        // FUNCIONES DE FORMATEO
+        // ==========================================
+        function formatCLP(num) {
+            if (num === null || num === undefined) return "0";
+            const n = String(num).replace(/[^\d]/g, '');
+            if (n === "") return "";
+            return new Intl.NumberFormat('es-CL').format(Number(n));
+        }
+
+        function unformatCLP(str) {
+            if (str === null || str === undefined) return 0;
+            const cleaned = String(str).replace(/[^\d]/g, '');
+            return parseInt(cleaned, 10) || 0;
+        }
+
+        function handleFormatOnInput(e) {
+            const input = e.target;
+            const numericValue = unformatCLP(input.value);
+            input.value = formatCLP(numericValue);
+            updateSaldo();
+        }
+
+        function updateSaldo() {
+            const valorInput = document.getElementById('valorTrabajoInput');
+            const abonoInput = document.getElementById('montoAbonadoInput');
+            const estadoPago = document.getElementById('estadoPago');
+            const labelAbono = document.getElementById('labelAbono');
+            const saldoDisplay = document.getElementById('saldoDisplay');
+            const saldoValue = document.getElementById('saldoValue');
+            
+            if (!valorInput || !abonoInput || !estadoPago) return;
+            
+            const valor = unformatCLP(valorInput.value);
+            const estado = estadoPago.value;
+            
+            if (estado === 'Abonado') {
+                labelAbono.classList.remove('hidden');
+            } else if (estado === 'Pagado') {
+                labelAbono.classList.add('hidden');
+                abonoInput.value = formatCLP(valor);
+            } else {
+                labelAbono.classList.add('hidden');
+                abonoInput.value = '';
+            }
+            
+            // Calcular saldo
+            const abono = unformatCLP(abonoInput.value);
+            const saldo = valor - abono;
+            
+            if (estado === 'Pagado' || saldo <= 0) {
+                saldoDisplay.classList.add('hidden');
+            } else {
+                saldoDisplay.classList.remove('hidden');
+                saldoValue.textContent = formatCLP(saldo);
+            }
+        }
+
+        // ==========================================
+        // CORRELATIVO
+        // ==========================================
+        async function updateOtDisplay() {
+            const saved = localStorage.getItem(OT_KEY);
+            lastKnownOt = saved ? parseInt(saved) : 10724;
+            document.getElementById('otNumber').value = String(lastKnownOt + 1);
+        }
+
+        function setLastOt(n) {
+            lastKnownOt = n;
+            localStorage.setItem(OT_KEY, String(n));
+        }
+
+        // ==========================================
+        // GUARDAR / CARGAR / ELIMINAR ÓRDENES
+        // ==========================================
+        async function saveOrder() {
+            const form = document.getElementById('otForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const fd = new FormData(form);
+            const order = {};
+            for (const [k, v] of fd.entries()) {
+                if (k !== 'accesorios') order[k] = v;
+            }
+            
+            order.accesorios = Array.from(form.querySelectorAll('input[name="accesorios"]:checked')).map(c => c.value);
+            order.fechaGuardado = new Date().toISOString();
+            order.valorTrabajo = unformatCLP(order.valorTrabajo);
+            order.estadoPago = order.estadoPago || 'Pendiente';
+            order.montoAbonado = unformatCLP(order.montoAbonado);
+            
+            // Validar monto abonado
+            if (order.montoAbonado > order.valorTrabajo && order.estadoPago !== 'Pagado') {
+                alert('Error: El monto abonado no puede ser mayor que el valor del trabajo.');
+                return;
+            }
+            
+            let otToSave;
+            let isNewOt = false;
+            
+            if (currentLoadedOt) {
+                order.ot = String(currentLoadedOt);
+                otToSave = currentLoadedOt;
+            } else {
+                otToSave = String(lastKnownOt + 1);
+                order.ot = otToSave;
+                isNewOt = true;
+            }
+            
+            try {
+                await dbPut(order);
+                
+                if (isNewOt) {
+                    setLastOt(Number(otToSave));
+                }
+                
+                alert(`Orden ${currentLoadedOt ? 'actualizada' : 'guardada'} correctamente ✅ (OT #${otToSave})`);
+                
+                form.reset();
+                currentLoadedOt = null;
+                await updateOtDisplay();
+                updateSaldo();
+                lucide.createIcons();
+            } catch (err) {
+                alert(`Error al guardar: ${err}`);
+            }
+        }
+
+        function dbPut(order) {
+            return new Promise((resolve, reject) => {
+                indexedDB.open(DB_NAME, DB_VERSION).onsuccess = e => {
+                    const db = e.target.result;
+                    const tx = db.transaction(STORE, 'readwrite');
+                    const store = tx.objectStore(STORE);
+                    const req = store.put(order);
+                    req.onsuccess = () => { resolve(true); db.close(); };
+                    req.onerror = () => { reject(req.error); db.close(); };
+                };
+            });
+        }
+
+        function dbGetAll() {
+            return new Promise((resolve, reject) => {
+                indexedDB.open(DB_NAME, DB_VERSION).onsuccess = e => {
+                    const db = e.target.result;
+                    const tx = db.transaction(STORE, 'readonly');
+                    const store = tx.objectStore(STORE);
+                    const req = store.getAll();
+                    req.onsuccess = () => { resolve(req.result || []); db.close(); };
+                    req.onerror = () => { reject(req.error); db.close(); };
+                };
+            });
+        }
+
+        function dbDelete(key) {
+            return new Promise((resolve, reject) => {
+                indexedDB.open(DB_NAME, DB_VERSION).onsuccess = e => {
+                    const db = e.target.result;
+                    const tx = db.transaction(STORE, 'readwrite');
+                    const store = tx.objectStore(STORE);
+                    const req = store.delete(String(key));
+                    req.onsuccess = () => { resolve(true); db.close(); };
+                    req.onerror = () => { reject(req.error); db.close(); };
+                };
+            });
+        }
+
+        async function viewOrders() {
+            await renderOrdersList();
+            document.getElementById('listModal').classList.remove('hidden');
+        }
+
+        async function renderOrdersList(filter = '') {
+            const list = document.getElementById('ordersList');
+            if (!list) return;
+            
+            list.innerHTML = '<div style="padding:10px;text-align:center;">Cargando...</div>';
+            
+            const all = await dbGetAll();
+            const rows = all.filter(o => {
+                if (!filter) return true;
+                const f = filter.toLowerCase();
+                return String(o.ot).toLowerCase().includes(f) || 
+                       (o.clienteNombre && o.clienteNombre.toLowerCase().includes(f));
+            }).sort((a, b) => Number(b.ot) - Number(a.ot));
+            
+            if (rows.length === 0) {
+                list.innerHTML = '<div style="padding:10px;text-align:center;">No hay órdenes guardadas.</div>';
+                return;
+            }
+            
+            list.innerHTML = '';
+            rows.forEach(o => {
+                const div = document.createElement('div');
+                div.className = 'order-row';
+                div.innerHTML = `
+                    <div>
+                        <b style="color:var(--primary)">OT #${o.ot}</b> — ${o.clienteNombre || 'Sin Nombre'}
+                        <br><small>${o.marca || ''} ${o.modelo || ''}</small>
+                    </div>
+                    <div class="order-actions">
+                        <button class="btn-print" onclick="printOrder('${o.ot}')">
+                            <i data-lucide="printer"></i>
+                        </button>
+                        <button class="btn-edit" onclick="loadOrder('${o.ot}')">
+                            <i data-lucide="edit"></i>
+                        </button>
+                        <button class="btn-delete" onclick="deleteOrder('${o.ot}')">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+            
+            lucide.createIcons();
+        }
+
+        async function loadOrder(ot) {
+            const db = await new Promise((resolve, reject) => {
+                indexedDB.open(DB_NAME, DB_VERSION).onsuccess = e => resolve(e.target.result);
+            });
+            
+            const order = await new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE, 'readonly');
+                const store = tx.objectStore(STORE);
+                const req = store.get(String(ot));
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+            
+            if (!order) {
+                alert('Orden no encontrada');
+                return;
+            }
+            
+            currentLoadedOt = String(order.ot);
+            const form = document.getElementById('otForm');
+            form.reset();
+            
+            // Cargar campos
+            Object.keys(order).forEach(key => {
+                if (key === 'accesorios') {
+                    form.querySelectorAll('input[name="accesorios"]').forEach(cb => {
+                        cb.checked = order.accesorios.includes(cb.value);
+                    });
+                } else if (key !== 'ot' && key !== 'fechaGuardado') {
+                    const el = form.querySelector(`[name="${key}"]`);
+                    if (el) {
+                        if (key === 'valorTrabajo' || key === 'montoAbonado') {
+                            el.value = formatCLP(order[key]);
+                        } else {
+                            el.value = order[key];
+                        }
+                    }
+                }
+            });
+            
+            // Cargar marca y modelo
+            if (order.marca) {
+                document.getElementById('marcaSelect').value = order.marca;
+                loadModelosSelect(order.marca);
+                if (order.modelo) {
+                    setTimeout(() => {
+                        document.getElementById('modeloSelect').value = order.modelo;
+                    }, 100);
+                }
+            }
+            
+            updateSaldo();
+            document.getElementById('listModal').classList.add('hidden');
+            
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.innerHTML = '<i data-lucide="refresh-cw"></i><span>Actualizar</span>';
+            saveBtn.classList.add('btn-warning');
+            lucide.createIcons();
+            
+            alert(`Orden OT #${ot} cargada. Modifique y guarde para actualizar.`);
+        }
+
+        async function deleteOrder(ot) {
+            if (!confirm(`¿Eliminar definitivamente la OT #${ot}?`)) return;
+            
+            await dbDelete(ot);
+            alert('Orden eliminada');
+            renderOrdersList();
+            
+            if (currentLoadedOt === ot) {
+                currentLoadedOt = null;
+                document.getElementById('otForm').reset();
+                const saveBtn = document.getElementById('saveBtn');
+                saveBtn.innerHTML = '<i data-lucide="save"></i><span>Guardar</span>';
+                saveBtn.classList.remove('btn-warning');
+                lucide.createIcons();
+            }
+        }
+
+        // ==========================================
+        // IMPRESIÓN
+        // ==========================================
+        function printCurrent() {
+            const form = document.getElementById('otForm');
+            const fd = new FormData(form);
+            const data = {};
+            for (const [k, v] of fd.entries()) {
+                if (k !== 'accesorios') data[k] = v;
+            }
+            data.accesorios = Array.from(form.querySelectorAll('input[name="accesorios"]:checked')).map(c => c.value);
+            data.ot = document.getElementById('otNumber').value;
+            data.valorTrabajoNum = unformatCLP(data.valorTrabajo);
+            data.montoAbonadoNum = unformatCLP(data.montoAbonado);
+            
+            buildPrintAndPrint(data);
+        }
+
+        async function printOrder(ot) {
+            const db = await new Promise((resolve, reject) => {
+                indexedDB.open(DB_NAME, DB_VERSION).onsuccess = e => resolve(e.target.result);
+            });
+            
+            const order = await new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE, 'readonly');
+                const store = tx.objectStore(STORE);
+                const req = store.get(String(ot));
+                req.onsuccess = () => resolve(req.result);
+            });
+            
+            if (order) {
+                order.valorTrabajoNum = order.valorTrabajo;
+                order.montoAbonadoNum = order.montoAbonado;
+                buildPrintAndPrint(order);
+            }
+        }
+
+        function buildPrintAndPrint(data) {
+            const printArea = document.getElementById('printArea');
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            
+            const valorNum = data.valorTrabajoNum || 0;
+            const abonoNum = data.montoAbonadoNum || 0;
+            const saldo = data.estadoPago === 'Pagado' ? 0 : valorNum - abonoNum;
+            
+            const estadoColor = data.estadoPago === 'Pagado' ? '#27ae60' : 
+                               data.estadoPago === 'Abonado' ? '#f39c12' : '#c0392b';
+            
+            const html = `
+                <div style="font-family:'Inter',sans-serif;color:#111;padding-bottom:15px;border-bottom:2px solid #ddd;">
+                    <div style="display:flex;align-items:center;gap:20px;">
+                        <img src="logo-fueltek.png" style="width:100px;height:100px;object-fit:contain;border-radius:8px;" alt="logo">
+                        <div style="flex-grow:1;">
+                            <h2 style="margin:0;color:#004d99;font-size:24px;">ORDEN DE TRABAJO - FUELTEK</h2>
+                            <div style="color:#f26522;font-weight:600;font-size:16px;">Servicio Técnico Multimarca</div>
+                            <div style="font-size:12px;margin-top:5px;color:#555;">
+                                Tel: ${config.taller.telefono} | ${config.taller.direccion}
+                            </div>
+                        </div>
+                        <div style="text-align:right;background:#004d99;color:white;padding:12px 18px;border-radius:8px;">
+                            <div style="font-weight:800;font-size:24px;">N° OT: ${data.ot}</div>
+                            <div style="font-size:10px;margin-top:5px;">Emitida: ${new Date().toLocaleDateString('es-CL')}</div>
+                        </div>
+                    </div>
+                    <hr style="border:none;border-top:3px solid #004d99;margin:15px 0;">
+                    
+                    <table style="width:100%;border-collapse:collapse;margin-bottom:15px;font-size:10pt;">
+                        <tr>
+                            <td style="width:50%;padding:10px;vertical-align:top;border-right:2px solid #eee;">
+                                <strong style="color:#004d99;display:block;margin-bottom:8px;font-size:11pt;">DATOS DEL CLIENTE</strong>
+                                <span style="display:block;">Nombre: <b>${data.clienteNombre || '-'}</b></span>
+                                <span style="display:block;">Teléfono: ${data.clienteTelefono || '-'}</span>
+                                <span style="display:block;">Email: ${data.clienteEmail || '-'}</span>
+                                <span style="display:block;">Fecha Recibida: <b>${data.fechaRecibida || '-'}</b></span>
+                                <span style="display:block;">Fecha Entrega: <b>${data.fechaEntrega || '-'}</b></span>
+                            </td>
+                            <td style="width:50%;padding:10px 0 10px 20px;vertical-align:top;">
+                                <strong style="color:#004d99;display:block;margin-bottom:8px;font-size:11pt;">DATOS DE LA HERRAMIENTA</strong>
+                                <span style="display:block;">Marca: <b>${data.marca || '-'}</b></span>
+                                <span style="display:block;">Modelo: <b>${data.modelo || '-'}</b></span>
+                                <span style="display:block;">N° Serie: ${data.serie || '-'}</span>
+                                <span style="display:block;">Año: ${data.anio || '-'}</span>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <div style="display:flex;gap:20px;margin-bottom:15px;border-top:2px solid #ddd;padding-top:15px;">
+                        <div style="width:40%;">
+                            <strong style="color:#004d99;display:block;margin-bottom:8px;font-size:11pt;">RESUMEN DE PAGO</strong>
+                            <table style="width:100%;border-collapse:collapse;font-size:9pt;background:#f8f8f8;border-radius:6px;">
+                                <tr><td style="padding:6px;border:1px solid #eee;">Valor Trabajo:</td><td style="padding:6px;text-align:right;font-weight:700;">$${formatCLP(valorNum)}</td></tr>
+                                ${data.estadoPago !== 'Pendiente' ? `<tr><td style="padding:6px;border:1px solid #eee;">Abonado:</td><td style="padding:6px;text-align:right;">$${formatCLP(abonoNum)}</td></tr>` : ''}
+                                <tr><td style="padding:6px;border:1px solid #eee;">Estado:</td><td style="padding:6px;text-align:right;font-weight:700;color:${estadoColor};">${data.estadoPago}</td></tr>
+                                ${saldo > 0 ? `<tr><td style="padding:6px;border:1px solid #eee;"><b>SALDO:</b></td><td style="padding:6px;text-align:right;font-weight:800;color:#c0392b;">$${formatCLP(saldo)}</td></tr>` : ''}
+                            </table>
+                        </div>
+                        <div style="flex:1;">
+                            <strong style="color:#004d99;display:block;margin-bottom:8px;font-size:11pt;">ACCESORIOS RECIBIDOS</strong>
+                            <div style="border:2px solid #ddd;padding:10px;border-radius:6px;min-height:60px;">
+                                ${(data.accesorios || []).map(s => `<span style="display:inline-block;border:1px solid #ddd;background:#fff;padding:4px 8px;margin:2px;border-radius:4px;font-size:9px;">${s}</span>`).join('') || '<span style="color:#999;">Ninguno</span>'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top:15px;">
+                        <strong style="color:#004d99;display:block;margin-bottom:8px;font-size:11pt;">DIAGNÓSTICO</strong>
+                        <div style="border:2px solid #ddd;padding:12px;border-radius:6px;min-height:80px;background:#fcfcfc;">${data.diagnostico || 'Sin diagnóstico'}</div>
+                    </div>
+                    
+                    <div style="margin-top:15px;">
+                        <strong style="color:#004d99;display:block;margin-bottom:8px;font-size:11pt;">TRABAJO REALIZADO</strong>
+                        <div style="border:2px solid #ddd;padding:12px;border-radius:6px;min-height:80px;background:#fcfcfc;">${data.trabajo || 'Pendiente'}</div>
+                    </div>
+                    
+                    <div style="display:flex;gap:50px;margin-top:50px;padding-top:15px;border-top:2px solid #eee;">
+                        <div style="flex:1;text-align:center;position:relative;">
+                            <img src="stamp-motosierra.png" style="width:130px;height:130px;position:absolute;top:-60px;left:50%;transform:translateX(-50%);opacity:0.9;" alt="sello">
+                            <div style="height:1px;border-bottom:2px solid #2c3e50;margin:0 auto;width:80%;margin-top:40px;"></div>
+                            <div style="margin-top:10px;font-weight:600;color:#2c3e50;">Firma Taller</div>
+                        </div>
+                        <div style="flex:1;text-align:center;">
+                            <div style="height:1px;border-bottom:2px solid #2c3e50;margin:0 auto;width:80%;"></div>
+                            <div style="margin-top:10px;font-weight:600;color:#2c3e50;">Firma Cliente</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top:40px;padding:12px;background:#f0f7ff;border:2px solid #d0e0f0;border-radius:8px;font-size:9pt;">
+                        <strong style="color:#004d99;">Notas Importantes:</strong>
+                        <ul style="margin:8px 0 0 20px;">
+                            <li>Herramienta no retirada en 30 días genera cobro por almacenamiento.</li>
+                            <li>FuelTek no se responsabiliza por accesorios no declarados.</li>
+                            <li>Cliente autoriza revisión del equipo.</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            printArea.innerHTML = html;
+            printArea.style.display = 'block';
+            window.print();
+            setTimeout(() => printArea.style.display = 'none', 800);
+        }
+
+        // ==========================================
+        // CONFIGURACIÓN
+        // ==========================================
+        function openConfig() {
+            renderConfigMarcas();
+            renderConfigModelos();
+            renderConfigAccesorios();
+            loadTallerConfig();
+            document.getElementById('configModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeConfig() {
+            document.getElementById('configModal').classList.add('hidden');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        function renderConfigMarcas() {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            const container = document.getElementById('marcasList');
+            container.innerHTML = config.marcas.map((marca, idx) => `
+                <div class="config-item">
+                    <input type="text" value="${marca}" onchange="updateMarca(${idx}, this.value)">
+                    <button class="btn-small btn-remove" onclick="removeMarca(${idx})">
+                        <i data-lucide="trash"></i>
+                    </button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function addMarca() {
+            const input = document.getElementById('newMarca');
+            const value = input.value.trim();
+            if (!value) return;
+            
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            if (!config.marcas.includes(value)) {
+                config.marcas.push(value);
+                config.modelos[value] = [];
+                localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+                renderConfigMarcas();
+                input.value = '';
+                loadMarcasSelect(config.marcas);
+            }
+        }
+
+        function updateMarca(idx, value) {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            const old = config.marcas[idx];
+            config.marcas[idx] = value;
+            
+            // Actualizar key en modelos
+            if (config.modelos[old]) {
+                config.modelos[value] = config.modelos[old];
+                delete config.modelos[old];
+            }
+            
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            loadMarcasSelect(config.marcas);
+        }
+
+        function removeMarca(idx) {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            const marca = config.marcas[idx];
+            config.marcas.splice(idx, 1);
+            delete config.modelos[marca];
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            renderConfigMarcas();
+            loadMarcasSelect(config.marcas);
+        }
+
+        function renderConfigModelos() {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            const select = document.getElementById('selectMarcaModelo');
+            const marca = select.value;
+            const container = document.getElementById('modelosList');
+            
+            if (!marca) {
+                container.innerHTML = '<p style="color:#999;text-align:center;">Seleccione una marca primero</p>';
+                return;
+            }
+            
+            const modelos = config.modelos[marca] || [];
+            container.innerHTML = modelos.map((modelo, idx) => `
+                <div class="config-item">
+                    <input type="text" value="${modelo}" onchange="updateModelo('${marca}', ${idx}, this.value)">
+                    <button class="btn-small btn-remove" onclick="removeModelo('${marca}', ${idx})">
+                        <i data-lucide="trash"></i>
+                    </button>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        }
+
+        document.getElementById('selectMarcaModelo')?.addEventListener('change', renderConfigModelos);
+
+        function addModelo() {
+            const select = document.getElementById('selectMarcaModelo');
+            const input = document.getElementById('newModelo');
+            const marca = select.value;
+            const value = input.value.trim();
+            
+            if (!marca || !value) return;
+            
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            if (!config.modelos[marca]) config.modelos[marca] = [];
+            if (!config.modelos[marca].includes(value)) {
+                config.modelos[marca].push(value);
+                localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+                renderConfigModelos();
+                input.value = '';
+            }
+        }
+
+        function updateModelo(marca, idx, value) {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            config.modelos[marca][idx] = value;
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+        }
+
+        function removeModelo(marca, idx) {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            config.modelos[marca].splice(idx, 1);
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            renderConfigModelos();
+        }
+
+        function renderConfigAccesorios() {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            const container = document.getElementById('categoriasAccesoriosList');
+            
+            container.innerHTML = Object.keys(config.accesorios).map(categoria => `
+                <div class="config-section" style="margin-top:15px;">
+                    <h4>${categoria}</h4>
+                    ${config.accesorios[categoria].map((item, idx) => `
+                        <div class="config-item">
+                            <input type="text" value="${item}" onchange="updateAccesorio('${categoria}', ${idx}, this.value)">
+                            <button class="btn-small btn-remove" onclick="removeAccesorio('${categoria}', ${idx})">
+                                <i data-lucide="trash"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                    <div class="config-item mt-10">
+                        <input type="text" placeholder="Nuevo item" id="newAcc_${categoria.replace(/\s/g, '_')}">
+                        <button class="btn-small btn-add" onclick="addAccesorio('${categoria}')">
+                            <i data-lucide="plus"></i> Agregar
+                        </button>
+                    </div>
+                    <button class="btn-small btn-remove mt-10" onclick="removeCategoria('${categoria}')" style="width:100%;">
+                        <i data-lucide="trash"></i> Eliminar Categoría
+                    </button>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        }
+
+        function addCategoria() {
+            const input = document.getElementById('newCategoria');
+            const value = input.value.trim();
+            if (!value) return;
+            
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            config.accesorios[value] = [];
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            renderConfigAccesorios();
+            renderAccessories(config.accesorios);
+            input.value = '';
+        }
+
+        function removeCategoria(categoria) {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            delete config.accesorios[categoria];
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            renderConfigAccesorios();
+            renderAccessories(config.accesorios);
+        }
+
+        function addAccesorio(categoria) {
+            const input = document.getElementById(`newAcc_${categoria.replace(/\s/g, '_')}`);
+            const value = input.value.trim();
+            if (!value) return;
+            
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            if (!config.accesorios[categoria].includes(value)) {
+                config.accesorios[categoria].push(value);
+                localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+                renderConfigAccesorios();
+                renderAccessories(config.accesorios);
+                input.value = '';
+            }
+        }
+
+        function updateAccesorio(categoria, idx, value) {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            config.accesorios[categoria][idx] = value;
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            renderAccessories(config.accesorios);
+        }
+
+        function removeAccesorio(categoria, idx) {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            config.accesorios[categoria].splice(idx, 1);
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            renderConfigAccesorios();
+            renderAccessories(config.accesorios);
+        }
+
+        function loadTallerConfig() {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            document.getElementById('tallerTelefono').value = config.taller.telefono || '';
+            document.getElementById('tallerDireccion').value = config.taller.direccion || '';
+            document.getElementById('tallerEmail').value = config.taller.email || '';
+            document.getElementById('anioInicio').value = config.anioInicio || 1980;
+            document.getElementById('anioFin').value = config.anioFin || 2030;
+        }
+
+        function saveTallerConfig() {
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            config.taller.telefono = document.getElementById('tallerTelefono').value;
+            config.taller.direccion = document.getElementById('tallerDireccion').value;
+            config.taller.email = document.getElementById('tallerEmail').value;
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            
+            document.getElementById('workshopInfo').textContent = 
+                `Tel: ${config.taller.telefono} | ${config.taller.direccion}`;
+            
+            alert('Datos del taller guardados');
+        }
+
+        function saveAniosConfig() {
+            const inicio = parseInt(document.getElementById('anioInicio').value);
+            const fin = parseInt(document.getElementById('anioFin').value);
+            
+            const config = JSON.parse(localStorage.getItem(CONFIG_KEY));
+            config.anioInicio = inicio;
+            config.anioFin = fin;
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            
+            loadAniosSelect(inicio, fin);
+            alert(`Rango de años actualizado: ${inicio} - ${fin}`);
+        }
+
+        function saveAllConfig() {
+            alert('Toda la configuración ha sido guardada correctamente ✅');
+            closeConfig();
+        }
+
+        // ==========================================
+        // EXPORTAR / IMPORTAR
+        // ==========================================
+        async function exportToExcel() {
+            const orders = await dbGetAll();
+            if (orders.length === 0) {
+                alert('No hay órdenes para exportar');
+                return;
+            }
+            
+            const data = orders.map(o => ({
+                'N° OT': o.ot,
+                'Cliente': o.clienteNombre,
+                'Teléfono': o.clienteTelefono,
+                'Email': o.clienteEmail,
+                'Fecha Recibida': o.fechaRecibida,
+                'Fecha Entrega': o.fechaEntrega,
+                'Marca': o.marca,
+                'Modelo': o.modelo,
+                'Serie': o.serie,
+                'Año': o.anio,
+                'Accesorios': (o.accesorios || []).join(', '),
+                'Diagnóstico': o.diagnostico,
+                'Trabajo': o.trabajo,
+                'Valor Trabajo': o.valorTrabajo,
+                'Estado Pago': o.estadoPago,
+                'Monto Abonado': o.montoAbonado,
+                'Fecha Guardado': new Date(o.fechaGuardado).toLocaleString('es-CL')
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Órdenes');
+            XLSX.writeFile(wb, `FuelTek_OT_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        async function clearDatabase() {
+            if (!confirm('⚠️ ADVERTENCIA: Esto eliminará TODAS las órdenes y reiniciará el contador a 10725. ¿Continuar?')) {
+                return;
+            }
+            
+            const req = indexedDB.deleteDatabase(DB_NAME);
+            req.onsuccess = async () => {
+                await initDB();
+                setLastOt(10724);
+                await updateOtDisplay();
+                alert('Base de datos eliminada. Contador reiniciado a 10725.');
+            };
+        }
+
+        // ==========================================
+        // UTILIDADES
+        // ==========================================
+        function resetForm() {
+            if (!confirm('¿Limpiar todos los campos?')) return;
+            
+            document.getElementById('otForm').reset();
+            currentLoadedOt = null;
+            updateOtDisplay();
+            updateSaldo();
+            
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.innerHTML = '<i data-lucide="save"></i><span>Guardar</span>';
+            saveBtn.classList.remove('btn-warning');
+            lucide.createIcons();
+        }
+
+        function setupEventListeners() {
+            // Formato CLP
+            document.getElementById('valorTrabajoInput')?.addEventListener('input', handleFormatOnInput);
+            document.getElementById('montoAbonadoInput')?.addEventListener('input', handleFormatOnInput);
+            
+            // Fecha recibida por defecto
+            const fechaInput = document.querySelector('[name="fechaRecibida"]');
+            if (fechaInput && !fechaInput.value) {
+                fechaInput.valueAsDate = new Date();
+            }
+        }
+
+        function toggleMobileMenu() {
+            const dropdown = document.getElementById('mobileMenuDropdown');
+            const btn = document.getElementById('mobileMenuBtn');
+            
+            dropdown.classList.toggle('active');
+            dropdown.classList.toggle('hidden');
+            
+            if (dropdown.classList.contains('active')) {
+                // Clonar botones principales
+                dropdown.innerHTML = '';
+                const buttons = document.querySelectorAll('.controls .btn');
+                buttons.forEach(btn => {
+                    const clone = btn.cloneNode(true);
+                    clone.onclick = function() {
+                        const originalClick = new Event('click');
+                        btn.dispatchEvent(originalClick);
+                        dropdown.classList.add('hidden');
+                        dropdown.classList.remove('active');
+                    };
+                    dropdown.appendChild(clone);
+                });
+                lucide.createIcons();
+            }
+        }
+
+        function closeListModal() {
+            document.getElementById('listModal').classList.add('hidden');
+        }
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {
+                console.log('Service Worker no registrado (modo offline)');
+            });
+        }
+    </script>
+</body>
+</html>
