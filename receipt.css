@@ -7,3 +7,6 @@
 @media print{.receipt-preview{display:none!important}.receipt-preview-open{overflow:visible!important}}
 
 .logo[hidden],.receipt-header img[hidden]{display:none!important}
+
+.receipt-storage{border:2px solid #e97624;padding:18px;margin:16px 0;background:#fff}.receipt-storage h3{font-size:14pt;color:#142d46;border-bottom:2px solid #e97624}.receipt-storage .receipt-pre,.receipt-current-terms .receipt-policy{font-size:12pt;line-height:1.5}.receipt-policy-price{font-size:13pt;font-weight:700;color:#142d46}.receipt-storage-acceptance{margin-top:18px;padding-top:14px;border-top:1px solid #ced9e2}.receipt-storage-acceptance h4{font-size:12pt}.receipt-current-terms{break-inside:auto}.receipt-storage{break-inside:avoid}
+@media print{.receipt-current-terms{break-before:page;page-break-before:always}}

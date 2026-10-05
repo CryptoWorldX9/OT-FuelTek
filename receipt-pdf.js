@@ -63,8 +63,22 @@
     const signatureHeight=32+Math.max(lines(order.firmaTaller||'',colWidth,9).length,lines(order.firmaCliente||'',colWidth,9).length)*12;ensure(signatureHeight+12);y+=12;
     const sigStart=y;for(const [x,text,label]of [[margin,order.firmaTaller,'Firma / responsable del taller'],[margin+colWidth+18,order.firmaCliente,'Firma / recepción del cliente']]){const sigLines=lines(text||'',colWidth,9);sigLines.forEach((value,index)=>draw(value,x,sigStart+index*12,9));const ruleTop=sigStart+signatureHeight-27;page.drawLine({start:{x,y:height-ruleTop},end:{x:x+colWidth,y:height-ruleTop},color:muted,thickness:.6});draw(label,x,ruleTop+6,8,bold,muted);}y=sigStart+signatureHeight;
     if(snapshot.receiptNote){y+=5;paragraph(snapshot.receiptNote,{size:8,color:muted,gap:11});}
-    const policy=window.fueltekReceipt.retire,policyLines=lines(policy,usable-24,8),policyHeight=33+policyLines.length*11;ensure(policyHeight+12);y+=10;
-    page.drawRectangle({x:margin,y:height-y-policyHeight,width:usable,height:policyHeight,color:pale});page.drawRectangle({x:margin,y:height-y-policyHeight,width:3,height:policyHeight,color:orange});draw('Condiciones de retiro del equipo',margin+12,y+9,9,bold,navy);policyLines.forEach((text,index)=>draw(text,margin+12,y+27+index*11,8,regular,muted));y+=policyHeight;
+    const policy=window.fueltekReceipt.policyFor(order);
+    if(policy.storage){
+      // Página propia para informar el precio y obtener una aceptación independiente legible.
+      newPage();
+      paragraph('IMPORTANTE · Bodegaje después de 30 días',{size:14,font:bold,color:navy,gap:19});
+      page.drawLine({start:{x:margin,y:height-y},end:{x:width-margin,y:height-y},color:orange,thickness:2});y+=12;
+      paragraph('$1.500 diarios desde el día 31',{size:14,font:bold,color:navy,gap:19});y+=5;
+      paragraph(policy.storage,{size:12,gap:17});y+=12;
+      paragraph('Aceptación separada del servicio de bodegaje',{size:12,font:bold,color:navy,gap:17});
+      paragraph(policy.acceptance,{size:12,gap:17});y+=12;
+      paragraph('Condiciones de retiro del equipo',{size:12,font:bold,color:navy,gap:17});
+      paragraph(policy.retire,{size:12,gap:17});
+    }else{
+      const policyLines=lines(policy.retire,usable-24,8),policyHeight=33+policyLines.length*11;ensure(policyHeight+12);y+=10;
+      page.drawRectangle({x:margin,y:height-y-policyHeight,width:usable,height:policyHeight,color:pale});page.drawRectangle({x:margin,y:height-y-policyHeight,width:3,height:policyHeight,color:orange});draw('Condiciones de retiro del equipo',margin+12,y+9,9,bold,navy);policyLines.forEach((text,index)=>draw(text,margin+12,y+27+index*11,8,regular,muted));y+=policyHeight;
+    }
     const pages=pdf.getPages();for(let index=0;index<pages.length;index++){page=pages[index];page.drawLine({start:{x:margin,y:38},end:{x:width-margin,y:38},color:lineColor,thickness:.6});page.drawText('OT #'+str(order.ot||'BORRADOR')+' · No reemplaza una boleta o factura.',{x:margin,y:25,size:7,font:regular,color:muted});const text=`Página ${index+1} de ${pages.length}`;page.drawText(text,{x:width-margin-regular.widthOfTextAtSize(text,7),y:25,size:7,font:regular,color:muted});}
     pdf.setTitle('FuelTek - Orden de trabajo '+str(order.ot||'Borrador'));pdf.setAuthor(b.name||'FuelTek');pdf.setSubject('Comprobante de recepción y servicio');return pdf.save();
   }
