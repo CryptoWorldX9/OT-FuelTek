@@ -1,5 +1,5 @@
-const CACHE_NAME = 'fueltek-shell-v3';
-const FILES = ['./','./index.html','./styles.css','./professional.css','./script.js','./professional.js','./access.js','./vendor/firebase-auth-compat.js','./logo-fueltek.png','./stamp-motosierra.png','./manifest.json','./icon-192.png','./vendor/lucide.min.js','./vendor/firebase-app-compat.js','./vendor/firebase-firestore-compat.js','./icon-512.png'];
+const CACHE_NAME = 'fueltek-shell-v4';
+const FILES = ['./','./index.html','./styles.css','./professional.css','./script.js','./professional.js','./access.js','./settings.js','./settings.css','./receipt.js','./receipt-pdf.js','./vendor/pdf-lib.min.js','./receipt.css','./vendor/firebase-auth-compat.js','./logo-fueltek.png','./stamp-motosierra.png','./manifest.json','./icon-192.png','./vendor/lucide.min.js','./vendor/firebase-app-compat.js','./vendor/firebase-firestore-compat.js','./icon-512.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(FILES))));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('fueltek-') && k !== CACHE_NAME).map(k => caches.delete(k))))));
 self.addEventListener('fetch', event => {

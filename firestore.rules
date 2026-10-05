@@ -40,6 +40,31 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/orders/$(request.resource.data.lastOrderId)).data.ot == request.resource.data.lastOrderId;
       allow create, delete: if false;
     }
+    match /config/workshop {
+      function validSettings() {
+        return request.resource.data.keys().hasOnly(['version','business','workflow','receiptNote','equipment','revision','updatedAt'])
+          && request.resource.data.version == 1
+          && request.resource.data.business is map
+          && request.resource.data.business.name is string
+          && request.resource.data.business.name.size() > 0
+          && request.resource.data.business.name.size() <= 120
+          && request.resource.data.workflow is map
+          && request.resource.data.workflow.deliveryDays is number
+          && request.resource.data.workflow.deliveryDays >= 0
+          && request.resource.data.workflow.deliveryDays <= 365
+          && request.resource.data.receiptNote is string
+          && request.resource.data.receiptNote.size() <= 1500
+          && request.resource.data.equipment is list
+          && request.resource.data.equipment.size() > 0
+          && request.resource.data.equipment.size() <= 60
+          && request.resource.data.revision is int
+          && request.resource.data.updatedAt is string;
+      }
+      allow read: if workshopUser();
+      allow create: if workshopUser() && validSettings() && request.resource.data.revision == 1;
+      allow update: if workshopUser() && validSettings() && request.resource.data.revision == resource.data.revision + 1;
+      allow delete: if false;
+    }
     match /metadata/{id} {
       allow read: if workshopUser();
       allow write: if false;

@@ -62,18 +62,22 @@ function demoOrders() {
 }
 document.addEventListener('DOMContentLoaded', async () => {
   if (window.fueltekAccessReady) await window.fueltekAccessReady;
+  if (window.fueltekSettingsReady) await window.fueltekSettingsReady;
   const $ = id => document.getElementById(id);
   const form = $('otForm');
   let allOrders = [], refreshId = 0, draftTimer, deferredInstall, modalFocus;
   const draftKey = demoMode ? 'fueltek_demo_draft_v1' : 'fueltek_draft_v1';
   const currency = n => '$' + formatCLP(n);
   const view = name => {
+    history.replaceState(null, '', '#' + name);
     $('dashboard').classList.toggle('hidden', name !== 'dashboard');
     $('editor').classList.toggle('hidden', name !== 'editor');
+    $('settingsPanel').classList.toggle('hidden', name !== 'settings');
+    $('navSettings').classList.toggle('selected', name === 'settings');
     $('navDashboard').classList.toggle('selected', name === 'dashboard');
     $('navOrder').classList.toggle('selected', name === 'editor');
-    for (const id of ['navDashboard','navOrder']) $(id).removeAttribute('aria-current');
-    $(name === 'dashboard' ? 'navDashboard' : 'navOrder').setAttribute('aria-current','page');
+    for (const id of ['navDashboard','navOrder','navSettings']) $(id).removeAttribute('aria-current');
+    $(name === 'dashboard' ? 'navDashboard' : name === 'settings' ? 'navSettings' : 'navOrder').setAttribute('aria-current','page');
   };
   function drawOrders() {
     const query = $('dashboardSearch').value.trim().toLocaleLowerCase('es');
@@ -110,6 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   connection(); window.addEventListener('online', connection); window.addEventListener('offline', connection);
   $('navDashboard').onclick = () => {view('dashboard'); refresh();};
   $('navOrder').onclick = () => view('editor');
+  $('navSettings').onclick = () => view('settings');
   $('backDashboard').onclick = () => {view('dashboard'); refresh();};
   $('navHistory').onclick = () => $('viewBtn').click();
   $('dashboardNew').onclick = () => { $('newOtBtn').click(); };
@@ -143,6 +148,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const draft=JSON.parse(localStorage.getItem(draftKey)); if (!draft?.fields) return;
       form.reset();
       for(const [key,value] of Object.entries(draft.fields)) {const el=form.elements.namedItem(key);if(el && key!=='accesorios') el.value=value;}
+      window.fueltekEquipment?.load(draft.fields);
       form.querySelectorAll('[name="accesorios"]').forEach(el=>el.checked=(draft.fields.accesorios||[]).includes(el.value));
       currentLoadedOt=draft.ot; loadedOrderSnapshot=draft.snapshot||{};
       if(draft.ot) {$('otNumber').value=draft.ot; $('saveBtn').querySelector('span').textContent='Actualizar';}
@@ -174,7 +180,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   if ('serviceWorker' in navigator && !demoMode) navigator.serviceWorker.register('./sw.js').catch(()=>{});
   if (demoMode) {
     const banner=document.createElement('div'); banner.className='demo-banner'; banner.textContent='DEMOSTRACIÓN · Información ficticia · Guardado y nube desactivados'; document.body.prepend(banner);
-    ['saveBtn','exportDbBtn','exportBtn','printBtn','syncCorrelativeBtn','importFile'].forEach(id=>{if($(id)) $(id).disabled=true;});
+    ['saveBtn','exportDbBtn','exportBtn','syncCorrelativeBtn','importFile'].forEach(id=>{if($(id)) $(id).disabled=true;});
   }
-  refresh(); balance();
+  const route = () => {const name=location.hash.slice(1);view(['editor','settings'].includes(name)?name:'dashboard');};
+  window.addEventListener('hashchange',route);
+  route(); refresh(); balance();
 });

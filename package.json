@@ -2,7 +2,7 @@
   "name": "fueltek-workshop",
   "private": true,
   "scripts": {
-    "test": "node tests/verify.cjs && node tests/access.cjs",
+    "test": "node tests/verify.cjs && node tests/access.cjs && node tests/settings-receipt.cjs && node tests/pdf.cjs",
     "test:rules": "firebase emulators:exec --only firestore --project demo-fueltek-tests \"node tests/firestore.cjs\""
   },
   "devDependencies": {
