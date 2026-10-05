@@ -32,7 +32,7 @@
         const right=width-margin-140;draw('ORDEN DE TRABAJO',right,margin+2,8,bold,navy);draw('#'+str(order.ot||'BORRADOR'),right,margin+17,22,bold,navy);draw('Emisión '+new Date().toLocaleDateString('es-CL'),right,margin+49,8,regular,muted);
         y=Math.max(y,margin+67)+10;page.drawLine({start:{x:margin,y:height-y},end:{x:width-margin,y:height-y},color:orange,thickness:2});y+=12;
         draw('Comprobante de recepción y servicio',margin,y,9,regular,muted);y+=19;
-      }else{draw((b.name||'FuelTek')+' · OT #'+str(order.ot||'BORRADOR'),margin,y,10,bold,navy);y+=20;page.drawLine({start:{x:margin,y:height-y},end:{x:width-margin,y:height-y},color:lineColor,thickness:1});y+=15;}
+      }else{for(const text of lines((b.name||'FuelTek')+' · OT #'+str(order.ot||'BORRADOR'),usable,10,bold)){draw(text,margin,y,10,bold,navy);y+=14;}y+=6;page.drawLine({start:{x:margin,y:height-y},end:{x:width-margin,y:height-y},color:lineColor,thickness:1});y+=15;}
     }
     const ensure=space=>{if(y+space>height-60)newPage();};
     function paragraph(value,{size=10,font=regular,color=ink,x=margin,maxWidth=usable,gap=14}={}){
@@ -46,7 +46,9 @@
     newPage(true);
     const colWidth=(usable-18)/2,left=[pair('Nombre',order.clienteNombre),pair('Teléfono',order.clienteTelefono),pair('Correo',order.clienteEmail),pair('Recepción',date(order.fechaRecibida)),pair('Entrega estimada',date(order.fechaEntrega))],right=[pair('Tipo',order.tipoEquipo),pair('Marca / modelo',[order.marca,order.modelo].filter(Boolean).join(' ')),pair('N° de serie',order.serie),pair('Año',order.anio),pair('Técnico',order.tecnico)];
     const leftLines=left.flatMap(text=>lines(text,colWidth-20,9)),rightLines=right.flatMap(text=>lines(text,colWidth-20,9)),cardHeight=38+Math.max(leftLines.length,rightLines.length)*13;ensure(cardHeight);
+    if(cardHeight>240){heading('01 · Cliente');for(const text of left)paragraph(text,{size:9,gap:13});heading('02 · Equipo');for(const text of right)paragraph(text,{size:9,gap:13});}else{
     for(const [x,title,content]of [[margin,'01 · Cliente',leftLines],[margin+colWidth+18,'02 · Equipo',rightLines]]){page.drawRectangle({x,y:height-y-cardHeight,width:colWidth,height:cardHeight,color:pale,borderColor:lineColor,borderWidth:.6});draw(title,x+10,y+10,10,bold,navy);content.forEach((text,index)=>draw(text,x+10,y+31+index*13,9));}y+=cardHeight+10;
+    }
     heading('03 · Recepción y revisión');
     paragraph('Estado: '+(order.estadoServicio||'Recibida'),{size:9,color:muted});
     const d=order.revisionDetalle, sections=d?[['Accesorios recibidos',d.accessories],['Condiciones y hallazgos verificados',d.conditions],['Otros elementos registrados',d.other]].filter(([,values])=>values?.length):[['Revisión y accesorios registrados',order.accesorios||[]]];
