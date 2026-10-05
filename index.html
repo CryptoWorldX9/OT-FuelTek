@@ -3,11 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Orden de Trabajo - Fueltek</title>
+  <title>FuelTek · Gestión del taller</title>
+  <meta name="theme-color" content="#142d46">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="professional.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="vendor/lucide.min.js"></script>
+  <script>window.lucide = window.lucide || {createIcons(){}};</script>
 </head>
 <body>
   <div class="wrapper">
@@ -21,6 +27,24 @@
     </header>
 
     <main>
+      <nav class="workspace-nav" aria-label="Secciones del taller">
+        <button id="navDashboard" class="selected" aria-current="page">Resumen</button>
+        <button id="navOrder">Orden de trabajo</button>
+        <button id="navHistory">Historial</button>
+        <button id="installApp" class="hidden">Instalar aplicación</button>
+        <span id="connectionStatus" role="status">Comprobando conexión…</span>
+      </nav>
+      <section id="dashboard" aria-labelledby="dashboardTitle">
+        <div class="section-heading"><div><p class="eyebrow">CENTRO DE OPERACIONES</p><h2 id="dashboardTitle">Tu taller, bajo control.</h2><p>Órdenes, entregas y cobros en un solo lugar.</p></div><button id="dashboardNew" class="primary">+ Nueva orden</button></div>
+        <div id="metrics" class="metrics" aria-live="polite"></div>
+        <div class="section-heading compact"><div><h3>Actividad del taller</h3><p id="dataStatus" role="status">Cargando órdenes…</p></div><button id="refreshDashboard">Actualizar</button></div>
+        <div class="filters"><label>Buscar<input id="dashboardSearch" type="search" placeholder="OT, cliente, equipo, serie o técnico"></label><label>Estado<select id="dashboardState"><option value="">Todos los estados</option><option>Recibida</option><option>En diagnóstico</option><option>Esperando aprobación</option><option>Esperando repuestos</option><option>En reparación</option><option>Lista para entrega</option><option>Entregada</option></select></label><label>Pago<select id="dashboardPayment"><option value="">Todos los pagos</option><option value="Pendiente">Pendiente</option><option value="Abonado">Abonado</option><option value="Pagado">Pagado</option></select></label></div>
+        <div id="dashboardOrders" class="dashboard-orders"></div>
+        <aside class="backup-callout"><div><strong>Respalda la información de tu taller</strong><p>Descarga una copia JSON que reúne las órdenes disponibles en este equipo y en la nube.</p></div><button id="dashboardBackup">Descargar respaldo</button></aside>
+      </section>
+      <section id="editor" class="hidden" aria-labelledby="editorTitle">
+      <div class="section-heading"><div><p class="eyebrow">SERVICIO TÉCNICO MULTIMARCA</p><h2 id="editorTitle">Orden de trabajo</h2><p id="draftStatus" role="status">Completa la recepción del equipo.</p></div><button id="backDashboard">Volver al resumen</button></div>
+      <div id="draftRecovery" class="backup-callout hidden"><span>Hay un borrador recuperable en este equipo.</span><button id="restoreDraft">Recuperar borrador</button><button id="dismissDraft">Descartar borrador</button></div>
       <div class="ot-bar">
         <div class="ot-box">
             <label class="ot-label">N° OT:</label>
@@ -30,31 +54,37 @@
         <button id="mobileMenuBtn" class="mobile-only" title="Menú"><i data-lucide="menu"></i></button>
 
         <div id="mobileMenuDropdown" class="controls">
-          <button id="newOtBtn" type="button" title="Reservar nuevo OT"><i data-lucide="plus"></i><span>Nuevo OT</span></button>
+          <button id="newOtBtn" type="button" title="Crear nueva orden"><i data-lucide="plus"></i><span>Nueva orden</span></button>
           <button id="saveBtn" type="button" title="Guardar OT"><i data-lucide="save"></i><span>Guardar</span></button>
           <button id="viewBtn" type="button" title="Ver lista de OT"><i data-lucide="list"></i><span>Ver Lista</span></button>
           <button id="resetFormBtn" type="button" title="Limpiar todos los campos"><i data-lucide="eraser"></i><span>Limpiar</span></button>
           <button id="exportBtn" type="button" title="Exportar Excel"><i data-lucide="download"></i><span>Exportar Excel</span></button>
-          <button id="exportDbBtn" type="button" title="Exportar DB JSON"><i data-lucide="file-text"></i><span>Exportar DB</span></button>
+          <button id="exportDbBtn" type="button" title="Exportar DB JSON"><i data-lucide="file-text"></i><span>Respaldo JSON</span></button>
           <label class="import-label" title="Importar DB JSON">
             <input id="importFile" type="file" accept=".json" />
-            <i data-lucide="upload"></i><span>Importar DB</span>
+            <i data-lucide="upload"></i><span>Importar respaldo</span>
           </label>
-          <button id="syncCorrelativeBtn" type="button" title="Sincronizar Correlativo"><i data-lucide="refresh-ccw"></i><span>Sincronizar</span></button>
+          <button id="syncCorrelativeBtn" type="button" title="Sincronizar Correlativo"><i data-lucide="refresh-ccw"></i><span>Actualizar datos</span></button>
           <button id="printBtn" type="button" title="Imprimir / PDF"><i data-lucide="printer"></i><span>Imprimir</span></button>
-          <button id="clearBtn" type="button" class="danger" title="Borrar DB"><i data-lucide="trash-2"></i><span>Borrar DB</span></button>
+
         </div>
       </div>
 
-      <form id="otForm" autocomplete="off">
+      <form id="otForm" autocomplete="on">
+        <fieldset><legend>Seguimiento del servicio</legend><div class="grid grid-2col spaced">
+          <label class="stack">Estado de la reparación<select name="estadoServicio"><option>Recibida</option><option>En diagnóstico</option><option>Esperando aprobación</option><option>Esperando repuestos</option><option>En reparación</option><option>Lista para entrega</option><option>Entregada</option></select></label>
+          <label class="stack">Técnico responsable<input name="tecnico" placeholder="Nombre del técnico"></label>
+          <label class="stack">Prioridad<select name="prioridad"><option>Normal</option><option>Alta</option><option>Urgente</option></select></label>
+          <label class="stack">Tipo de equipo<select name="tipoEquipo"><option value="">Seleccionar equipo</option><option>Motosierra</option><option>Desbrozadora</option><option>Cortasetos</option><option>Corta Césped</option><option>Fumigadora</option><option>Sopladora</option><option>Otro</option></select></label>
+        </div></fieldset>
         <fieldset>
           <legend>Datos del Cliente</legend>
           <div class="grid grid-2col spaced">
             <label class="stack">Nombre del Cliente
-              <input name="clienteNombre" />
+              <input name="clienteNombre" required autocomplete="name" />
             </label>
             <label class="stack">Teléfono
-              <input name="clienteTelefono" />
+              <input name="clienteTelefono" type="tel" autocomplete="tel" />
             </label>
 
             <label class="stack">Correo Electrónico
@@ -75,7 +105,7 @@
           <legend>Datos de la Herramienta</legend>
           <div class="grid grid-2col spaced">
             <label class="stack">Marca
-              <input name="marca" />
+              <input name="marca" required />
             </label>
             <label class="stack">Modelo
               <input name="modelo" />
@@ -117,12 +147,12 @@
 
         <fieldset>
           <legend>Diagnóstico Inicial</legend>
-          <textarea name="diagnostico" rows="6" placeholder="Describa el diagnóstico ..."></textarea>
+          <textarea aria-label="Diagnóstico inicial" name="diagnostico" rows="6" placeholder="Describa el diagnóstico ..."></textarea>
         </fieldset>
 
         <fieldset>
           <legend>Trabajo Realizado / Notas del Técnico</legend>
-          <textarea name="trabajo" rows="6" placeholder="Describa el trabajo realizado ..."></textarea>
+          <textarea aria-label="Trabajo realizado y notas del técnico" name="trabajo" rows="6" placeholder="Describa el trabajo realizado ..."></textarea>
         </fieldset>
 
         <fieldset>
@@ -138,6 +168,7 @@
             </label>
             <label class="stack hidden" id="labelAbono">Monto Abonado (CLP)<input name="montoAbonado" type="text" inputmode="numeric" id="montoAbonadoInput" /></label>
           </div>
+          <p class="balance-line">Saldo pendiente <strong id="balanceAmount">$0</strong></p>
         </fieldset>
 
         <div class="firmas">
@@ -154,21 +185,23 @@
           </ul>
         </section>
       </form>
+      <div class="mobile-save-bar"><button id="quickSave" class="primary" type="button">Guardar orden</button></div>
+      </section>
     </main>
 
     <footer>
-      <p>© 2025 FUELTEK</p>
+      <p>FUELTEK · Gestión de servicio técnico</p>
     </footer>
   </div>
 
-  <div id="modal" class="modal hidden" role="dialog" aria-hidden="true">
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Órdenes guardadas</h3>
+        <h3 id="historyTitle">Historial de órdenes</h3>
         <button id="closeModal" class="small">Cerrar</button>
       </div>
       <div class="modal-body">
-        <input id="searchOt" placeholder="Buscar por N° OT o nombre cliente..." />
+        <input id="searchOt" placeholder="Buscar por OT, cliente, marca, modelo o serie…" />
         <div id="ordersList" class="orders-list"></div>
       </div>
     </div>
@@ -176,11 +209,11 @@
 
   <div id="printArea" class="print-area" style="display:none"></div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="vendor/firebase-app-compat.js"></script>
+  <script src="vendor/firebase-firestore-compat.js"></script>
 
   <script>
-    // ESTA CONFIGURACIÓN DEBE SER LA TUYA (actualmente tiene datos de ejemplo)
+    // Proyecto existente: conservar la conexión y las colecciones al actualizar.
     const firebaseConfig = {
       apiKey: "AIzaSyATGBP6B5YoOk8kkovZydhQ9rLjjmxwgds",
       authDomain: "ot-fueltek.firebaseapp.com",
@@ -191,11 +224,14 @@
       measurementId: "G-DCNFDEJN0Y"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const firestore = firebase.firestore();
+    let firestore;
+    try {
+      if (window.firebase && !new URLSearchParams(location.search).has("demo")) { firebase.initializeApp(firebaseConfig); firestore = firebase.firestore(); }
+    } catch (error) { console.warn("La nube no está disponible", error); }
   </script>
 
   <script src="script.js"></script>
+  <script src="professional.js"></script>
   <script>lucide.createIcons();</script>
 </body>
 </html>
