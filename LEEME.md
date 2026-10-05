@@ -1,6 +1,6 @@
-# FuelTek · Versión profesional para revisión
+# FuelTek · Versión profesional
 
-Preparada el 5 de octubre de 2026. Esta entrega contiene el código mejorado. **Todavía no está publicada ni validada contra escrituras en Firebase real.**
+Publicada el 5 de octubre de 2026 en https://cryptoworldx9.github.io/OT-FuelTek/. Google y las reglas protegidas de Firestore están activos. Se verificó la lectura con una cuenta autorizada y el rechazo del acceso anónimo. Las escrituras se validaron en el emulador oficial, sin crear órdenes de prueba en producción.
 
 ## Qué incluye
 
@@ -42,7 +42,7 @@ Excel depende de la descarga de SheetJS desde su CDN. Si no está disponible, el
 
 1. Desde cada equipo que tenga órdenes locales, exporta su JSON actual. Ese respaldo original puede incluir solamente los registros del dispositivo.
 2. Con acceso administrador, realiza un respaldo independiente de Firestore y registra el correlativo actual. Conserva también el código anterior.
-3. Revisa las reglas de Firestore, los usuarios autorizados y los permisos sobre `orders` y `config/lastOt`. Las reglas vigentes revisadas en la consola el 5 de octubre permitían acceso sin autenticación hasta el 14 de diciembre de 2030. Las nuevas reglas de firestore.rules todavía requieren publicación coordinada con la versión que incluye acceso con Google.
+3. Revisa las reglas de Firestore, los usuarios autorizados y los permisos sobre `orders` y `config/lastOt`. Las reglas de firestore.rules fueron publicadas el 5 de octubre de 2026, con Google verificado para las dos cuentas autorizadas y borrado denegado.
 4. Valida las transacciones nuevas en un proyecto de pruebas o emulador, con las reglas que se usarán en producción. Se validaron las reglas y las funciones de transacción contra el emulador oficial de Firestore, con un proyecto demo aislado, sin escrituras en producción.
 5. Publica mediante una rama y revisión, manteniendo /OT-FuelTek/. No subas archivos con registros o respaldos privados al repositorio público.
 6. Comprueba la instalación PWA en Chrome/Android y Safari/iPhone, impresión/PDF y exportación Excel. La posibilidad de instalar depende del navegador.
@@ -50,7 +50,7 @@ Excel depende de la descarga de SheetJS desde su CDN. Si no está disponible, el
 
 ## Límites pendientes
 
-Esta versión es una base operativa para revisión; aún no es un producto comercial completo. El acceso con Google está preparado para dos cuentas con los mismos permisos de operación. Faltan roles diferenciados, aislamiento entre talleres, presupuestos desglosados, movimientos de inventario, fotos, autorización del cliente, historial de cambios y respaldo automatizado independiente. Las firmas actuales son campos de texto: no representan una solución de firma electrónica.
+Esta versión está publicada para el taller; aún no es un producto comercial para múltiples empresas. El acceso con Google está preparado para dos cuentas con los mismos permisos de operación. Faltan roles diferenciados, aislamiento entre talleres, presupuestos desglosados, movimientos de inventario, fotos, autorización del cliente, historial de cambios y respaldo automatizado independiente. Las firmas actuales son campos de texto: no representan una solución de firma electrónica.
 
 Los indicadores representan lo registrado: saldo por cobrar no equivale a utilidad. Las órdenes antiguas sin estado se muestran como recibidas hasta que se revisen y actualicen; no se cambia su estado en la base automáticamente.
 
@@ -58,7 +58,7 @@ Los indicadores representan lo registrado: saldo por cobrar no equivale a utilid
 
 Sintaxis de JavaScript; escenarios simulados de saldo, mezcla de fuentes, escape HTML, creación concurrente, colisiones, edición concurrente y abortos de IndexedDB. Revisión visual a 1440 y 390 píxeles, búsqueda, filtro, apertura de OT y recuperación de borrador en el navegador.
 
-No se realizaron escrituras, eliminaciones ni migraciones en la base real. Se revisaron las reglas existentes en Firebase y se comprobaron las reglas nuevas en el emulador oficial. No se confirmó instalación real de la PWA, ingreso con Google en el sitio publicado, sincronización entre dispositivos reales ni impresión física.
+No se realizaron escrituras de órdenes, eliminaciones ni migraciones en la base real. Se publicaron las reglas probadas en el emulador oficial y se confirmó el ingreso con Google y la lectura de órdenes en el sitio publicado. No se confirmó instalación real de la PWA, sincronización entre dispositivos reales ni impresión física.
 
 
 ## Pruebas de seguridad y publicación coordinada
