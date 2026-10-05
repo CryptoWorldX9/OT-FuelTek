@@ -709,6 +709,15 @@ async function firebaseSaveOrder(order, expected) {
     if (remote.exists && expected && (remote.data().fechaGuardado || "") !== (expected.fechaGuardado || "")) {
       throw new Error("Esta orden cambió en otro equipo. Conserva tu borrador y vuelve a abrir la versión actual antes de guardar.");
     }
+    if (!remote.exists) {
+      // Sincronización manual de una orden que existía únicamente en el navegador.
+      const number = Number(order.ot);
+      if (!Number.isSafeInteger(number) || number <= 0 || String(number) !== String(order.ot)) throw new Error("Número de orden local inválido. Descarga su respaldo antes de revisar el registro.");
+      const counterRef = firestore.collection("config").doc(OT_FIREBASE_DOC);
+      const counter = await tx.get(counterRef);
+      if (!counter.exists) throw new Error("No se pudo leer el correlativo del taller. La copia local se conserva.");
+      if (number > Number(counter.data().value)) tx.set(counterRef, {value:number,lastOrderId:String(order.ot),updatedAt:new Date().toISOString()}, {merge:true});
+    }
     tx.set(ref, {...order}, {merge: true});
   });
   return true;

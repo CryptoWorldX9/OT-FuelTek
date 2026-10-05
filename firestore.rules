@@ -22,10 +22,11 @@ service cloud.firestore {
     }
     match /orders/{id} {
       allow read: if workshopUser();
-      allow create: if workshopUser() && validOrder(id)
-        && getAfter(/databases/$(database)/documents/config/lastOt).data.value > get(/databases/$(database)/documents/config/lastOt).data.value
+      allow create: if workshopUser() && validOrder(id) && (
+        int(id) <= get(/databases/$(database)/documents/config/lastOt).data.value
+        || (getAfter(/databases/$(database)/documents/config/lastOt).data.value > get(/databases/$(database)/documents/config/lastOt).data.value
         && getAfter(/databases/$(database)/documents/config/lastOt).data.lastOrderId == id
-        && string(getAfter(/databases/$(database)/documents/config/lastOt).data.value) == id;
+        && string(getAfter(/databases/$(database)/documents/config/lastOt).data.value) == id));
       allow update: if workshopUser() && validOrder(id);
       allow delete: if false;
     }

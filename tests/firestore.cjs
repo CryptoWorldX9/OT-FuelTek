@@ -15,7 +15,7 @@ const {doc,collection,getDoc,getDocs,setDoc,deleteDoc,runTransaction}=require('f
   const unverified=env.authenticatedContext('unverified',{email:'servtecfueltek@gmail.com',email_verified:false,firebase:{sign_in_provider:'google.com'}}).firestore();
   for(const db of [anonymous,outsider,unverified]){await assertFails(getDoc(doc(db,'orders/10781')));await assertFails(getDocs(collection(db,'orders')));await assertFails(setDoc(doc(db,'orders/10781'),legacy));}
   for(const db of [admin,second]){await assertSucceeds(getDoc(doc(db,'orders/10781')));await assertFails(deleteDoc(doc(db,'orders/10781')));}
-  await assertFails(setDoc(doc(admin,'orders/999'),{...legacy,ot:'999'}));
+  await assertFails(setDoc(doc(admin,'orders/999999'),{...legacy,ot:'999999'}));
   await assertFails(setDoc(doc(admin,'config/lastOt'),{value:10780,lastOrderId:'10780'}));
   await assertFails(setDoc(doc(admin,'config/lastOt'),{value:10782,lastOrderId:'10782'}));
   const facade=db=>({collection:path=>({doc:id=>doc(db,path,String(id))}),runTransaction:fn=>runTransaction(db,tx=>fn({get:async ref=>{const snap=await tx.get(ref);return {exists:snap.exists(),data:()=>snap.data()};},set:(ref,data,options)=>options?tx.set(ref,JSON.parse(JSON.stringify(data)),options):tx.set(ref,JSON.parse(JSON.stringify(data)))}))});
@@ -27,6 +27,8 @@ const {doc,collection,getDoc,getDocs,setDoc,deleteDoc,runTransaction}=require('f
   await assert.rejects(()=>sandbox.firebaseSaveOrder({...legacy,fechaGuardado:'otra'},{fechaGuardado:'anterior'}),/otro equipo/);
   await assertFails(setDoc(doc(admin,'orders/10781'),{...legacy,montoAbonado:200}));
   sandbox.firestore=facade(second);await sandbox.firebaseSaveOrder({...legacy,clienteNombre:'Segunda cuenta',fechaGuardado:'final'},{fechaGuardado:'nueva'});
+  await sandbox.firebaseSaveOrder({...legacy,ot:'10700',fechaGuardado:'local'},{});assert.equal((await getDoc(doc(second,'orders/10700'))).data().ot,'10700');
+  await sandbox.firebaseSaveOrder({...legacy,ot:'10800',fechaGuardado:'local'},{});assert.equal((await getDoc(doc(second,'config/lastOt'))).data().value,10800);
   console.log('PASS emulador: dos cuentas autorizadas, denegación anónima/externa/no verificada, borrado denegado, creación concurrente, campos conservados y conflictos detectados. Sin conexión a producción.');
  }finally{await env.cleanup();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

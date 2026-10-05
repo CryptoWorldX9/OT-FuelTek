@@ -16,6 +16,7 @@ Preparada el 5 de octubre de 2026. Esta entrega contiene el código mejorado. **
 - Importación que omite números existentes y añade únicamente registros locales. No reemplaza ni sube automáticamente registros a Firebase.
 - Creación de OT y avance del correlativo en una sola transacción de Firebase. Si el número ya existe, se detiene sin reemplazarlo.
 - Detección de cambios de otra sesión antes de actualizar una orden, mediante fechaGuardado.
+- Las órdenes que existían solo en este navegador pueden sincronizarse al guardar manualmente, conservando su número y avanzando el correlativo si corresponde.
 - Campos adicionales de registros existentes conservados al editar; actualización remota con merge.
 - Borrado total y borrado individual retirados de la interfaz y del código de acceso a datos.
 - Texto ingresado por usuarios escapado en historial e impresión.
@@ -64,6 +65,6 @@ No se realizaron escrituras, eliminaciones ni migraciones en la base real. Se re
 
 Instala las dependencias de desarrollo del package.json (solo herramientas de prueba). `npm test` valida lógica y barrera de acceso; `npm run test:rules` requiere Java 21 y ejecuta el emulador oficial contra demo-fueltek-tests. El archivo de pruebas se niega a ejecutarse sin FIRESTORE_EMULATOR_HOST.
 
-La prueba verifica acceso de ambas cuentas, denegación a usuarios anónimos, externos y no verificados, borrado bloqueado, creación concurrente, correlativo atómico, rechazo de conflictos y conservación de campos antiguos.
+La prueba verifica acceso de ambas cuentas, denegación a usuarios anónimos, externos y no verificados, borrado bloqueado, creación concurrente, correlativo atómico, rechazo de conflictos, conservación de campos antiguos y sincronización manual de órdenes locales sin cambiar su número.
 
 Habilita Google en Authentication y autoriza cryptoworldx9.github.io. Publica primero la aplicación con el ingreso y confirma una sesión válida; después publica firestore.rules. Las reglas nuevas bloquean clientes antiguos sin sesión. No cambies la URL ni borres el almacenamiento del navegador. Las copias locales permanecen en el dispositivo después de cerrar sesión; el cierre no es una limpieza de datos del equipo.
