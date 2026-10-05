@@ -1,0 +1,13 @@
+{
+  "name": "fueltek-workshop",
+  "private": true,
+  "scripts": {
+    "test": "node tests/verify.cjs && node tests/access.cjs && node tests/settings-receipt.cjs && node tests/pdf.cjs",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-fueltek-tests \"node tests/firestore.cjs\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.2",
+    "firebase": "12.19.0",
+    "firebase-tools": "15.32.1"
+  }
+}
