@@ -104,6 +104,7 @@ function setLastOt(n) {
 
 // 💥 NUEVA FUNCIÓN: Obtiene el correlativo maestro desde Firebase
 async function getFirebaseCorrelative() {
+  if (window.fueltekRequireAccess) window.fueltekRequireAccess();
   const localValue = parseInt(localStorage.getItem(OT_LOCAL) || "10724", 10);
   if (typeof firestore === 'undefined') {
     // Si Firebase no está cargado, usa el valor local/default
@@ -173,7 +174,8 @@ function updateSaldo() {
 /* ====================================================================
    DOMContentLoaded - eventos principales
    ==================================================================== */
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  if (window.fueltekAccessReady) await window.fueltekAccessReady;
   const otInput = document.getElementById("otNumber");
   const form = document.getElementById("otForm");
   const estadoPago = document.getElementById("estadoPago");
@@ -699,6 +701,7 @@ document.addEventListener("DOMContentLoaded", () => {
    ==================================================================== */
 
 async function firebaseSaveOrder(order, expected) {
+  if (window.fueltekRequireAccess) window.fueltekRequireAccess();
   if (typeof firestore === 'undefined') throw new Error("Nube no disponible");
   const ref = firestore.collection("orders").doc(String(order.ot));
   await firestore.runTransaction(async tx => {
@@ -712,6 +715,7 @@ async function firebaseSaveOrder(order, expected) {
 }
 
 async function firebaseGetAllOrders() {
+  if (window.fueltekRequireAccess) window.fueltekRequireAccess();
   if (typeof firestore === 'undefined') return Promise.reject("Firestore no inicializado");
   try {
     const snap = await firestore.collection("orders").get();
@@ -723,6 +727,7 @@ async function firebaseGetAllOrders() {
 }
 
 async function firebaseGetOrder(ot) {
+  if (window.fueltekRequireAccess) window.fueltekRequireAccess();
   if (typeof firestore === 'undefined') throw new Error("Firestore no inicializado");
   try {
     const doc = await firestore.collection("orders").doc(String(ot)).get();

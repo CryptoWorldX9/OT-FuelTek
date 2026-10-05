@@ -4,6 +4,7 @@ Preparada el 5 de octubre de 2026. Esta entrega contiene el código mejorado. **
 
 ## Qué incluye
 
+- Inicio de sesión con Google para las dos cuentas autorizadas; acceso a la nube protegido mediante reglas separadas.
 - Panel de órdenes activas, equipos listos, entregas atrasadas y saldo pendiente.
 - Búsqueda por OT, cliente, marca, modelo, serie y técnico; filtros por reparación y pago.
 - Seguimiento: recibida, diagnóstico, aprobación, repuestos, reparación, lista y entregada.
@@ -40,15 +41,15 @@ Excel depende de la descarga de SheetJS desde su CDN. Si no está disponible, el
 
 1. Desde cada equipo que tenga órdenes locales, exporta su JSON actual. Ese respaldo original puede incluir solamente los registros del dispositivo.
 2. Con acceso administrador, realiza un respaldo independiente de Firestore y registra el correlativo actual. Conserva también el código anterior.
-3. Revisa las reglas de Firestore, los usuarios autorizados y los permisos sobre `orders` y `config/lastOt`. El código actual carece de autenticación de usuarios; no es posible deducir la seguridad del proyecto únicamente a partir de su configuración pública.
-4. Valida las transacciones nuevas en un proyecto de pruebas o emulador, con las reglas que se usarán en producción. Las pruebas entregadas usan simulación, no el servicio real.
+3. Revisa las reglas de Firestore, los usuarios autorizados y los permisos sobre `orders` y `config/lastOt`. Las reglas vigentes revisadas en la consola el 5 de octubre permitían acceso sin autenticación hasta el 14 de diciembre de 2030. Las nuevas reglas de firestore.rules todavía requieren publicación coordinada con la versión que incluye acceso con Google.
+4. Valida las transacciones nuevas en un proyecto de pruebas o emulador, con las reglas que se usarán en producción. Se validaron las reglas y las funciones de transacción contra el emulador oficial de Firestore, con un proyecto demo aislado, sin escrituras en producción.
 5. Publica mediante una rama y revisión, manteniendo /OT-FuelTek/. No subas archivos con registros o respaldos privados al repositorio público.
 6. Comprueba la instalación PWA en Chrome/Android y Safari/iPhone, impresión/PDF y exportación Excel. La posibilidad de instalar depende del navegador.
 7. Actualiza todos los equipos: las versiones antiguas siguen usando su lógica anterior de guardado y no quedan protegidas por estas nuevas transacciones.
 
 ## Límites pendientes
 
-Esta versión es una base operativa para revisión; aún no es un producto comercial completo. Faltan acceso por usuario y roles, aislamiento entre talleres, presupuestos desglosados, movimientos de inventario, fotos, autorización del cliente, historial de cambios y respaldo automatizado independiente. Las firmas actuales son campos de texto: no representan una solución de firma electrónica.
+Esta versión es una base operativa para revisión; aún no es un producto comercial completo. El acceso con Google está preparado para dos cuentas con los mismos permisos de operación. Faltan roles diferenciados, aislamiento entre talleres, presupuestos desglosados, movimientos de inventario, fotos, autorización del cliente, historial de cambios y respaldo automatizado independiente. Las firmas actuales son campos de texto: no representan una solución de firma electrónica.
 
 Los indicadores representan lo registrado: saldo por cobrar no equivale a utilidad. Las órdenes antiguas sin estado se muestran como recibidas hasta que se revisen y actualicen; no se cambia su estado en la base automáticamente.
 
@@ -56,4 +57,13 @@ Los indicadores representan lo registrado: saldo por cobrar no equivale a utilid
 
 Sintaxis de JavaScript; escenarios simulados de saldo, mezcla de fuentes, escape HTML, creación concurrente, colisiones, edición concurrente y abortos de IndexedDB. Revisión visual a 1440 y 390 píxeles, búsqueda, filtro, apertura de OT y recuperación de borrador en el navegador.
 
-No se realizaron escrituras, eliminaciones ni migraciones en la base real. No se confirmó instalación real de la PWA, reglas de Firebase, sincronización entre dispositivos reales ni impresión física.
+No se realizaron escrituras, eliminaciones ni migraciones en la base real. Se revisaron las reglas existentes en Firebase y se comprobaron las reglas nuevas en el emulador oficial. No se confirmó instalación real de la PWA, ingreso con Google en el sitio publicado, sincronización entre dispositivos reales ni impresión física.
+
+
+## Pruebas de seguridad y publicación coordinada
+
+Instala las dependencias de desarrollo del package.json (solo herramientas de prueba). `npm test` valida lógica y barrera de acceso; `npm run test:rules` requiere Java 21 y ejecuta el emulador oficial contra demo-fueltek-tests. El archivo de pruebas se niega a ejecutarse sin FIRESTORE_EMULATOR_HOST.
+
+La prueba verifica acceso de ambas cuentas, denegación a usuarios anónimos, externos y no verificados, borrado bloqueado, creación concurrente, correlativo atómico, rechazo de conflictos y conservación de campos antiguos.
+
+Habilita Google en Authentication y autoriza cryptoworldx9.github.io. Publica primero la aplicación con el ingreso y confirma una sesión válida; después publica firestore.rules. Las reglas nuevas bloquean clientes antiguos sin sesión. No cambies la URL ni borres el almacenamiento del navegador. Las copias locales permanecen en el dispositivo después de cerrar sesión; el cierre no es una limpieza de datos del equipo.

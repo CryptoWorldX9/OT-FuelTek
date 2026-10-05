@@ -15,7 +15,7 @@
   <script src="vendor/lucide.min.js"></script>
   <script>window.lucide = window.lucide || {createIcons(){}};</script>
 </head>
-<body>
+<body class="auth-pending">
   <div class="wrapper">
     <header>
       <img src="logo-fueltek.png" alt="Fueltek Logo" class="logo" />
@@ -26,7 +26,15 @@
       </div>
     </header>
 
-    <main>
+    <section id="accessPanel" class="access-panel" aria-labelledby="accessTitle">
+    <p class="eyebrow">ESPACIO PRIVADO DEL TALLER</p>
+    <h2 id="accessTitle">Bienvenido a FuelTek</h2>
+    <p>Ingresa con la cuenta de Google autorizada para administrar tus órdenes.</p>
+    <button id="signIn" class="primary" disabled>Ingresar con Google</button>
+    <p id="accessStatus" role="status">Comprobando tu sesión…</p>
+  </section>
+  <div id="sessionBar" class="session-bar hidden"><span id="sessionIdentity"></span><button id="signOut">Cerrar sesión</button></div>
+  <main>
       <nav class="workspace-nav" aria-label="Secciones del taller">
         <button id="navDashboard" class="selected" aria-current="page">Resumen</button>
         <button id="navOrder">Orden de trabajo</button>
@@ -211,6 +219,7 @@
 
   <script src="vendor/firebase-app-compat.js"></script>
   <script src="vendor/firebase-firestore-compat.js"></script>
+  <script src="vendor/firebase-auth-compat.js"></script>
 
   <script>
     // Proyecto existente: conservar la conexión y las colecciones al actualizar.
@@ -230,6 +239,7 @@
     } catch (error) { console.warn("La nube no está disponible", error); }
   </script>
 
+  <script src="access.js"></script>
   <script src="script.js"></script>
   <script src="professional.js"></script>
   <script>lucide.createIcons();</script>

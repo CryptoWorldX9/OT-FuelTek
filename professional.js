@@ -20,6 +20,7 @@ function mergeOrderSources(local, cloud) {
   return [...map.values()];
 }
 async function getCombinedOrders() {
+  if (window.fueltekRequireAccess) window.fueltekRequireAccess();
   if (demoMode) return {orders: demoOrders(), cloudAvailable: true, demo: true};
   const local = await dbGetAll();
   try {
@@ -31,8 +32,12 @@ async function getCombinedOrders() {
   }
 }
 async function createCloudOrder(order) {
+  if (window.fueltekRequireAccess) window.fueltekRequireAccess();
   const configRef = firestore.collection('config').doc(OT_FIREBASE_DOC);
-  return firestore.runTransaction(async tx => {
+  // Las reglas pueden evaluar el contador recién cambiado antes de que el SDK detecte el conflicto.
+  // Releer en una transacción nueva permite reintentar esa carrera sin sobrescribir registros.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try { return await firestore.runTransaction(async tx => {
     const config = await tx.get(configRef);
     const counter = Math.max(Number(config.data()?.value) || 10724, getLastOt());
     const ot = String(counter + 1);
@@ -40,9 +45,12 @@ async function createCloudOrder(order) {
     const existing = await tx.get(ref);
     if (existing.exists) throw new Error('El número previsto ya existe. Actualiza el correlativo antes de guardar; ninguna orden se reemplazó.');
     tx.set(ref, {...order, ot});
-    tx.set(configRef, {value:Number(ot), updatedAt:new Date().toISOString()}, {merge:true});
+    tx.set(configRef, {value:Number(ot), lastOrderId:ot, updatedAt:new Date().toISOString()}, {merge:true});
     return ot;
-  });
+    }); } catch (error) {
+      if (error.code !== 'permission-denied' || attempt === 2) throw error;
+    }
+  }
 }
 function demoOrders() {
   return [
@@ -52,7 +60,8 @@ function demoOrders() {
     {ot:'10778', clienteNombre:'Cliente de ejemplo D', marca:'STIHL', modelo:'FS 55', estadoServicio:'Entregada', valorTrabajo:45000, estadoPago:'Pagado'}
   ];
 }
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  if (window.fueltekAccessReady) await window.fueltekAccessReady;
   const $ = id => document.getElementById(id);
   const form = $('otForm');
   let allOrders = [], refreshId = 0, draftTimer, deferredInstall, modalFocus;

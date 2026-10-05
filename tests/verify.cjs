@@ -1,5 +1,5 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
-const sandbox={console,Intl,Date,Map,Set,URLSearchParams,location:{search:''},document:{addEventListener(){}},localStorage:{getItem(){return null},setItem(){}},navigator:{onLine:true}};
+const sandbox={window:{},console,Intl,Date,Map,Set,URLSearchParams,location:{search:''},document:{addEventListener(){}},localStorage:{getItem(){return null},setItem(){}},navigator:{onLine:true}};
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(__dirname+'/../script.js','utf8'),sandbox);
 vm.runInContext(fs.readFileSync(__dirname+'/../professional.js','utf8'),sandbox);

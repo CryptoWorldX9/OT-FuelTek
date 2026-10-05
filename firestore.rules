@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function workshopUser() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && request.auth.token.email in ['servtecfueltek@gmail.com', 'fueltekchile@gmail.com'];
+    }
+    function validOrder(id) {
+      return request.resource.data.ot == id
+        && id.matches('^[0-9]+$')
+        && request.resource.data.clienteNombre is string
+        && request.resource.data.clienteNombre.size() > 0
+        && request.resource.data.marca is string
+        && request.resource.data.marca.size() > 0
+        && request.resource.data.valorTrabajo is int
+        && request.resource.data.valorTrabajo >= 0
+        && request.resource.data.montoAbonado is int
+        && request.resource.data.montoAbonado >= 0
+        && request.resource.data.montoAbonado <= request.resource.data.valorTrabajo;
+    }
+    match /orders/{id} {
+      allow read: if workshopUser();
+      allow create: if workshopUser() && validOrder(id)
+        && getAfter(/databases/$(database)/documents/config/lastOt).data.value > get(/databases/$(database)/documents/config/lastOt).data.value
+        && getAfter(/databases/$(database)/documents/config/lastOt).data.lastOrderId == id
+        && string(getAfter(/databases/$(database)/documents/config/lastOt).data.value) == id;
+      allow update: if workshopUser() && validOrder(id);
+      allow delete: if false;
+    }
+    match /config/lastOt {
+      allow read: if workshopUser();
+      allow update: if workshopUser()
+        && request.resource.data.value is int
+        && request.resource.data.value > resource.data.value
+        && request.resource.data.lastOrderId == string(request.resource.data.value)
+        && !exists(/databases/$(database)/documents/orders/$(request.resource.data.lastOrderId))
+        && getAfter(/databases/$(database)/documents/orders/$(request.resource.data.lastOrderId)).data.ot == request.resource.data.lastOrderId;
+      allow create, delete: if false;
+    }
+    match /metadata/{id} {
+      allow read: if workshopUser();
+      allow write: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
