@@ -79,7 +79,7 @@
   window.fueltekEquipment={load:renderEquipment,enrich(order,snapshot={}) {
     const checks=[...document.querySelectorAll('#otForm [name="accesorios"]:checked')];
     order.revisionDetalle={accessories:checks.filter(e=>e.dataset.kind==='accessory').map(e=>e.value),conditions:checks.filter(e=>e.dataset.kind==='condition').map(e=>e.value),other:checks.filter(e=>e.dataset.kind==='legacy').map(e=>e.value)};
-    order.documentoTaller=snapshot.documentoTaller || {business:copy(settings.business),receiptNote:settings.receiptNote};
+    order.documentoTaller=snapshot.documentoTaller || {business:copy(settings.business),receiptNote:settings.receiptNote,...(!snapshot.ot?{storagePolicyVersion:1}:{})};
     return order;
   }};
   async function saveShared(next,expectedRevision) {
