@@ -500,7 +500,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function buildPrintAndPrint(data) {
     if (!printArea) return;
-    const html = window.fueltekReceipt.build(data, window.fueltekSettings?.get());
+    let html;
+    try { html = window.fueltekReceipt.build(data, window.fueltekSettings?.get()); }
+    catch(error) { alert(error.message); return; }
     printArea.innerHTML = html;
     window.fueltekReceipt.preview(html, data, window.fueltekSettings?.get());
   }
