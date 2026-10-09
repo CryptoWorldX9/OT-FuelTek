@@ -1,27 +1,30 @@
 # Telegram → OT FuelTek → PDF
 
-Estado: integración preparada para pruebas y despliegue; **no activada en producción**.
+Estado: desplegada y activa en el VPS FuelTek. Mantiene la base existente `ot-fueltek`.
 Usa Firestore `orders`, `config/lastOt`, `config/workshop` y el mismo generador vectorial con logo y timbre del sitio. No cambia reglas de Firestore ni la interfaz web.
 
-## Qué escribir siempre
+## Registro rápido por Telegram
 
-Un mensaje completo por orden; un campo por línea. `/ayuda` devuelve la plantilla y `/equipos` enumera el catálogo vigente.
+Un mensaje por orden. Copia este ejemplo, reemplaza los datos y envíalo al bot. `/ayuda` muestra la plantilla y `/equipos` enumera el catálogo vigente.
 
 ```text
 /ot
-Cliente: Cliente de ejemplo
-Telefono: +56912345678
-Equipo: Motosierra
+Nombre: Juan Perez
+Telefono: 912345678
+Tipo: Motosierra
 Marca: STIHL
 Modelo: MS 180
-Serie: Sin serie visible
-Falla: No enciende
-Accesorios: Espada; Cadena
-Valor: pendiente
-Abono: 0
-Tecnico: Por asignar
-Entrega: por definir
+Descripcion: No enciende
+Correo: juan@ejemplo.cl
 ```
+
+Solo Nombre, Telefono, Tipo, Marca, Modelo y Descripcion son obligatorios. Correo es opcional: borra esa línea si no fue informado. Tipo debe corresponder al catálogo, por ejemplo Motosierra o Desbrozadora si está activa. El móvil chileno de nueve dígitos se guarda con +56; también se acepta el formato internacional completo.
+
+La fecha recibida es automáticamente el día de recepción en America/Santiago. Serie y accesorios quedan sin informar; presupuesto pendiente, abono 0, técnico Por asignar y entrega por definir. Luego se completan desde el PC. No se inventan datos ni se considera que el equipo llegó sin accesorios. Los nombres anteriores Cliente, Equipo y Falla continúan funcionando. También se aceptan Nombre, Tipo de herramienta, Diagnostico inicial y Descripcion con o sin tildes.
+
+## Campos adicionales opcionales
+
+El formato detallado anterior continúa disponible:
 
 | Parámetro | Campo en la web | Regla |
 |---|---|---|
@@ -30,13 +33,13 @@ Entrega: por definir
 | Equipo | tipoEquipo | Nombre del catálogo; consultar /equipos |
 | Marca | marca | Marca informada |
 | Modelo | modelo | Modelo, o «No identificado» explícito |
-| Serie | serie | Número, o «Sin serie visible» explícito |
+| Serie | serie | Opcional; vacío si no fue informado |
 | Falla | diagnostico | Se identifica como síntoma del cliente; diagnóstico técnico pendiente |
-| Accesorios | revisionDetalle.accessories y accesorios | Separar con `;`, o «Ninguno» |
-| Valor | valorTrabajo | CLP entero o «pendiente»; pendiente se representa por 0 y una nota visible |
-| Abono | montoAbonado | CLP entero; 0 si no existe; nunca superior al valor |
-| Tecnico | tecnico | Nombre o «Por asignar» |
-| Entrega | fechaEntrega | AAAA-MM-DD o «por definir» |
+| Accesorios | revisionDetalle.accessories y accesorios | Opcional; separar con `;`, o «Ninguno» |
+| Valor | valorTrabajo | Opcional, pendiente por defecto; CLP entero o «pendiente» |
+| Abono | montoAbonado | Opcional, 0 por defecto; nunca superior al valor |
+| Tecnico | tecnico | Opcional, «Por asignar» por defecto |
+| Entrega | fechaEntrega | Opcional, «por definir» por defecto |
 
 Opcionales: `Correo`, `Ano`, `Recepcion` (AAAA-MM-DD), `Prioridad` (Normal/Alta/Urgente), `Hallazgos` (solo verificados, separados por `;`), `Trabajo` (solo realizado o notas explícitas). Se aceptan tildes en nombres de campo.
 
@@ -57,7 +60,7 @@ Los reintentos del mismo update_id reutilizan el número y la instantánea origi
 
 Si el servicio falla, el nodo HTTP termina con error: n8n no debe informar éxito. Configurar alerta de ejecuciones fallidas antes de activar. Los registros `telegramRequests` no tienen caducidad automática para conservar la protección frente a reintentos; contienen la instantánea de la orden y deben incluirse en la política de respaldo y retención del taller.
 
-## Despliegue pendiente
+## Despliegue y mantenimiento
 
 Se necesita acceso al servidor que aloja n8n o a su panel (Docker/Portainer/Coolify, según exista). GitHub Pages no ejecuta este servicio Node.
 
