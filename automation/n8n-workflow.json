@@ -1,0 +1,232 @@
+{
+  "name": "FuelTek · Telegram → OT → PDF (preparación)",
+  "nodes": [
+    {
+      "id": "telegram-trigger",
+      "name": "Telegram · recibir",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      }
+    },
+    {
+      "id": "ot-service",
+      "name": "Validar y crear OT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://fueltek-ot:8080/telegram",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "filter",
+      "name": "Descartar no autorizados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return $input.all().filter(item => item.json.kind !== 'ignore');"
+      }
+    },
+    {
+      "id": "pdf-or-message",
+      "name": "¿Tiene PDF?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "kind",
+              "leftValue": "={{ $json.kind }}",
+              "rightValue": "pdf",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "binary",
+      "name": "Preparar archivo PDF",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        -100
+      ],
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst data = await this.helpers.prepareBinaryData(Buffer.from(item.json.pdfBase64, 'base64'), item.json.fileName, 'application/pdf');\nconst { pdfBase64, ...json } = item.json;\nreturn [{ json, binary: { data } }];"
+      }
+    },
+    {
+      "id": "send-document",
+      "name": "Enviar PDF al mismo chat",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        -100
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendDocument",
+        "chatId": "={{ $json.chatId }}",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "additionalFields": {
+          "caption": "={{ $json.text }}"
+        }
+      }
+    },
+    {
+      "id": "send-message",
+      "name": "Informar campos faltantes",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "instructions",
+      "name": "Configuración pendiente",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -380
+      ],
+      "parameters": {
+        "content": "## Preparado, sin activar\n1. Desplegar servicio automation/ en red privada de n8n.\n2. Elegir credencial Telegram en los 3 nodos Telegram.\n3. Elegir Header Auth (Authorization: Bearer secreto) en HTTP.\n4. Configurar IDs permitidos y Firebase IAM en el servidor.\n5. Validar con bot/proyecto de pruebas antes de publicar.\nUn bot solo admite un webhook activo. No reutilizar el bot de un flujo publicado sin revisar su función.\nFormato y accesos: automation/README.md.",
+        "height": 300,
+        "width": 640
+      }
+    }
+  ],
+  "connections": {
+    "Telegram · recibir": {
+      "main": [
+        [
+          {
+            "node": "Validar y crear OT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar y crear OT": {
+      "main": [
+        [
+          {
+            "node": "Descartar no autorizados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descartar no autorizados": {
+      "main": [
+        [
+          {
+            "node": "¿Tiene PDF?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Tiene PDF?": {
+      "main": [
+        [
+          {
+            "node": "Preparar archivo PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Informar campos faltantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar archivo PDF": {
+      "main": [
+        [
+          {
+            "node": "Enviar PDF al mismo chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Santiago",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false,
+    "saveExecutionProgress": false
+  }
+}
