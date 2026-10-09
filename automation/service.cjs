@@ -20,7 +20,7 @@ function createService({db,allowedUsers,allowedChats,botId,renderPdf=pdf,now=()=
     const settingsRef = db.collection('config').doc('workshop');
     const settingsDoc = await settingsRef.get();
     const settings = settingsDoc.exists ? cleanSettings(settingsDoc.data()) : defaults();
-    if (/^\/(ayuda|start)(?:@[\w]+)?\s*$/.test(msg.text)) return reply('Envía todos estos campos. Serie puede ser «Sin serie visible», Valor «pendiente», Técnico «Por asignar» y Entrega «por definir».\n\n' + template + '\n\nOpcionales: Correo, Ano, Recepcion (AAAA-MM-DD), Prioridad, Hallazgos y Trabajo. No inventes hallazgos ni firmas.');
+    if (/^\/(ayuda|start)(?:@[\w]+)?\s*$/.test(msg.text)) return reply('Registro rápido: copia este ejemplo, reemplaza los datos y envíalo en un solo mensaje.\n\n' + template + '\n\nCorreo es opcional: puedes borrar esa línea. La fecha de recepción será la de hoy en Chile. Serie, accesorios, presupuesto, abono, técnico y entrega se completan después desde el PC.\n\nUsa /equipos para ver los tipos de herramienta disponibles.');
     if (/^\/equipos(?:@[\w]+)?\s*$/.test(msg.text)) return reply('Tipos de equipo:\n' + settings.equipment.filter(e=>e.active!==false).map(e=>e.name).join('\n'));
     try {
       const order = makeOrder(parse(msg.text),settings,now());
