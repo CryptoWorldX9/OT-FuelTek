@@ -19,10 +19,23 @@ test('required fields, unknown/duplicate fields, country code and explicit missi
   assert.equal(order.fechaRecibida,'2026-10-08');assert.equal(order.fechaEntrega,'');
   assert.equal(order.estadoServicio,'Recibida');assert.equal(order.presupuestoPendiente,true);
   assert.equal(order.firmaCliente,'');assert.match(order.diagnostico,/Diagnóstico técnico pendiente/);
-  assert.throws(()=>parse(template.replace('Serie: Sin serie visible','')),/Faltan: serie/);
+  assert.throws(()=>parse(template.replace('Modelo: MS 180','')),/Faltan: Modelo/);
   assert.throws(()=>parse(template+'\nCliente: Duplicado'),/repetido/);
   assert.throws(()=>parse(template+'\nOT: 123'),/desconocido/);
-  assert.throws(()=>makeOrder({...sample(),telefono:'912345678'},defaults()),/código de país/);
+  assert.throws(()=>makeOrder({...sample(),telefono:'123'},defaults()),/código de país/);
+});
+test('quick intake accepts local phone and optional email, leaves unknown details empty',()=>{
+  const minimal=template.replace('Correo: juan@ejemplo.cl','');
+  const order=makeOrder(parse(minimal),defaults(),new Date('2026-10-09T01:00:00Z'));
+  assert.equal(order.clienteTelefono,'+56912345678');assert.equal(order.clienteEmail,'');
+  assert.equal(order.serie,'');assert.deepEqual(order.revisionDetalle.accessories,[]);
+  assert.equal(order.tecnico,'Por asignar');assert.equal(order.valorTrabajo,0);assert.equal(order.montoAbonado,0);
+  assert.equal(order.fechaRecibida,'2026-10-08');assert.equal(order.fechaEntrega,'');
+  assert.equal(makeOrder({...parse(minimal),telefono:'56912345678'},defaults()).clienteTelefono,'+56912345678');
+  assert.throws(()=>makeOrder({...parse(minimal),correo:'no-es-correo'},defaults()),/Correo inválido/);
+  const legacy=minimal.replace('Nombre:','Cliente:').replace('Tipo:','Equipo:').replace('Descripcion:','Falla:')+'\nSerie: ABC123\nAccesorios: Espada; Cadena\nValor: 45000\nAbono: 1000\nTecnico: Pedro\nEntrega: 2026-12-01';
+  const full=makeOrder(parse(legacy),defaults(),new Date('2026-10-09T01:00:00Z'));
+  assert.equal(full.serie,'ABC123');assert.equal(full.valorTrabajo,45000);assert.equal(full.tecnico,'Pedro');
 });
 test('money, dates, equipment and payment consistency',()=>{
   assert.throws(()=>makeOrder({...sample(),abono:'1000'},defaults()),/Abono debe ser 0/);
